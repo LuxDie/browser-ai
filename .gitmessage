@@ -1,0 +1,13 @@
+# <tipo>: <descripción>
+#
+# <cuerpo opcional>
+#
+# <pie opcional>
+#
+# Tipos: feat, fix, docs, style, refactor, test, chore
+# La descripción debe estar en inglés siguiendo las directrices del proyecto
+# Ejemplos:
+# feat: add user authentication system
+# fix: resolve memory leak in data processing
+# docs: update API documentation
+# test: add unit tests for user service
