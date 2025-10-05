@@ -57,6 +57,89 @@ La documentación técnica completa se encuentra en la carpeta `docs/`:
   - [`adr/README.md`](docs/adr/README.md)
   - [`adr/0001-hybrid-ai-approach.md`](docs/adr/0001-hybrid-ai-approach.md)
 
+## Instalación y Uso
+
+### Requisitos
+
+- **Chrome 138 o superior**: Requerido para las APIs de IA integradas
+- **Manifest V3**: Compatible con la última versión de extensiones Chrome
+
+#### Requisitos de Hardware
+
+**Para Translator API y Language Detector API (Fase 1 actual):**
+- **Sistema operativo**: Windows 10/11, macOS 13+ (Ventura), Linux, o ChromeOS (desde Platform 16389.0.0) en dispositivos Chromebook Plus
+- **Dispositivo**: Solo escritorio (no funciona en móviles)
+- **Almacenamiento**: Al menos 22 GB de espacio libre en el volumen que contiene tu perfil de Chrome
+- **Red**: Conexión sin límites de datos
+
+**Para APIs adicionales (Fases futuras - Summarizer, Writer, Rewriter, Proofreader):**
+- **Sistema operativo**: Windows 10/11, macOS 13+ (Ventura), o Linux
+- **Dispositivo**: Solo escritorio (no funciona en móviles)
+- **Almacenamiento**: Al menos 22 GB de espacio libre en el volumen que contiene tu perfil de Chrome
+- **GPU**: Más de 4 GB de VRAM (requisito estricto)
+- **Red**: Conexión sin límites de datos
+
+> **Nota**: Para verificar el tamaño actual del modelo Gemini Nano, visita `chrome://on-device-internals` y ve a **Model status**. Para debugging de APIs, selecciona **Event Logs**.
+
+### Instalación para Desarrollo
+
+1. **Clonar el repositorio**:
+   ```bash
+   git clone <repository-url>
+   cd browser-ai
+   ```
+
+2. **Instalar dependencias**:
+   ```bash
+   npm install
+   ```
+
+3. **Construir la extensión**:
+   ```bash
+   npm run build
+   ```
+
+4. **Cargar en Chrome**:
+   - Abrir Chrome y ir a `chrome://extensions/`
+   - Activar "Modo de desarrollador"
+   - Hacer clic en "Cargar extensión sin empaquetar"
+   - Seleccionar la carpeta `dist/`
+
+### Uso
+
+1. **Traducción desde selección de texto**:
+   - Seleccionar texto en cualquier página web
+   - Hacer clic derecho y seleccionar "Traducir con Browser AI"
+   - El panel lateral se abrirá automáticamente con la traducción
+
+2. **Traducción manual**:
+   - Hacer clic en el icono de Browser AI en la barra de herramientas
+   - Escribir o pegar texto en el panel lateral
+   - Seleccionar idioma destino y hacer clic en "Traducir"
+
+3. **Configuración**:
+   - Ir a `chrome://extensions/`
+   - Buscar Browser AI y hacer clic en "Opciones"
+   - Configurar idioma destino predeterminado y modo de privacidad
+
+### Scripts de Desarrollo
+
+```bash
+npm run dev          # Modo desarrollo con hot reload
+npm run build        # Construir para producción
+npm run preview      # Vista previa de la build
+npm run test         # Ejecutar pruebas
+npm run lint         # Linter
+npm run type-check   # Verificación de tipos TypeScript
+```
+
+## APIs Utilizadas
+
+Browser AI utiliza las siguientes APIs integradas de Chrome:
+
+- **[Translator API](https://developer.chrome.com/docs/ai/built-in-apis#translator-api)**: Para traducción de texto
+- **[Language Detector API](https://developer.chrome.com/docs/ai/built-in-apis#language-detector-api)**: Para detección automática del idioma
+
 ## Desarrollo
 
 Este proyecto sigue un enfoque de **especificación primero** (Specification-First). Todos los cambios deben documentarse primero en los archivos `.md` correspondientes antes de proceder con la implementación en código.
