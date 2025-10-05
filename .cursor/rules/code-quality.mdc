@@ -1,0 +1,14 @@
+---
+description: Calidad de código
+alwaysApply: true
+---
+Siempre verificar lo siguiente antes de completar cualquier tarea de desarrollo:
+
+1. Ejecutar `npm run lint` para verificar errores de ESLint
+2. Ejecutar `npm run type-check` para verificar errores de TypeScript
+3. Ejecutar `npm run test` para verificar las pruebas.
+4. Ejecutar `npm run build` para compilar.
+5. Corregir cualquier error encontrado antes de finalizar
+6. Confirmar que todos los comandos se ejecuten sin errores
+
+Esta regla NO se aplica para tareas de documentación o configuración.
