@@ -4,14 +4,7 @@ Este documento define las reglas y el flujo de trabajo que el agente debe seguir
 
 ## Flujo de Trabajo Mandatorio: Especificación Primero (Specification-First)
 
-**Regla fundamental:** Todo cambio en el proyecto, sin excepción, debe hacerse primero en la especificación (los documentos `.md`) y solo después de su aprobación, se procederá a la implementación en el código.
-
-### Proceso a Seguir
-
-1.  **Discusión del Cambio:** El usuario y el agente discuten la modificación o nueva funcionalidad.
-2.  **Propuesta de Especificación:** El agente debe proponer los cambios necesarios en los documentos `.md` relevantes (ej: `implementation.md`, `ui.md`, etc.).
-3.  **Aprobación del Usuario:** El usuario debe revisar y aprobar explícitamente los cambios en la documentación.
-4.  **Implementación en Código:** Solo después de que la especificación ha sido aprobada, el agente tiene permitido escribir, modificar o generar el código correspondiente para implementar el cambio.
+**Regla fundamental:** Todo cambio o adición al proyecto, sin excepción, debe basarse estrictamente en la especificación técnica (los documentos `.md` en el directorio @docs). Cualquier desviación de la misma debe ser corregida, y de no poder conformarla por limitaciones técnicas o de otra índole, dicha situación deberá quedar debidamente documentada en la misma especificación.
 
 ### Reglas de Pruebas
 
@@ -31,11 +24,11 @@ Este documento define las reglas y el flujo de trabajo que el agente debe seguir
 - **Variables y funciones:** `getUserData()`, `isAuthenticated`
 - **Clases y interfaces:** `UserService`, `AuthController`
 - **Constantes técnicas:** `API_ENDPOINTS`, `ERROR_CODES`
+- **Mensajes de commit:** `feat: add form validation`
 
 ### Documentación y Comentarios: CASTELLANO
 - **Comentarios en código:** Explicaciones de lógica de negocio en castellano
 - **Documentación técnica:** `README.md`, archivos en `docs/`
-- **Mensajes de commit:** `feat: agregar validación de formulario`
 - **Comentarios de PR:** Explicaciones detalladas en castellano
 
 ### Excepciones
