@@ -11,4 +11,6 @@ Siempre verificar lo siguiente antes de completar cualquier tarea de desarrollo:
 5. Corregir cualquier error encontrado antes de finalizar
 6. Confirmar que todos los comandos se ejecuten sin errores
 
-Esta regla NO se aplica para tareas de documentación o configuración.
+Esta regla NO se aplica para tareas de documentación, configuración, o cualquier operación que no involucre modificaciones del código fuente local (como gestión de issues/PRs en GitHub, actualizaciones de documentación remota, etc.).
+
+**IMPORTANTE**: Antes de crear un Pull Request, siempre ejecutar las verificaciones de calidad de código para asegurar que el código esté listo para revisión.
