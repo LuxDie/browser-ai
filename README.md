@@ -140,15 +140,40 @@ Browser AI utiliza las siguientes APIs integradas de Chrome:
 - **[Translator API](https://developer.chrome.com/docs/ai/built-in-apis#translator-api)**: Para traducción de texto
 - **[Language Detector API](https://developer.chrome.com/docs/ai/built-in-apis#language-detector-api)**: Para detección automática del idioma
 
-## Desarrollo
+## 🤝 Contribución y Colaboración
 
-Este proyecto sigue un enfoque de **especificación primero** (Specification-First). Todos los cambios deben documentarse primero en los archivos `.md` correspondientes antes de proceder con la implementación en código.
+¡Tu contribución es bienvenida! Este proyecto sigue un enfoque de **especificación primero** (Specification-First). Todos los cambios deben documentarse primero en los archivos `.md` correspondientes antes de proceder con la implementación en código.
 
-### Reglas de Colaboración
+### 📖 Guías de Contribución
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Guía completa para contribuir al proyecto
+- **[Código de Conducta](CODE_OF_CONDUCT.md)**: Normas de comportamiento en la comunidad
+- **[Plantilla de PR](.github/pull_request_template.md)**: Plantilla para Pull Requests
+
+### 🔧 Flujo de Trabajo
+
+1. **Revisar documentación** en `docs/` antes de comenzar
+2. **Crear un issue** usando las plantillas disponibles
+3. **Desarrollar** siguiendo las reglas del proyecto
+4. **Crear un PR** usando la plantilla proporcionada
+5. **Esperar revisión** y aprobación del equipo
+
+### 🧪 Verificaciones Automáticas
+
+El proyecto incluye integración continua (CI) que verifica:
+
+- ✅ Linting con ESLint
+- ✅ Verificación de tipos TypeScript
+- ✅ Ejecución de pruebas unitarias
+- ✅ Build exitoso
+
+### 📝 Reglas de Colaboración
 
 - **Código y Estructura:** Inglés
 - **Documentación y Comentarios:** Castellano
 - **Nomenclatura:** Seguir convenciones establecidas en `AGENTS.md`
+- **Pruebas:** Obligatorias para nueva funcionalidad
+- **Commits:** Seguir Conventional Commits
 
 ## Licencia
 
