@@ -242,3 +242,6 @@ const userData = await getUserData(id);
 // ✅ Bueno - template literals
 const url = `${baseUrl}/users/${userId}`;
 ```
+13. Flujos asíncronos
+
+- La asincronía se maneja con `async/await`. No se utiliza `setTimeout` para manejar flujos asíncronos, ni el la implementación ni en las pruebas. Solo es válido para desistir de la operación luego de no recibir respuesta por un tiempo aceptable.
