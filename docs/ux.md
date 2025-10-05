@@ -30,6 +30,13 @@
 5. **Resultado**: Mostrar resultado con opciones de acción adicional
 6. **Encadenamiento**: Usar resultado como entrada para siguiente acción
 
+### Flujo de Acciones Automáticas desde Menú Contextual
+1. **Selección**: Usuario selecciona texto en cualquier página web
+2. **Menú Contextual**: Clic derecho → seleccionar acción específica (Traducir, Corregir, Resumir, etc.)
+3. **Apertura Automática**: Panel lateral se abre automáticamente con el texto cargado
+4. **Ejecución Automática**: La acción seleccionada se ejecuta automáticamente sin intervención del usuario
+5. **Resultado Inmediato**: El usuario ve el resultado completado automáticamente
+
 ### Flujos de Error
 - **IA local no disponible**: Explicar por qué y ofrecer nube como alternativa
 - **Sin conectividad**: Informar que solo IA local está disponible

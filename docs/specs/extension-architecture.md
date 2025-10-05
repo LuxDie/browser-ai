@@ -31,10 +31,31 @@
 ```
 
 ## Responsabilidades
-- **`manifest.json`**: metadatos, permisos (`sidePanel`, `storage`, `activeTab`, `scripting`)
+- **`manifest.json`**: metadatos, permisos (`sidePanel`, `storage`, `activeTab`, `scripting`, `notifications`)
 - **`sidepanel`**: UI principal y flujos de usuario
 - **`background`**: estado global y eventos del navegador
 - **`content`**: lectura/edición del DOM y puente con la página
+
+## Componentes de Gestión de Modelos
+
+### ModelManager (background)
+- **Detección de disponibilidad**: Verificar qué modelos están descargados
+- **Gestión de descargas**: Iniciar, monitorear y cancelar descargas
+- **Cache de estado**: Almacenar estado de modelos y descargas
+- **Notificaciones**: Enviar notificaciones push cuando modelos estén listos
+
+### TranslationService (background)
+- **Abstracción de proveedores**: Manejar APIs integradas vs nube
+- **Ejecución diferida**: Almacenar traducciones pendientes durante descargas
+- **Fallback automático**: Cambiar a nube si modelo local falla
+- **Monitoreo de progreso**: Escuchar eventos de descarga de modelos
+
+### UI Components (sidepanel)
+- **LanguageSelector**: Selector desplegable de idioma destino
+- **ModelStatusIndicator**: Mostrar estado de disponibilidad de modelos
+- **DownloadProgress**: Indicador de progreso de descarga
+- **ModelOptions**: Opciones para descargar modelo o usar nube
+- **NotificationHandler**: Manejar notificaciones push del sistema
 
 ## Integración con IA
 - Preferencia por APIs integradas del navegador
