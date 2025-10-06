@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
-import { readFileSync, existsSync, readdirSync, copyFileSync, unlinkSync } from 'fs'
+import { readFileSync, existsSync, readdirSync } from 'fs'
 import { fileURLToPath } from 'url'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
-  publicDir: 'extension/public',
+  publicDir: false,
   resolve: {
     alias: {
       '@': resolve(__dirname, './extension/src')
@@ -19,29 +19,19 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        sidepanel: resolve(__dirname, 'extension/src/sidepanel/sidepanel.html'),
         background: resolve(__dirname, 'extension/src/background.ts'),
-        options: resolve(__dirname, 'extension/public/options.html')
+        sidepanel: resolve(__dirname, 'extension/src/sidepanel/sidepanel.ts'),
+        options: resolve(__dirname, 'extension/src/options.ts')
       },
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: '[name].js',
         format: 'es', // ES modules para compatibilidad
         manualChunks: undefined, // No crear chunks separados
-        assetFileNames: (assetInfo) => {
-          // Move HTML files to root of dist
-          const fileName = assetInfo.names?.[0] || assetInfo.name
-          if (fileName === 'sidepanel.html') {
-            return 'sidepanel.html'
-          }
-          if (fileName === 'options.html') {
-            return 'options.html'
-          }
-          return '[name].[ext]'
-        }
+        assetFileNames: '[name].[ext]'
       }
     },
-    copyPublicDir: true,
+    copyPublicDir: false,
     target: 'es2020' // Target específico para Chrome extension
   },
   plugins: [
@@ -68,26 +58,19 @@ export default defineConfig({
             })
           })
         }
-      }
-    },
-    {
-      name: 'move-html-files',
-      writeBundle() {
-        // Move sidepanel.html to root
-        const sidepanelSource = resolve(__dirname, 'dist/extension/src/sidepanel/sidepanel.html')
-        const sidepanelDest = resolve(__dirname, 'dist/sidepanel.html')
-        if (existsSync(sidepanelSource)) {
-          copyFileSync(sidepanelSource, sidepanelDest)
-          unlinkSync(sidepanelSource)
-        }
-        
-        // Move options.html to root
-        const optionsSource = resolve(__dirname, 'dist/extension/public/options.html')
-        const optionsDest = resolve(__dirname, 'dist/options.html')
-        if (existsSync(optionsSource)) {
-          copyFileSync(optionsSource, optionsDest)
-          unlinkSync(optionsSource)
-        }
+
+        // Copy HTML files directly to root
+        this.emitFile({
+          type: 'asset',
+          fileName: 'sidepanel.html',
+          source: readFileSync(resolve(__dirname, 'extension/src/sidepanel/sidepanel.html'), 'utf-8')
+        })
+
+        this.emitFile({
+          type: 'asset',
+          fileName: 'options.html',
+          source: readFileSync(resolve(__dirname, 'extension/public/options.html'), 'utf-8')
+        })
       }
     }
   ]
