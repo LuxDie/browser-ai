@@ -4,7 +4,8 @@ import './sidepanel.css'
 import type { LanguageDetectionError, SelectedTextData } from '../messages'
 import {
   shouldRenderWithLanguages,
-  getAvailableLanguages
+  getAvailableLanguages,
+  getLanguageName
 } from '../core'
 
 interface TranslationState {
@@ -531,9 +532,12 @@ export class SidepanelApp {
           </div>
 
           <div class="mb-4">
-            <label for="input-text" class="block text-sm font-medium text-gray-700 mb-2">
-              Texto a traducir
-            </label>
+            <div class="flex items-center justify-between mb-2">
+              <label for="input-text" class="block text-sm font-medium text-gray-700">
+                Texto a traducir
+              </label>
+              <div id="language-info-container"></div>
+            </div>
             <textarea
               id="input-text"
               class="input-field h-32 resize-none"
@@ -549,12 +553,13 @@ export class SidepanelApp {
           </div>
 
           <div id="model-status-container" class="mb-4"></div>
-          
+
           <button id="translate-button" class="btn-primary w-full mb-4 disabled:opacity-50 disabled:cursor-not-allowed"></button>
+
+          <div id="translate-warning-container" class="mb-4"></div>
 
           <div id="result-container"></div>
           <div id="error-container"></div>
-          <div id="language-info-container"></div>
         </div>
       `
       this.#elements.inputText = document.getElementById('input-text') as HTMLTextAreaElement
@@ -570,6 +575,7 @@ export class SidepanelApp {
     this.#updateLanguageSelector()
     this.#updateModelStatus()
     this.#updateTranslateButton()
+    this.#updateTranslateWarning()
     this.#updateResult()
     this.#updateError()
     this.#updateLanguageInfo()
@@ -722,15 +728,15 @@ export class SidepanelApp {
       
       if (this.#state.sourceLanguage && hasEnoughText) {
         languageInfoContainer.innerHTML = `
-          <div class="mt-4 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <div class="p-2 bg-blue-50 border border-blue-200 rounded-lg">
             <p class="text-blue-800 text-xs">
-              Idioma detectado: <span class="font-medium">${this.#state.sourceLanguage.toUpperCase()}</span>
+              Idioma detectado: <span class="font-medium">${getLanguageName(this.#state.sourceLanguage)}</span>
             </p>
           </div>
         `
       } else if (hasText && !hasEnoughText) {
         languageInfoContainer.innerHTML = `
-          <div class="mt-4 p-2 bg-gray-50 border border-gray-200 rounded-lg">
+          <div class="p-2 bg-gray-50 border border-gray-200 rounded-lg">
             <p class="text-gray-600 text-xs">
               No hay suficiente texto para detectar el idioma
             </p>
@@ -796,6 +802,29 @@ export class SidepanelApp {
     }
 
     return ''
+  }
+
+
+  #updateTranslateWarning(): void {
+    const warningContainer = document.getElementById('translate-warning-container')
+    if (warningContainer) {
+      const hasText = this.#state.text.trim().length > 0
+      const hasSourceLanguage = this.#state.sourceLanguage !== ''
+      const languagesAreSame = this.#state.sourceLanguage && this.#state.targetLanguage &&
+        this.#state.sourceLanguage.toLowerCase() === this.#state.targetLanguage.toLowerCase()
+
+      if (hasText && hasSourceLanguage && languagesAreSame) {
+        warningContainer.innerHTML = `
+          <div class="p-2 bg-amber-50 border border-amber-200 rounded-lg">
+            <p class="text-amber-800 text-xs">
+              ⚠️ Los idiomas de origen y destino son iguales. Selecciona un idioma destino diferente.
+            </p>
+          </div>
+        `
+      } else {
+        warningContainer.innerHTML = ''
+      }
+    }
   }
 }
 
