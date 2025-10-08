@@ -50,9 +50,3 @@ export interface LanguageDetected {
 export interface LanguageDetectionError {
   error: string;
 }
-
-export interface SelectedTextData {
-  text: string;
-  fromContextMenu: boolean;
-  autoTranslate: boolean;
-}

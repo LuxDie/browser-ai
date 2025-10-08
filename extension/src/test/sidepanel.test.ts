@@ -11,11 +11,6 @@ describe('SidepanelApp', () => {
     vi.stubGlobal('chrome', mockChrome);
     document.body.innerHTML = '<div id="root"></div>';
 
-    // Mock storage with APIs available by default for most tests
-    (mockChrome.storage.local.get as any).mockResolvedValue({
-      translatorAPIAvailable: true,
-      languageDetectorAPIAvailable: true,
-    });
 
     // Mock response to GET_AVAILABLE_LANGUAGES
     (mockChrome.runtime.sendMessage as any).mockImplementation((message: any) => {
@@ -82,14 +77,7 @@ describe('SidepanelApp', () => {
 
 
   it('should initialize with correct API availability information', async () => {
-    (mockChrome.storage.local.get as any).mockResolvedValue({
-      translatorAPIAvailable: true,
-      languageDetectorAPIAvailable: true,
-      translatorState: 'available',
-      languageDetectorState: 'available'
-    });
-    
-    // Re-init for this specific storage state
+    // Re-init for this specific API state
     new SidepanelApp();
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await vi.runAllTimersAsync();
@@ -110,12 +98,7 @@ describe('SidepanelApp', () => {
   });
 
   it('should handle API availability check failure gracefully', async () => {
-    (mockChrome.storage.local.get as any).mockResolvedValue({
-      translatorAPIAvailable: false,
-      languageDetectorAPIAvailable: false
-    });
-    
-    // Re-init for this specific storage state
+    // Re-init for this specific API state
     new SidepanelApp();
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await vi.runAllTimersAsync();
@@ -403,10 +386,9 @@ describe('SidepanelApp', () => {
 
       // Simulate receiving text from context menu with autoTranslate enabled
       (mockChrome.runtime.onMessage as any).trigger({
-        type: 'SELECTED_TEXT_FROM_CONTEXT_MENU',
+        type: 'SELECTED_TEXT',
         data: {
           text: 'This is a test sentence for automatic translation.',
-          fromContextMenu: true,
           autoTranslate: true
         }
       });
@@ -450,13 +432,12 @@ describe('SidepanelApp', () => {
       // Simulate the main flow: panel opens and then message is sent directly
       const textData = {
         text: 'This is text sent directly after panel opens.',
-        fromContextMenu: true,
         autoTranslate: true
       };
 
       // First, simulate receiving the message directly (main flow)
       (mockChrome.runtime.onMessage as any).trigger({
-        type: 'SELECTED_TEXT_FROM_CONTEXT_MENU',
+        type: 'SELECTED_TEXT',
         data: textData
       });
 

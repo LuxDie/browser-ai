@@ -55,14 +55,6 @@ describe('Background Script', () => {
       });
     });
 
-    it('should set default values in storage exactly once', () => {
-      expect(mockChrome.storage.local.set).toHaveBeenCalledOnce();
-      expect(mockChrome.storage.local.set).toHaveBeenCalledWith({
-        translatorAPIAvailable: true,
-        languageDetectorAPIAvailable: true,
-        privacyMode: false,
-      });
-    });
   });
 
 describe('getBrowserLanguage', () => {

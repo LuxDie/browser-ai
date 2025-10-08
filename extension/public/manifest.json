@@ -7,7 +7,6 @@
   "minimum_chrome_version": "138",
   "permissions": [
     "sidePanel",
-    "storage",
     "activeTab",
     "contextMenus",
     "notifications"
@@ -19,7 +18,6 @@
   "side_panel": {
     "default_path": "sidepanel.html"
   },
-  "options_page": "options.html",
   "action": {
     "default_title": "Browser AI"
   },

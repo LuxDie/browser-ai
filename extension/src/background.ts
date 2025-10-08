@@ -392,14 +392,6 @@ class TranslationService {
 
     console.log('Final API availability result:', result)
 
-    // Actualizar el storage con el estado real
-    await chrome.storage.local.set({
-      translatorAPIAvailable: result.translator,
-      languageDetectorAPIAvailable: result.languageDetector,
-      languageDetectorState: result.languageDetectorState,
-      translatorState: result.translatorState
-    })
-
     return result
   }
 
@@ -515,27 +507,11 @@ class TranslationService {
         return
       }
 
-      // Obtener configuración de API en nube
-      const config = await chrome.storage.local.get(['cloudAPIKey', 'cloudProvider'])
-      
-      if (!config.cloudAPIKey || !config.cloudProvider) {
-        await this.#modelManager.notifySidepanel('CLOUD_API_NOT_CONFIGURED', {
-          message: 'Configura tu API de traducción en nube en las Opciones'
-        })
-        return
-      }
-
-      // Aquí se implementaría la llamada a la API en nube
-      // Por ahora, simular una respuesta
-      const translatedText = `[Traducido con ${config.cloudProvider}: ${text}]`
-      
-      await this.#modelManager.notifySidepanel('TRANSLATION_COMPLETED', {
-        originalText: text,
-        translatedText,
-        sourceLanguage,
-        targetLanguage,
-        usingCloud: true
+      // Usar solo APIs nativas de Chrome (sin configuración de nube)
+      await this.#modelManager.notifySidepanel('CLOUD_API_NOT_SUPPORTED', {
+        message: 'La traducción en nube no está disponible. Solo se admiten las APIs nativas de Chrome.'
       })
+      return
     } catch (error) {
       console.error('Error with cloud translation:', error)
     }
@@ -589,68 +565,6 @@ chrome.runtime.onInstalled.addListener(() => {
     console.error('Exception configuring side panel behavior:', error)
   }
 
-  // Verificar disponibilidad de APIs y configurar por defecto
-  void (async () => {
-    try {
-      console.log('Browser AI: Checking API availability on install...')
-      
-      const hasTranslatorAPI = 'Translator' in self
-      const hasLanguageDetectorAPI = 'LanguageDetector' in self
-      
-      console.log('Browser AI: Basic API check on install:', {
-        Translator: hasTranslatorAPI,
-        LanguageDetector: hasLanguageDetectorAPI
-      })
-      
-      // Hacer verificación más robusta si las APIs están disponibles
-      let translatorAvailable = false
-      let languageDetectorAvailable = false
-      
-      if (hasLanguageDetectorAPI) {
-        try {
-          const availability = await self.LanguageDetector.availability()
-          languageDetectorAvailable = availability === 'available' || availability === 'downloadable'
-          console.log('Browser AI: LanguageDetector availability on install:', availability)
-        } catch (error) {
-          console.warn('Browser AI: LanguageDetector availability check failed on install:', error)
-        }
-      }
-      
-      if (hasTranslatorAPI) {
-        try {
-          const availability = await self.Translator.availability({
-            sourceLanguage: 'en',
-            targetLanguage: 'es'
-          })
-          translatorAvailable = availability === 'available' || availability === 'downloadable'
-          console.log('Browser AI: Translator availability on install:', availability)
-        } catch (error) {
-          console.warn('Browser AI: Translator availability check failed on install:', error)
-        }
-      }
-      
-      // TODO: Eliminar uso de storage local
-      await chrome.storage.local.set({
-        translatorAPIAvailable: translatorAvailable,
-        languageDetectorAPIAvailable: languageDetectorAvailable,
-        privacyMode: false
-      })
-      
-      console.log('Browser AI: Final API availability on install:', {
-        translator: translatorAvailable,
-        languageDetector: languageDetectorAvailable
-      })
-    } catch (error) {
-      console.error('Browser AI: Error checking API availability on install:', error)
-      // Configuración por defecto sin APIs
-      await chrome.storage.local.set({
-        translatorAPIAvailable: false,
-        languageDetectorAPIAvailable: false,
-        defaultTargetLanguage: 'es',
-        privacyMode: false
-      })
-    }
-  })()
 })
 
 // Función auxiliar para enviar mensaje al sidepanel con reintento
@@ -697,7 +611,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
           // Enviar mensaje con reintento (sin delay adicional)
           await sendMessageToSidepanel({
-            type: 'SELECTED_TEXT_FROM_CONTEXT_MENU',
+            type: 'SELECTED_TEXT',
             data: textData
           })
 
@@ -744,32 +658,32 @@ chrome.runtime.onMessage.addListener((message: ChromeMessage, sender) => {
   
   if (message.type === 'TRANSLATE_TEXT') {
     console.log('Processing TRANSLATE_TEXT message')
-    
-    chrome.storage.local.set({ selectedText: message.data as string })
-      .then(() => {
-        if (sender.tab?.id && sender.tab?.windowId) {
-          try {
-            chrome.sidePanel.open({ tabId: sender.tab.id, windowId: sender.tab.windowId })
-              .then(() => {
-                console.log('Side panel opened successfully from content script message')
-              })
-              .catch((error) => {
-                console.error('Error opening side panel from content script:', error)
-                console.error('Error details:', JSON.stringify(error))
-              });
-          } catch (error) {
-            console.error('Exception opening side panel from content script:', error)
-          }
-        } else {
-          console.error('Missing tab info in content script message:', { 
-            tabId: sender.tab?.id,
-            windowId: sender.tab?.windowId
+
+    if (sender.tab?.id && sender.tab?.windowId) {
+      try {
+        // Abrir el sidepanel primero
+        chrome.sidePanel.open({ tabId: sender.tab.id, windowId: sender.tab.windowId })
+          .then(() => {
+            console.log('Side panel opened successfully from content script message')
+            // Enviar el texto seleccionado directamente al sidepanel
+            void sendMessageToSidepanel({
+              type: 'SELECTED_TEXT',
+              data: { text: message.data as string, autoTranslate: false }
+            })
           })
-        }
+          .catch((error) => {
+            console.error('Error opening side panel from content script:', error)
+            console.error('Error details:', JSON.stringify(error))
+          });
+      } catch (error) {
+        console.error('Exception opening side panel from content script:', error)
+      }
+    } else {
+      console.error('Missing tab info in content script message:', {
+        tabId: sender.tab?.id,
+        windowId: sender.tab?.windowId
       })
-      .catch(error => {
-        console.error('Error storing selected text from content script:', error)
-      });
+    }
   } else if (message.type === 'OPEN_SIDEPANEL_USER_GESTURE') {
     console.log('Processing OPEN_SIDEPANEL_USER_GESTURE message')
     
@@ -924,38 +838,62 @@ chrome.runtime.onMessage.addListener((message: ChromeMessage, sender) => {
   }
 });
 
-// Verificar disponibilidad de APIs integradas
+// Verificar disponibilidad de APIs integradas al iniciar la extensión
 chrome.runtime.onStartup.addListener(() => {
   void (async () => {
   try {
     console.log('Browser AI: Checking API availability on startup...')
-    
+
     // Verificar si las APIs están disponibles usando el método recomendado por la documentación
     const hasTranslatorAPI = 'Translator' in self
     const hasLanguageDetectorAPI = 'LanguageDetector' in self
-    
+
     console.log('Browser AI: Basic API availability check:', {
       Translator: hasTranslatorAPI,
       LanguageDetector: hasLanguageDetectorAPI,
       userAgent: navigator.userAgent,
       chromeVersion: navigator.userAgent.match(/Chrome\/(\d+)/)?.[1]
     })
-    
+
     // Hacer verificación más robusta si las APIs están disponibles
     if (hasLanguageDetectorAPI || hasTranslatorAPI) {
       const translationService = TranslationService.getInstance()
       const realAvailability = await translationService.checkAPIAvailability()
       console.log('Browser AI: Real API availability after testing:', realAvailability)
+
+      // Enviar resultados al sidepanel
+      await sendMessageToSidepanel({
+        type: 'API_AVAILABILITY_RESPONSE',
+        data: realAvailability
+      })
+    } else {
+      // Si no hay APIs disponibles, enviar estado no disponible
+      await sendMessageToSidepanel({
+        type: 'API_AVAILABILITY_RESPONSE',
+        data: UNAVAILABLE_API_STATE
+      })
     }
   } catch (error) {
     console.error('Browser AI: Error checking API availability on startup:', error)
-    // En caso de error, asumir que las APIs no están disponibles
-    void chrome.storage.local.set({
-      translatorAPIAvailable: false,
-      languageDetectorAPIAvailable: false
-    })
+    // En caso de error, enviar estado no disponible
+    try {
+      await sendMessageToSidepanel({
+        type: 'API_AVAILABILITY_RESPONSE',
+        data: UNAVAILABLE_API_STATE
+      })
+    } catch (sendError) {
+      console.error('Browser AI: Error sending API availability response:', sendError)
+    }
   }
   })()
 })
+
+// Estado de APIs no disponibles (constante para evitar duplicación)
+const UNAVAILABLE_API_STATE = {
+  translator: false,
+  languageDetector: false,
+  languageDetectorState: 'unavailable',
+  translatorState: 'unavailable'
+} as const
 
 export {}

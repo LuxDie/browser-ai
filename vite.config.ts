@@ -20,8 +20,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         background: resolve(__dirname, 'extension/src/background.ts'),
-        sidepanel: resolve(__dirname, 'extension/src/sidepanel/sidepanel.ts'),
-        options: resolve(__dirname, 'extension/src/options.ts')
+        sidepanel: resolve(__dirname, 'extension/src/sidepanel/sidepanel.ts')
       },
       output: {
         entryFileNames: '[name].js',
@@ -64,12 +63,6 @@ export default defineConfig({
           type: 'asset',
           fileName: 'sidepanel.html',
           source: readFileSync(resolve(__dirname, 'extension/src/sidepanel/sidepanel.html'), 'utf-8')
-        })
-
-        this.emitFile({
-          type: 'asset',
-          fileName: 'options.html',
-          source: readFileSync(resolve(__dirname, 'extension/public/options.html'), 'utf-8')
         })
       }
     }

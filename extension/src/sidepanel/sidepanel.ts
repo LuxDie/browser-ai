@@ -1,7 +1,7 @@
 /// <reference types="../types/browser" />
 
 import './sidepanel.css'
-import type { LanguageDetectionError, SelectedTextData } from '../messages'
+import type { LanguageDetectionError } from '../messages'
 import {
   shouldRenderWithLanguages,
   getAvailableLanguages,
@@ -39,9 +39,10 @@ export const getBrowserLanguage = (): string => {
     // Prioridad: navigator.languages (array completo), luego navigator.language
     let detectedLang = 'es' // fallback por defecto
 
-    if (navigator.languages && navigator.languages.length > 0) {
+    if (navigator.languages && Array.isArray(navigator.languages) && navigator.languages.length > 0) {
       // Tomar el primer idioma y convertir 'es-ES' a 'es'
-      const primaryLang = navigator.languages[0].split('-')[0]
+      const firstLanguage = navigator.languages[0] as string
+      const primaryLang = firstLanguage.split('-')[0]
       // Verificar que el idioma sea soportado por la extensión
       const supportedLanguages = getAvailableLanguages()
       if (supportedLanguages.includes(primaryLang)) {
@@ -105,40 +106,18 @@ export class SidepanelApp {
   }
 
   async #init(): Promise<void> {
-    await this.#loadSelectedText()
     this.#state.targetLanguage = getBrowserLanguage()
-    this.#state.apiAvailable = await this.#checkAPIAvailability()
+    this.#state.apiAvailable = this.#checkAPIAvailability()
     // Verificar disponibilidad de APIs dinámicamente (el listener global manejará la respuesta)
     this.#refreshAPIAvailability()
     await this.#loadAvailableLanguages()
     // Actualizar el selector de idiomas ahora que se cargaron los idiomas disponibles y el idioma por defecto
     this.#updateLanguageSelector()
     this.#setupEventListeners()
-    this.#setupStorageListener()
     this.#setupMessageListener()
     this.#render()
   }
 
-  async #loadSelectedText(): Promise<void> {
-    if (this.#state.textReceived) {
-      return
-    }
-
-    try {
-      // Verificar el storage normal para compatibilidad con otros flujos
-      const result = await chrome.storage.local.get(['selectedText']) as { selectedText?: string }
-      if (result.selectedText) {
-        this.#state.text = result.selectedText
-        this.#state.textReceived = true
-        await chrome.storage.local.remove(['selectedText'])
-        this.#detectLanguage(result.selectedText)
-
-        // No ejecutar traducción aquí - el listener de LANGUAGE_DETECTED la manejará
-      }
-    } catch (error) {
-      console.error('Error loading selected text:', error)
-    }
-  }
 
   async #loadAvailableLanguages(): Promise<void> {
     try {
@@ -195,11 +174,14 @@ export class SidepanelApp {
           this.#handleLanguageDetectionError(message.data as LanguageDetectionError)
           break
         case 'API_AVAILABILITY_RESPONSE':
-          void this.#handleAPIAvailabilityResponse(message.data as {translator: boolean, languageDetector: boolean})
+          void this.#handleAPIAvailabilityResponse(message.data as {translator: boolean, languageDetector: boolean, languageDetectorState?: string, translatorState?: string})
           break
-        case 'SELECTED_TEXT_FROM_CONTEXT_MENU':
-          void this.#handleSelectedTextFromContextMenu(message.data as SelectedTextData)
+        case 'SELECTED_TEXT': {
+          const data = message.data as { text: string; autoTranslate?: boolean }
+          console.log('Handling selected text:', { text: data.text.substring(0, 50) + '...', autoTranslate: data.autoTranslate })
+          this.#setSelectedText(data.text, data.autoTranslate || false)
           break
+        }
       }
     })
   }
@@ -269,27 +251,25 @@ export class SidepanelApp {
     }
   }
 
-  async #checkAPIAvailability(): Promise<{translator: boolean, languageDetector: boolean}> {
+  #checkAPIAvailability(): {translator: boolean, languageDetector: boolean} {
     try {
-      // Verificar disponibilidad desde el storage local (configurado por background script)
-      const result = await chrome.storage.local.get([
-        'translatorAPIAvailable', 
-        'languageDetectorAPIAvailable'
-      ]) as { 
-        translatorAPIAvailable?: boolean, 
-        languageDetectorAPIAvailable?: boolean
-      }
-      
-      console.log('Sidepanel API availability from storage:', result)
-      
+      // Verificar disponibilidad directamente de las APIs de Chrome
+      const translatorAvailable = 'Translator' in self
+      const languageDetectorAvailable = 'LanguageDetector' in self
+
+      console.log('Sidepanel API availability check:', {
+        translator: translatorAvailable,
+        languageDetector: languageDetectorAvailable
+      })
+
       return {
-        translator: result.translatorAPIAvailable ?? false,
-        languageDetector: result.languageDetectorAPIAvailable ?? false
+        translator: translatorAvailable,
+        languageDetector: languageDetectorAvailable
       }
     } catch (error) {
       console.error('Error checking API availability:', error)
-      return { 
-        translator: false, 
+      return {
+        translator: false,
         languageDetector: false
       }
     }
@@ -345,22 +325,6 @@ export class SidepanelApp {
     })
   }
 
-  #setupStorageListener(): void {
-    // Escuchar cambios en el storage para detectar nuevo texto seleccionado
-    chrome.storage.onChanged.addListener((changes) => {
-      if (changes.selectedText) {
-        const newText = changes.selectedText.newValue as string | undefined;
-        console.log('Storage changed, new selected text:', newText)
-        if (newText) {
-          this.#state.text = newText
-          this.#detectLanguage(newText)
-          this.#render()
-
-          // No ejecutar traducción aquí - el listener de LANGUAGE_DETECTED la manejará si es necesario
-        }
-      }
-    })
-  }
 
   // Métodos de manejo de eventos del ModelManager
   #handleModelAvailabilityResponse(data: ModelAvailabilityResponse): void {
@@ -483,24 +447,25 @@ export class SidepanelApp {
     this.#render()
   }
 
-  #handleSelectedTextFromContextMenu(data: SelectedTextData): void {
-    console.log('Handling selected text from context menu:', data)
-    this.#state.text = data.text
+  #setSelectedText(text: string, autoTranslate: boolean = false): void {
+    console.log('Setting selected text:', { text: text.substring(0, 50) + '...', autoTranslate })
+    this.#state.text = text
     this.#state.textReceived = true
-    this.#state.autoTranslate = data.autoTranslate || false
+    this.#state.autoTranslate = autoTranslate
 
     // Si se debe traducir automáticamente, marcar como pendiente (se ejecutará cuando se detecte el idioma)
-    if (data.autoTranslate) {
+    if (autoTranslate) {
       this.#state.pendingAutoTranslate = true
     }
 
-    // Detectar idioma del texto (el listener global manejará la respuesta y activará la traducción automática si es necesario)
-    this.#detectLanguage(data.text)
+    // Detectar idioma del texto
+    this.#detectLanguage(text)
 
     this.#render()
   }
 
-  #handleAPIAvailabilityResponse(data: {translator: boolean, languageDetector: boolean}): void {
+
+  #handleAPIAvailabilityResponse(data: {translator: boolean, languageDetector: boolean, languageDetectorState?: string, translatorState?: string}): void {
     this.#state.apiAvailable = data
     console.log('API availability updated from background:', data)
     console.log('Previous API availability state:', this.#state.apiAvailable)
