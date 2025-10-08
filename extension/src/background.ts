@@ -629,10 +629,10 @@ chrome.runtime.onInstalled.addListener(() => {
         }
       }
       
+      // TODO: Eliminar uso de storage local
       await chrome.storage.local.set({
         translatorAPIAvailable: translatorAvailable,
         languageDetectorAPIAvailable: languageDetectorAvailable,
-        defaultTargetLanguage: 'es',
         privacyMode: false
       })
       

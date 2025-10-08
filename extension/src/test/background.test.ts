@@ -2,6 +2,9 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createChromeMock, createAIMock, setupChromeMock, setupAIMock } from './test-utils';
 
+// Importar la función getBrowserLanguage para pruebas
+import { getBrowserLanguage } from '../sidepanel/sidepanel';
+
 // Mock para las APIs de Chrome y del navegador que no están disponibles en el entorno de prueba de Vitest (Node.js)
 const mockChrome = createChromeMock();
 const mockAI = createAIMock();
@@ -57,11 +60,100 @@ describe('Background Script', () => {
       expect(mockChrome.storage.local.set).toHaveBeenCalledWith({
         translatorAPIAvailable: true,
         languageDetectorAPIAvailable: true,
-        defaultTargetLanguage: 'es',
         privacyMode: false,
       });
     });
   });
+
+describe('getBrowserLanguage', () => {
+  it('should detect language from navigator.languages when available', () => {
+    // Mock navigator.languages
+    Object.defineProperty(navigator, 'languages', {
+      value: ['fr-FR', 'fr', 'en-US'],
+      writable: true
+    });
+
+    const result = getBrowserLanguage();
+    expect(result).toBe('fr');
+  });
+
+  it('should fallback to navigator.language when navigator.languages is not available', () => {
+    // Reset navigator.languages
+    Object.defineProperty(navigator, 'languages', {
+      value: undefined,
+      writable: true
+    });
+
+    // Mock navigator.language
+    Object.defineProperty(navigator, 'language', {
+      value: 'de-DE',
+      writable: true
+    });
+
+    const result = getBrowserLanguage();
+    expect(result).toBe('de');
+  });
+
+  it('should fallback to Spanish when neither navigator.languages nor navigator.language are available', () => {
+    // Reset both
+    Object.defineProperty(navigator, 'languages', {
+      value: undefined,
+      writable: true
+    });
+    Object.defineProperty(navigator, 'language', {
+      value: undefined,
+      writable: true
+    });
+
+    const result = getBrowserLanguage();
+    expect(result).toBe('es');
+  });
+
+  it('should fallback to Spanish when detected language is not supported', () => {
+    // Mock con idioma no soportado
+    Object.defineProperty(navigator, 'languages', {
+      value: ['xx-XX', 'xx'],
+      writable: true
+    });
+
+    const result = getBrowserLanguage();
+    expect(result).toBe('es');
+  });
+
+  it('should handle errors gracefully and return Spanish', () => {
+    // Guardar valores originales
+    const originalNavigator = globalThis.navigator;
+
+    // Mock que cause error al acceder a navigator
+    Object.defineProperty(globalThis, 'navigator', {
+      value: undefined,
+      writable: true
+    });
+
+    const result = getBrowserLanguage();
+    expect(result).toBe('es');
+
+    // Restaurar
+    Object.defineProperty(globalThis, 'navigator', {
+      value: originalNavigator,
+      writable: true
+    });
+  });
+
+  it('should prioritize navigator.languages over navigator.language', () => {
+    Object.defineProperty(navigator, 'languages', {
+      value: ['it-IT', 'it'],
+      writable: true
+    });
+    Object.defineProperty(navigator, 'language', {
+      value: 'fr-FR', // Este debería ser ignorado
+      writable: true
+    });
+
+    const result = getBrowserLanguage();
+    expect(result).toBe('it');
+  });
+});
 
   describe('onMessage Listener', () => {
     describe('when receiving a DETECT_LANGUAGE message', () => {
