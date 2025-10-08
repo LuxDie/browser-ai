@@ -17,6 +17,29 @@ describe('SidepanelApp', () => {
       languageDetectorAPIAvailable: true,
     });
 
+    // Mock response to GET_AVAILABLE_LANGUAGES
+    (mockChrome.runtime.sendMessage as any).mockImplementation((message: any) => {
+      if (message.type === 'GET_AVAILABLE_LANGUAGES') {
+        // Simulate response with available languages
+        setTimeout(() => {
+          (mockChrome.runtime.onMessage as any).trigger({
+            type: 'AVAILABLE_LANGUAGES_RESPONSE',
+            data: {
+              languages: [
+                { code: 'es', name: 'Español' },
+                { code: 'en', name: 'English' },
+                { code: 'fr', name: 'Français' },
+                { code: 'de', name: 'Deutsch' },
+                { code: 'it', name: 'Italiano' },
+                { code: 'pt', name: 'Português' }
+              ]
+            }
+          });
+        }, 0);
+      }
+      return Promise.resolve();
+    });
+
     new SidepanelApp();
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await vi.runAllTimersAsync(); // Ensure all async operations in constructor and init are done
@@ -152,7 +175,12 @@ describe('SidepanelApp', () => {
       expect(translateButton.disabled).toBe(true);
     });
 
-    it('should enable button when language is detected', async () => {
+    it('should enable button when source language is detected to be different from target language', async () => {
+      // Change target language to Spanish to enable translation
+      const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
+      targetSelect.value = 'es';
+      targetSelect.dispatchEvent(new Event('change'));
+
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
       textarea.value = 'This is a longer text that should trigger language detection';
       textarea.dispatchEvent(new Event('input'));
@@ -164,12 +192,34 @@ describe('SidepanelApp', () => {
       expect(translateButton.disabled).toBe(true);
 
       (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
-      
+
       await vi.runAllTimersAsync();
 
       translateButton = document.getElementById('translate-button') as HTMLButtonElement;
       expect(translateButton.textContent?.trim()).toBe('Traducir');
+      // Button should be enabled because source ('en') and target ('es') languages are different
       expect(translateButton.disabled).toBe(false);
+    });
+
+    it('should disable button when source language is detected to be the same as target language', async () => {
+      const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
+      textarea.value = 'This is a longer text that should trigger language detection';
+      textarea.dispatchEvent(new Event('input'));
+
+      await vi.runAllTimersAsync();
+
+      let translateButton = document.getElementById('translate-button') as HTMLButtonElement;
+      expect(translateButton.textContent?.trim()).toBe('Traducir (Detectando idioma...)');
+      expect(translateButton.disabled).toBe(true);
+
+      (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
+
+      await vi.runAllTimersAsync();
+
+      translateButton = document.getElementById('translate-button') as HTMLButtonElement;
+      expect(translateButton.textContent?.trim()).toBe('Traducir');
+      // Button should be disabled because source ('en') and target ('en') languages are the same
+      expect(translateButton.disabled).toBe(true);
     });
   });
 
@@ -346,6 +396,11 @@ describe('SidepanelApp', () => {
     });
 
     it('should automatically translate text when selected from context menu', async () => {
+      // Change target language to Spanish to enable automatic translation (different from detected 'en')
+      const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
+      targetSelect.value = 'es';
+      targetSelect.dispatchEvent(new Event('change'));
+
       // Simulate receiving text from context menu with autoTranslate enabled
       (mockChrome.runtime.onMessage as any).trigger({
         type: 'SELECTED_TEXT_FROM_CONTEXT_MENU',
@@ -369,17 +424,29 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Verify that translation was requested
-      expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({
-        type: 'TRANSLATE_TEXT_REQUEST',
-        data: {
-          text: 'This is a test sentence for automatic translation.',
-          targetLanguage: 'es',
-          sourceLanguage: 'en'
-        }
-      });
+      expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'TRANSLATE_TEXT_REQUEST'
+        })
+      );
+
+      // Verify the call contains the expected data by checking the mock calls directly
+      // TODO: remove lint exceptions
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const mock = mockChrome.runtime.sendMessage as any;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const lastCall = mock.mock.calls[mock.mock.calls.length - 1][0];
+      expect(lastCall.data.text).toBe('This is a test sentence for automatic translation.');
+      expect(lastCall.data.sourceLanguage).toBe('en');
+      expect(lastCall.data.targetLanguage).toBe('es');
     });
 
     it('should handle text sent directly after panel opens (main flow)', async () => {
+      // Change target language to Spanish to enable automatic translation (different from detected 'en')
+      const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
+      targetSelect.value = 'es';
+      targetSelect.dispatchEvent(new Event('change'));
+
       // Simulate the main flow: panel opens and then message is sent directly
       const textData = {
         text: 'This is text sent directly after panel opens.',
@@ -410,13 +477,234 @@ describe('SidepanelApp', () => {
       expect(textarea.value).toBe('This is text sent directly after panel opens.');
 
       // Verify that translation was requested automatically
-      expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({
-        type: 'TRANSLATE_TEXT_REQUEST',
-        data: {
-          text: 'This is text sent directly after panel opens.',
-          targetLanguage: 'es',
-          sourceLanguage: 'en'
+      expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'TRANSLATE_TEXT_REQUEST'
+        })
+      );
+
+      // Verify the call contains the expected data by checking the mock calls directly
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const mock = mockChrome.runtime.sendMessage as any;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const lastCall = mock.mock.calls[mock.mock.calls.length - 1][0];
+      expect(lastCall.data.text).toBe('This is text sent directly after panel opens.');
+      expect(lastCall.data.sourceLanguage).toBe('en');
+      expect(lastCall.data.targetLanguage).toBe('es');
+    });
+  });
+
+  describe('Language Selector Behavior', () => {
+    it('should keep all language options enabled in target selector', async () => {
+      // Reset DOM for this test
+      document.body.innerHTML = '<div id="root"></div>';
+
+      // Create a fresh mock for this test
+      const testMockChrome = createChromeMock();
+
+      // Mock response to GET_AVAILABLE_LANGUAGES
+      (testMockChrome.runtime.sendMessage as any).mockImplementation((message: any) => {
+        if (message.type === 'GET_AVAILABLE_LANGUAGES') {
+          setTimeout(() => {
+            (testMockChrome.runtime.onMessage as any).trigger({
+              type: 'AVAILABLE_LANGUAGES_RESPONSE',
+              data: {
+                languages: [
+                  { code: 'es', name: 'Español' },
+                  { code: 'en', name: 'English' },
+                  { code: 'fr', name: 'Français' }
+                ]
+              }
+            });
+          }, 0);
         }
+        return Promise.resolve();
+      });
+
+      vi.stubGlobal('chrome', testMockChrome);
+
+      // Create SidepanelApp instance
+      new SidepanelApp();
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+      await vi.runAllTimersAsync();
+
+      // Simulate language detection (set source language to English)
+      (testMockChrome.runtime.onMessage as any).trigger({
+        type: 'LANGUAGE_DETECTED',
+        data: { language: 'en' }
+      });
+
+      // Wait for UI updates
+      await vi.runAllTimersAsync();
+
+      // Verify that all options are enabled and show normal names
+      const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
+      expect(targetSelect).toBeTruthy();
+
+      const englishOption = targetSelect.querySelector('option[value="en"]') as HTMLOptionElement;
+      expect(englishOption).toBeTruthy();
+      expect(englishOption.disabled).toBe(false);
+      expect(englishOption.textContent).toBe('English');
+
+      // Verify that Spanish option is also enabled
+      const spanishOption = targetSelect.querySelector('option[value="es"]') as HTMLOptionElement;
+      expect(spanishOption).toBeTruthy();
+      expect(spanishOption.disabled).toBe(false);
+      expect(spanishOption.textContent).toBe('Español');
+
+      // Verify that French option is also enabled
+      const frenchOption = targetSelect.querySelector('option[value="fr"]') as HTMLOptionElement;
+      expect(frenchOption).toBeTruthy();
+      expect(frenchOption.disabled).toBe(false);
+      expect(frenchOption.textContent).toBe('Français');
+
+      // Target language should remain as initially set (English in this case)
+      expect(targetSelect.value).toBe('en');
+    });
+  });
+
+
+  describe('Default Language Loading', () => {
+    it('should detect browser language and update selector', async () => {
+      // Reset DOM for this test
+      document.body.innerHTML = '<div id="root"></div>';
+
+      // Create a fresh mock for this test
+      const testMockChrome = createChromeMock();
+
+      // Mock response to GET_AVAILABLE_LANGUAGES
+      (testMockChrome.runtime.sendMessage as any).mockImplementation((message: any) => {
+        if (message.type === 'GET_AVAILABLE_LANGUAGES') {
+          setTimeout(() => {
+            (testMockChrome.runtime.onMessage as any).trigger({
+              type: 'AVAILABLE_LANGUAGES_RESPONSE',
+              data: {
+                languages: [
+                  { code: 'es', name: 'Español' },
+                  { code: 'en', name: 'English' },
+                  { code: 'fr', name: 'Français' },
+                  { code: 'de', name: 'Deutsch' }
+                ]
+              }
+            });
+          }, 0);
+        }
+        return Promise.resolve();
+      });
+
+      vi.stubGlobal('chrome', testMockChrome);
+
+      // Mock navigator.languages to return 'fr' as primary language
+      Object.defineProperty(navigator, 'languages', {
+        value: ['fr-FR', 'fr', 'en-US'],
+        writable: true
+      });
+
+      // Create fresh SidepanelApp instance for this test
+      new SidepanelApp();
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+      await vi.runAllTimersAsync();
+
+      // Verify that the target language was detected as 'fr'
+      const select = document.getElementById('target-language') as HTMLSelectElement;
+      expect(select).toBeTruthy();
+      expect(select.value).toBe('fr');
+    });
+
+    it('should fallback to Spanish when detected language is not supported', async () => {
+      // Reset DOM for this test
+      document.body.innerHTML = '<div id="root"></div>';
+
+      // Create a fresh mock for this test
+      const testMockChrome = createChromeMock();
+
+      // Mock response to GET_AVAILABLE_LANGUAGES
+      (testMockChrome.runtime.sendMessage as any).mockImplementation((message: any) => {
+        if (message.type === 'GET_AVAILABLE_LANGUAGES') {
+          setTimeout(() => {
+            (testMockChrome.runtime.onMessage as any).trigger({
+              type: 'AVAILABLE_LANGUAGES_RESPONSE',
+              data: {
+                languages: [
+                  { code: 'es', name: 'Español' },
+                  { code: 'en', name: 'English' },
+                  { code: 'fr', name: 'Français' },
+                  { code: 'de', name: 'Deutsch' }
+                ]
+              }
+            });
+          }, 0);
+        }
+        return Promise.resolve();
+      });
+
+      vi.stubGlobal('chrome', testMockChrome);
+
+      // Mock navigator.languages to return unsupported language
+      Object.defineProperty(navigator, 'languages', {
+        value: ['xx-XX', 'xx'],
+        writable: true
+      });
+
+      new SidepanelApp();
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+      await vi.runAllTimersAsync();
+
+      // Verify that the target language was set to 'es' (fallback)
+      const select = document.getElementById('target-language') as HTMLSelectElement;
+      expect(select).toBeTruthy();
+      expect(select.value).toBe('es');
+    });
+
+    it('should handle navigator errors gracefully and use Spanish fallback', async () => {
+      // Reset DOM for this test
+      document.body.innerHTML = '<div id="root"></div>';
+
+      // Create a fresh mock for this test
+      const testMockChrome = createChromeMock();
+
+      // Mock response to GET_AVAILABLE_LANGUAGES
+      (testMockChrome.runtime.sendMessage as any).mockImplementation((message: any) => {
+        if (message.type === 'GET_AVAILABLE_LANGUAGES') {
+          setTimeout(() => {
+            (testMockChrome.runtime.onMessage as any).trigger({
+              type: 'AVAILABLE_LANGUAGES_RESPONSE',
+              data: {
+                languages: [
+                  { code: 'es', name: 'Español' },
+                  { code: 'en', name: 'English' },
+                  { code: 'fr', name: 'Français' },
+                  { code: 'de', name: 'Deutsch' }
+                ]
+              }
+            });
+          }, 0);
+        }
+        return Promise.resolve();
+      });
+
+      vi.stubGlobal('chrome', testMockChrome);
+
+      // Mock navigator to cause error
+      const originalNavigator = globalThis.navigator;
+      Object.defineProperty(globalThis, 'navigator', {
+        value: undefined,
+        writable: true
+      });
+
+      new SidepanelApp();
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+      await vi.runAllTimersAsync();
+
+      // Verify that the target language was set to 'es' (fallback)
+      const select = document.getElementById('target-language') as HTMLSelectElement;
+      expect(select).toBeTruthy();
+      expect(select.value).toBe('es');
+
+      // Restore navigator
+      Object.defineProperty(globalThis, 'navigator', {
+        value: originalNavigator,
+        writable: true
       });
     });
   });

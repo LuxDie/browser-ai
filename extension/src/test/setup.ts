@@ -36,6 +36,17 @@ Object.defineProperty(navigator, 'clipboard', {
   writable: true
 })
 
+// Mock de navigator.language y navigator.languages para detección de idioma
+Object.defineProperty(navigator, 'language', {
+  value: 'en-US',
+  writable: true
+})
+
+Object.defineProperty(navigator, 'languages', {
+  value: ['en-US', 'en', 'es'],
+  writable: true
+})
+
 // Mock de window.getSelection
 Object.defineProperty(window, 'getSelection', {
   value: vi.fn(() => ({

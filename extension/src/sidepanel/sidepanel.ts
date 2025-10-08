@@ -2,8 +2,9 @@
 
 import './sidepanel.css'
 import type { LanguageDetectionError, SelectedTextData } from '../messages'
-import { 
-  shouldRenderWithLanguages 
+import {
+  shouldRenderWithLanguages,
+  getAvailableLanguages
 } from '../core'
 
 interface TranslationState {
@@ -28,13 +29,51 @@ interface TranslationState {
   pendingAutoTranslate: boolean // Indica si hay una traducción automática pendiente después de detección de idioma
 }
 
+/**
+ * Detecta el idioma principal del navegador del usuario
+ * @returns Código de idioma (ej: 'es', 'en', 'fr')
+ */
+export const getBrowserLanguage = (): string => {
+  try {
+    // Prioridad: navigator.languages (array completo), luego navigator.language
+    let detectedLang = 'es' // fallback por defecto
+
+    if (navigator.languages && navigator.languages.length > 0) {
+      // Tomar el primer idioma y convertir 'es-ES' a 'es'
+      const primaryLang = navigator.languages[0].split('-')[0]
+      // Verificar que el idioma sea soportado por la extensión
+      const supportedLanguages = getAvailableLanguages()
+      if (supportedLanguages.includes(primaryLang)) {
+        detectedLang = primaryLang
+      } else {
+        console.log('Browser language detected via navigator.languages:', primaryLang, '- not supported, using default')
+      }
+    } else if (navigator.language) {
+      // Fallback a navigator.language si navigator.languages no está disponible
+      const primaryLang = navigator.language.split('-')[0]
+      const supportedLanguages = getAvailableLanguages()
+      if (supportedLanguages.includes(primaryLang)) {
+        detectedLang = primaryLang
+      } else {
+        console.log('Browser language detected via navigator.language:', primaryLang, '- not supported, using default')
+      }
+    }
+
+    console.log('Browser language detected:', detectedLang)
+    return detectedLang
+  } catch (error) {
+    console.error('Error detecting browser language:', error)
+    return 'es' // fallback seguro
+  }
+}
+
 export class SidepanelApp {
   #state: TranslationState = {
     text: '',
     translatedText: '',
     editedTranslatedText: '',
     sourceLanguage: '',
-    targetLanguage: 'es',
+    targetLanguage: '', // Se detecta automáticamente desde el navegador al abrir la extensión
     isLoading: false,
     error: null,
     usingCloud: false,
@@ -66,10 +105,13 @@ export class SidepanelApp {
 
   async #init(): Promise<void> {
     await this.#loadSelectedText()
+    this.#state.targetLanguage = getBrowserLanguage()
     this.#state.apiAvailable = await this.#checkAPIAvailability()
     // Verificar disponibilidad de APIs dinámicamente (el listener global manejará la respuesta)
     this.#refreshAPIAvailability()
     await this.#loadAvailableLanguages()
+    // Actualizar el selector de idiomas ahora que se cargaron los idiomas disponibles y el idioma por defecto
+    this.#updateLanguageSelector()
     this.#setupEventListeners()
     this.#setupStorageListener()
     this.#setupMessageListener()
@@ -203,6 +245,7 @@ export class SidepanelApp {
       this.#render()
       return
     }
+
 
     this.#state.isLoading = true
     this.#state.error = null
@@ -418,9 +461,18 @@ export class SidepanelApp {
     this.#render()
 
     // Ejecutar traducción automáticamente si está configurado o si hay una traducción pendiente
-    if ((this.#state.autoTranslate || this.#state.pendingAutoTranslate) && this.#state.text.trim().length >= 15) {
+    // pero solo si los idiomas fuente y destino son diferentes
+    const languagesAreDifferent = !this.#state.targetLanguage ||
+      this.#state.sourceLanguage.toLowerCase() !== this.#state.targetLanguage.toLowerCase()
+
+    if ((this.#state.autoTranslate || this.#state.pendingAutoTranslate) &&
+        this.#state.text.trim().length >= 15 &&
+        languagesAreDifferent) {
       this.#state.pendingAutoTranslate = false // Limpiar la bandera pendiente
       void this.#translateText()
+    } else if (this.#state.pendingAutoTranslate) {
+      // Limpiar la bandera pendiente incluso si no se traduce
+      this.#state.pendingAutoTranslate = false
     }
   }
 
@@ -554,24 +606,19 @@ export class SidepanelApp {
 
   #updateLanguageSelector(): void {
     if (this.#elements.targetLanguage) {
-      const optionsHTML = this.#state.availableLanguages.length > 0 ? 
-        this.#state.availableLanguages.map(lang => 
+      const optionsHTML = this.#state.availableLanguages.length > 0 ?
+        this.#state.availableLanguages.map(lang =>
           `<option value="${lang.code}" ${this.#state.targetLanguage === lang.code ? 'selected' : ''}>${lang.name}</option>`
         ).join('') :
-        `<option value="es" ${this.#state.targetLanguage === 'es' ? 'selected' : ''}>Español</option>
-         <option value="en" ${this.#state.targetLanguage === 'en' ? 'selected' : ''}>English</option>
-         <option value="fr" ${this.#state.targetLanguage === 'fr' ? 'selected' : ''}>Français</option>
-         <option value="de" ${this.#state.targetLanguage === 'de' ? 'selected' : ''}>Deutsch</option>
-         <option value="it" ${this.#state.targetLanguage === 'it' ? 'selected' : ''}>Italiano</option>
-         <option value="pt" ${this.#state.targetLanguage === 'pt' ? 'selected' : ''}>Português</option>
-         <option value="ja" ${this.#state.targetLanguage === 'ja' ? 'selected' : ''}>日本語</option>
-         <option value="ko" ${this.#state.targetLanguage === 'ko' ? 'selected' : ''}>한국어</option>
-         <option value="zh" ${this.#state.targetLanguage === 'zh' ? 'selected' : ''}>中文</option>
-         <option value="ru" ${this.#state.targetLanguage === 'ru' ? 'selected' : ''}>Русский</option>`
-      
-      if (this.#elements.targetLanguage.innerHTML !== optionsHTML) {
-        this.#elements.targetLanguage.innerHTML = optionsHTML
-      }
+        ['es', 'en', 'fr', 'de', 'it', 'pt', 'ja', 'ko', 'zh', 'ru'].map(code => {
+          const names = {
+            es: 'Español', en: 'English', fr: 'Français', de: 'Deutsch',
+            it: 'Italiano', pt: 'Português', ja: '日本語', ko: '한국어', zh: '中文', ru: 'Русский'
+          }
+          return `<option value="${code}" ${this.#state.targetLanguage === code ? 'selected' : ''}>${names[code as keyof typeof names]}</option>`
+        }).join('')
+
+      this.#elements.targetLanguage.innerHTML = optionsHTML
     }
   }
 
@@ -593,7 +640,9 @@ export class SidepanelApp {
     if (this.#elements.translateButton) {
       const hasText = this.#state.text.trim().length > 0
       const hasSourceLanguage = this.#state.sourceLanguage !== ''
-      const canTranslate = hasText && !this.#state.isLoading && this.#state.error === null && hasSourceLanguage
+      const languagesAreSame = this.#state.sourceLanguage && this.#state.targetLanguage &&
+        this.#state.sourceLanguage.toLowerCase() === this.#state.targetLanguage.toLowerCase()
+      const canTranslate = hasText && !this.#state.isLoading && this.#state.error === null && hasSourceLanguage && !languagesAreSame
       this.#elements.translateButton.disabled = !canTranslate
 
       this.#elements.translateButton.innerHTML = this.#state.isLoading ? `
