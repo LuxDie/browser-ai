@@ -25,6 +25,7 @@ Este documento define las reglas y el flujo de trabajo que el agente debe seguir
 - **Clases y interfaces:** `UserService`, `AuthController`
 - **Constantes técnicas:** `API_ENDPOINTS`, `ERROR_CODES`
 - **Mensajes de commit:** `feat: add form validation`
+- **Descripciones de tests:** `it('should validate user input')`, `describe('AuthService')`
 
 ### Documentación y Comentarios: CASTELLANO
 - **Comentarios en código:** Explicaciones de lógica de negocio en castellano
