@@ -581,13 +581,9 @@ export class SidepanelApp {
         this.#state.availableLanguages.map(lang =>
           `<option value="${lang.code}" ${this.#state.targetLanguage === lang.code ? 'selected' : ''}>${lang.name}</option>`
         ).join('') :
-        ['es', 'en', 'fr', 'de', 'it', 'pt', 'ja', 'ko', 'zh', 'ru'].map(code => {
-          const names = {
-            es: 'Español', en: 'English', fr: 'Français', de: 'Deutsch',
-            it: 'Italiano', pt: 'Português', ja: '日本語', ko: '한국어', zh: '中文', ru: 'Русский'
-          }
-          return `<option value="${code}" ${this.#state.targetLanguage === code ? 'selected' : ''}>${names[code as keyof typeof names]}</option>`
-        }).join('')
+        getAvailableLanguages().map(code =>
+          `<option value="${code}" ${this.#state.targetLanguage === code ? 'selected' : ''}>${getLanguageName(code)}</option>`
+        ).join('')
 
       this.#elements.targetLanguage.innerHTML = optionsHTML
     }
