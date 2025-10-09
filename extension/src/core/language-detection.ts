@@ -3,20 +3,6 @@
  * Estas funciones encapsulan la lógica de detección de idioma utilizada en la implementación
  */
 
-/**
- * Detección de idioma simplificada
- * @param text - Texto a analizar
- * @returns Código de idioma detectado
- */
-export const simpleLanguageDetection = (text: string): string => {
-  // Detectar español por ñ únicamente
-  if (/[ñ]/i.test(text)) {
-    return 'es';
-  }
-  
-  // Por defecto, asumir inglés
-  return 'en';
-};
 
 /**
  * Obtiene el nombre del idioma en español

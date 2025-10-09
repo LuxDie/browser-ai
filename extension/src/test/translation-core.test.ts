@@ -13,7 +13,6 @@ import {
   setupStorageMock
 } from './test-utils'
 import {
-  simpleLanguageDetection,
   createStorageMock,
   isValidLanguageCode
 } from '../core'
@@ -49,35 +48,6 @@ describe('Translation Core', () => {
       await expect(mockDetector.detect('test')).rejects.toThrow('Detection failed');
     })
 
-    it('should detect Spanish text correctly', () => {
-
-      const spanishTexts = [
-        'niño',
-        'mañana',
-        'señor',
-        'año',
-        'peña'
-      ]
-
-      spanishTexts.forEach(text => {
-        expect(simpleLanguageDetection(text)).toBe('es')
-      })
-    })
-
-    it('should default to English for unrecognized text', () => {
-
-      const englishTexts = [
-        'Hello world',
-        'How are you?',
-        'English text',
-        'Simple text',
-        '123 numbers'
-      ]
-
-      englishTexts.forEach(text => {
-        expect(simpleLanguageDetection(text)).toBe('en')
-      })
-    })
 
     it('should validate language codes correctly', () => {
 
