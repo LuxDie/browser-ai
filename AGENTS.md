@@ -60,3 +60,12 @@ Este documento define las reglas y el flujo de trabajo que el agente debe seguir
 - **Configuración:** `kebab-case.config.js`
 
 **Justificación:** Facilita navegación, mantiene consistencia con estándares web, y mejora la legibilidad del proyecto.
+
+## Información del Repositorio
+
+- **Nombre del repositorio:** `browser-ai`
+- **URL del repositorio:** `https://github.com/LuxDie/browser-ai`
+- **Propietario:** `LuxDie`
+- **Tipo:** Repositorio público de extensión de navegador
+
+**Nota:** Los agentes deben usar esta información para todas las operaciones de GitHub (crear issues, PRs, releases, etc.).
