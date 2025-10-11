@@ -1,5 +1,7 @@
 
 export interface ModelStatus {
+  source: string;
+  target: string;
   available: boolean;
   downloading: boolean;
   progress?: number;

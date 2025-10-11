@@ -6,8 +6,6 @@
 import {
   isValidContextMenuInput,
   getLanguagePairKey,
-  addPendingTranslation,
-  getPendingTranslations,
   getLanguageName,
   getAvailableLanguages,
   type ModelStatus,
@@ -17,8 +15,8 @@ import {
 // Cache de estado de modelos
 const modelStatusCache: Map<string, ModelStatus> = new Map()
 
-// Traducciones pendientes durante descargas
-const pendingTranslations: PendingTranslation[] = []
+// Traducción pendiente durante descarga
+let pendingTranslation: PendingTranslation | null = null
 
 // ModelManager: Gestión de modelos de traducción
 class ModelManager {
@@ -137,6 +135,7 @@ class ModelManager {
           targetLanguage: target
         })
 
+        // TODO: Eliminar este código y usar el progreso real de la API
         // Simular progreso de descarga (en una implementación real, esto vendría de eventos de la API)
         for (let progress = 10; progress <= 100; progress += 10) {
           await new Promise(resolve => setTimeout(resolve, 500)) // Simular tiempo de descarga
@@ -187,30 +186,34 @@ class ModelManager {
 
   // Agregar traducción pendiente
   addPendingTranslation(text: string, sourceLanguage: string, targetLanguage: string): void {
-    addPendingTranslation(text, sourceLanguage, targetLanguage, pendingTranslations)
+    pendingTranslation = {
+      text,
+      sourceLanguage,
+      targetLanguage
+    }
     console.log('Added pending translation:', { text, sourceLanguage, targetLanguage })
   }
 
-  // Procesar traducciones pendientes cuando el modelo esté listo
+  // Procesar traducción pendiente cuando el modelo esté listo
   async #processPendingTranslations(source: string, target: string): Promise<void> {
-    const relevant = getPendingTranslations(source, target, pendingTranslations)
-
-    for (const pending of relevant) {
+    // Verificar si hay una traducción pendiente para este par de idiomas
+    if (pendingTranslation &&
+        pendingTranslation.sourceLanguage === source &&
+        pendingTranslation.targetLanguage === target) {
       try {
         // Ejecutar traducción automáticamente
-        await this.#executeTranslation(pending.text, pending.sourceLanguage, pending.targetLanguage)
+        await this.#executeTranslation(pendingTranslation.text, pendingTranslation.sourceLanguage, pendingTranslation.targetLanguage)
 
-        // Remover de pendientes
-        const index = pendingTranslations.indexOf(pending)
-        if (index > -1) {
-          pendingTranslations.splice(index, 1)
-        }
+        // Limpiar la traducción pendiente
+        pendingTranslation = null
       } catch (error) {
         console.error('Error processing pending translation:', error)
         // Notificar al sidepanel del error para que resetee el estado de loading
         await this.notifySidepanel('TRANSLATION_ERROR', {
           error: error instanceof Error ? error.message : 'Error procesando traducción pendiente'
         })
+        // Limpiar la traducción pendiente incluso en caso de error
+        pendingTranslation = null
       }
     }
   }
@@ -269,7 +272,7 @@ class ModelManager {
   async cancelDownload(source: string, target: string): Promise<void> {
     const key = this.#getLanguagePairKey(source, target)
     const status = modelStatusCache.get(key)
-    
+
     if (status?.downloading) {
       const cancelledStatus: ModelStatus = {
         available: false,
@@ -277,8 +280,18 @@ class ModelManager {
         error: 'Descarga cancelada por el usuario'
       }
       modelStatusCache.set(key, cancelledStatus)
-      
+
       await this.notifySidepanel('MODEL_DOWNLOAD_CANCELLED', { source, target })
+    }
+  }
+
+  // Cancelar cualquier traducción pendiente
+  cancelPendingTranslations(): void {
+    console.log('Cancelling any pending translation')
+
+    if (pendingTranslation) {
+      console.log(`Removed pending translation: ${pendingTranslation.sourceLanguage}→${pendingTranslation.targetLanguage}`)
+      pendingTranslation = null
     }
   }
 
@@ -827,7 +840,7 @@ chrome.runtime.onMessage.addListener((message: ChromeMessage, sender) => {
       code,
       name: translationService.getLanguageName(code)
     }))
-    
+
     const response: AvailableLanguagesResponse = { languages: languageNames }
     if (sender.tab?.id) {
       void chrome.runtime.sendMessage({
@@ -835,6 +848,10 @@ chrome.runtime.onMessage.addListener((message: ChromeMessage, sender) => {
         data: response
       })
     }
+  } else if (message.type === 'CANCEL_PENDING_TRANSLATIONS') {
+    // Cancelar cualquier traducción pendiente
+    const modelManager = ModelManager.getInstance()
+    modelManager.cancelPendingTranslations()
   }
 });
 

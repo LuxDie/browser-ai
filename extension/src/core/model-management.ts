@@ -14,7 +14,6 @@ export interface PendingTranslation {
   text: string;
   sourceLanguage: string;
   targetLanguage: string;
-  timestamp: number;
 }
 
 /**

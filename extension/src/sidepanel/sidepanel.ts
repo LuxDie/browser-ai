@@ -2,11 +2,7 @@
 
 import './sidepanel.css'
 import type { LanguageDetectionError } from '../messages'
-import {
-  shouldRenderWithLanguages,
-  getAvailableLanguages,
-  getLanguageName
-} from '../core'
+import { getAvailableLanguages, getLanguageName } from '../core'
 
 interface TranslationState {
   text: string
@@ -21,6 +17,8 @@ interface TranslationState {
   autoTranslate: boolean // Indica si se debe traducir automáticamente cuando se detecte el idioma
   apiAvailable: {translator: boolean, languageDetector: boolean}
   modelStatus: {
+    source: string
+    target: string
     available: boolean
     downloading: boolean
     progress?: number
@@ -106,7 +104,10 @@ export class SidepanelApp {
   }
 
   async #init(): Promise<void> {
-    this.#state.targetLanguage = getBrowserLanguage()
+    // Solo establecer el idioma por defecto si no se ha establecido antes
+    if (!this.#state.targetLanguage) {
+      this.#state.targetLanguage = getBrowserLanguage()
+    }
     this.#state.apiAvailable = this.#checkAPIAvailability()
     // Verificar disponibilidad de APIs dinámicamente (el listener global manejará la respuesta)
     this.#refreshAPIAvailability()
@@ -129,7 +130,7 @@ export class SidepanelApp {
 
   #setupMessageListener(): void {
     chrome.runtime.onMessage.addListener((message: ChromeMessage) => {
-      console.log('Received message in sidepanel:', message);
+      console.log('Received message', message)
       switch (message.type) {
         case 'AVAILABLE_LANGUAGES_RESPONSE': {
           const availableLanguagesData = message.data as AvailableLanguagesResponse
@@ -298,25 +299,30 @@ export class SidepanelApp {
   #setupEventListeners(): void {
     // Input text change
     this.#elements.inputText?.addEventListener('input', (e) => {
+      const previousText = this.#state.text
       this.#state.text = (e.target as HTMLTextAreaElement).value
+
+      // Cancelar traducciones pendientes cuando cambia el texto
+      if (previousText !== this.#state.text) {
+        this.#cancelPendingTranslations()
+      }
+
       this.#detectLanguage(this.#state.text)
       this.#render()
     })
 
     // Target language change
     this.#elements.targetLanguage?.addEventListener('change', (e) => {
+      const previousTargetLanguage = this.#state.targetLanguage
       this.#state.targetLanguage = (e.target as HTMLSelectElement).value
-      // Verificar disponibilidad del modelo cuando cambie el idioma
-      if (this.#state.sourceLanguage && this.#state.targetLanguage) {
-        console.log(`🔎 Sending CHECK_MODEL_AVAILABILITY for ${this.#state.sourceLanguage}→${this.#state.targetLanguage}`)
-        void chrome.runtime.sendMessage({
-          type: 'CHECK_MODEL_AVAILABILITY',
-          data: {
-            source: this.#state.sourceLanguage,
-            target: this.#state.targetLanguage
-          }
-        })
+
+      // Cancelar traducciones pendientes cuando cambia el idioma destino
+      if (previousTargetLanguage !== this.#state.targetLanguage) {
+        this.#cancelPendingTranslations()
       }
+
+      // Actualizar la interfaz después del cambio de idioma
+      this.#render()
     })
 
     // Translate button
@@ -325,16 +331,34 @@ export class SidepanelApp {
     })
   }
 
+  #cancelPendingTranslations(): void {
+    this.#state.modelStatus = null
+    this.#state.isLoading = false
+    this.#state.error = null
+    try {
+      void chrome.runtime.sendMessage({
+        type: 'CANCEL_PENDING_TRANSLATIONS'
+      })
+    } catch (error) {
+      console.error('Error cancelling pending translations:', error)
+    }
+  }
 
   // Métodos de manejo de eventos del ModelManager
   #handleModelAvailabilityResponse(data: ModelAvailabilityResponse): void {
     console.log(`📨 Received MODEL_AVAILABILITY_RESPONSE for ${data.source}→${data.target}:`, data.status)
-    this.#state.modelStatus = data.status
+    this.#state.modelStatus = {
+      source: data.source,
+      target: data.target,
+      ...data.status
+    }
     this.#render()
   }
 
-  #handleModelDownloadStarted(_data: ModelDownloadProgress): void {
+  #handleModelDownloadStarted(data: ModelDownloadProgress): void {
     this.#state.modelStatus = {
+      source: data.source,
+      target: data.target,
       available: false,
       downloading: true,
       progress: 0
@@ -349,28 +373,20 @@ export class SidepanelApp {
     }
   }
 
-  #handleModelDownloadCompleted(_data: ModelDownloadCompleted): void {
+  #handleModelDownloadCompleted(data: ModelDownloadCompleted): void {
     this.#state.modelStatus = {
+      source: data.source,
+      target: data.target,
       available: true,
       downloading: false
     }
-
-    // Si hay texto para traducir y el modelo ahora está disponible, mostrar que está traduciendo
-    const hasText = this.#state.text.trim().length >= 15
-    const hasSourceLanguage = this.#state.sourceLanguage !== ''
-    const hasTargetLanguage = this.#state.targetLanguage !== ''
-    const modelNowAvailable = this.#state.modelStatus?.available
-
-    if (hasText && hasSourceLanguage && hasTargetLanguage && modelNowAvailable) {
-      // Mostrar que está traduciendo (el background procesará la traducción pendiente automáticamente)
-      this.#state.isLoading = true
-    }
-
     this.#render()
   }
 
   #handleModelDownloadError(data: ModelDownloadError): void {
     this.#state.modelStatus = {
+      source: this.#state.sourceLanguage,
+      target: this.#state.targetLanguage,
       available: false,
       downloading: false,
       error: data.error
@@ -378,8 +394,11 @@ export class SidepanelApp {
     this.#render()
   }
 
-  #handleModelDownloadCancelled(_data: ModelDownloadCancelled): void {
+  #handleModelDownloadCancelled(data: ModelDownloadCancelled): void {
+    // Limpiar el estado del modelo cuando se cancela la descarga
     this.#state.modelStatus = {
+      source: data.source,
+      target: data.target,
       available: false,
       downloading: false,
       error: 'Descarga cancelada por el usuario'
@@ -390,6 +409,8 @@ export class SidepanelApp {
 
   #handleModelDownloading(data: ModelDownloadProgress): void {
     this.#state.modelStatus = {
+      source: data.source,
+      target: data.target,
       available: false,
       downloading: true,
       progress: data.progress
@@ -609,7 +630,17 @@ export class SidepanelApp {
       const hasSourceLanguage = this.#state.sourceLanguage !== ''
       const languagesAreSame = this.#state.sourceLanguage && this.#state.targetLanguage &&
         this.#state.sourceLanguage.toLowerCase() === this.#state.targetLanguage.toLowerCase()
-      const canTranslate = hasText && !this.#state.isLoading && this.#state.error === null && hasSourceLanguage && !languagesAreSame
+      const modelIsDownloading = this.#state.apiAvailable.translator && this.#state.modelStatus?.downloading === true
+      const canTranslate = hasText && !this.#state.isLoading && this.#state.error === null && hasSourceLanguage && !languagesAreSame && !modelIsDownloading
+      console.log('[TranslateButton state]', {
+        hasText,
+        hasSourceLanguage,
+        languagesAreSame,
+        modelIsDownloading,
+        isLoading: this.#state.isLoading,
+        errorIsNull: this.#state.error === null,
+        canTranslate
+      })
       this.#elements.translateButton.disabled = !canTranslate
 
       this.#elements.translateButton.innerHTML = this.#state.isLoading ? `
@@ -617,7 +648,7 @@ export class SidepanelApp {
           <div class="loading-spinner mr-2"></div>
           Traduciendo...
         </div>
-      ` : this.#state.error !== null ? 'Traducir (No disponible)' : 
+      ` : this.#state.error !== null ? 'Traducir (No disponible)' :
         (this.#state.text.trim().length >= 15 && this.#state.sourceLanguage === '') ? 'Traducir (Detectando idioma...)' : 'Traducir'
     }
   }
@@ -726,33 +757,11 @@ export class SidepanelApp {
   }
 
   #renderModelStatus(): string {
-    const sourceLang = this.#state.sourceLanguage
-    const targetLang = this.#state.targetLanguage
-
-    // Si no hay idiomas seleccionados, no mostrar estado del modelo
-    if (!shouldRenderWithLanguages(sourceLang, targetLang)) return ''
-
-    // Si la API del Translator no está disponible, no mostrar información de modelos
-    if (!this.#state.apiAvailable.translator) return ''
-
-    // Si no hay estado del modelo (aún no se ha verificado), no mostrar nada
-    if (!this.#state.modelStatus) {
-      return ''
-    }
-
-    const { available, downloading } = this.#state.modelStatus
-
-    if (available) {
-      // Cuando el modelo está disponible, no mostrar ningún mensaje en el panel
-      // La notificación "Modelo listo" es una notificación de navegador
-      return ''
-    }
-
-    if (downloading) {
+    if (this.#state.modelStatus?.downloading) {
       return `
         <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div class="flex items-center mb-3">
-            <span class="font-medium text-blue-800">📥 Descargando modelo (${sourceLang}-${targetLang}) por única vez...</span>
+            <span class="font-medium text-blue-800">📥 Descargando modelo (${this.#state.modelStatus.source}-${this.#state.modelStatus.target}) por única vez...</span>
           </div>
           <div id="download-progress-bar" class="progress-indeterminate mb-2"></div>
           <div class="text-sm text-blue-700">
