@@ -57,6 +57,19 @@ La documentación técnica completa se encuentra en la carpeta `docs/`:
   - [`adr/README.md`](docs/adr/README.md)
   - [`adr/0001-hybrid-ai-approach.md`](docs/adr/0001-hybrid-ai-approach.md)
 
+## Apoya el Proyecto
+
+Si te gusta este proyecto y quieres apoyar su desarrollo, puedes hacer una donación:
+
+### 🌍 Donaciones Internacionales
+
+[![Donar con PayPal](https://www.paypalobjects.com/es_ES/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate/?business=Q74CJ2GU8MSML&no_recurring=0&item_name=%C2%A1Hola%21+Soy+desarrollador+web+y+estoy+trabajando+en+mi+primer+proyecto+de+c%C3%B3digo+abierto+y+gratuito.&currency_code=USD)
+
+### 🇦🇷 Donaciones Locales (Argentina)
+
+- **Alias**: `ecicala.nx`
+- **Titular**: Ezequiel Cicala
+
 ## Instalación y Uso
 
 ### Requisitos
