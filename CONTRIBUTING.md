@@ -212,6 +212,40 @@ Usa las plantillas proporcionadas en `.github/ISSUE_TEMPLATE/` para:
 - Incluir información del entorno
 - Agregar etiquetas apropiadas
 
+### Convenciones para Issues, Pull Requests, Tags y Milestones
+
+Para mantener orden, profesionalismo y facilitar la colaboración y el filtrado en GitHub, se deben cumplir las siguientes convenciones:
+
+#### Título y Etiquetas para Issues
+
+- Cada issue debe comenzar con un prefijo según su tipo:
+    - `✨ [FEATURE]:` para nuevas funcionalidades
+    - `🐛 [BUG]:` para reporte de errores
+    - `📚 [DOCS]:` para documentación o estándares
+    - `♻️ [REFACTOR]:` para refactorizaciones/reorganización de código
+    - `🛠️ [CHORE]:` para tareas de mantenimiento, configuración o build
+- El título en inglés, claro y conciso, siguiendo la plantilla correspondiente.
+- Etiquetas mínimas requeridas:
+    - Feature: `enhancement`
+    - Bug: `bug`
+    - Docs: `documentation`
+    - Refactor: `refactor`
+    - Chore: `chore`
+- Puedes agregar etiquetas secundarias según corresponda (ej: `ui`, `testing`, `typescript`).
+
+#### Idioma en Issues, Pull Requests, Tags y Milestones
+
+- **Títulos**: Siempre en inglés, incluyendo el prefijo.
+- **Contenido/descripciones**: En castellano. Explica el contexto y los detalles técnicos en español.
+- **Tags (etiquetas)**: En inglés.
+- **Milestones**: El nombre principal en inglés; la descripción puede estar en castellano.
+- **Pull Requests**:
+    - Título en inglés (con tipo de cambio, por ejemplo, “✨ [FEATURE]: Add new settings page”).
+    - Descripción en castellano, incluyendo contexto, motivación y cambios principales.
+- **Commits**: Mensajes en inglés siguiendo [Conventional Commits](https://www.conventionalcommits.org/).
+
+Esto asegura máxima claridad, internacionalización y coherencia con el resto del código y documentación.
+
 ## 📞 Soporte
 
 Si tienes preguntas o necesitas ayuda:

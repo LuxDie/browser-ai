@@ -16,29 +16,17 @@ Este documento define las reglas y el flujo de trabajo que el agente debe seguir
 
 ## Reglas de Internacionalización
 
-**Enfoque híbrido con predominio del inglés para facilitar la colaboración y mantenimiento:**
+Para toda contribución, los agentes deben cumplir con las normas de idioma, nomenclatura y estructura de issues, PRs, tags y milestones definidas en `CONTRIBUTING.md`.
 
-### Código y Estructura: INGLÉS
-- **Nombres de archivos:** `user-service.ts`, `auth-controller.js`
-- **Nombres de carpetas:** `components/`, `services/`, `utils/`
-- **Variables y funciones:** `getUserData()`, `isAuthenticated`
-- **Clases y interfaces:** `UserService`, `AuthController`
-- **Constantes técnicas:** `API_ENDPOINTS`, `ERROR_CODES`
-- **Mensajes de commit:** `feat: add form validation`
-- **Descripciones de tests:** `it('should validate user input')`, `describe('AuthService')`
+Las siguientes reglas son específicas para agentes automáticos:
 
-### Documentación y Comentarios: CASTELLANO
-- **Comentarios en código:** Explicaciones de lógica de negocio en castellano
-- **Documentación técnica:** `README.md`, archivos en `docs/`
-- **Comentarios de PR:** Explicaciones detalladas en castellano
+### Código y estructura generado:
+- Todo nombre técnico (funciones, clases, archivos, carpetas, APIs, variables, constantes, descripciones de tests, etc.) debe estar en **inglés**.
+- Strings de UI y mensajes de error deben seguir el idioma definido para el usuario final de la extensión.
 
-### Excepciones
-- **Strings de UI:** Siempre en el idioma del usuario final
-- **Mensajes de error:** En el idioma del usuario
-- **Logs de producción:** Pueden ser en inglés para debugging global
-- **APIs públicas:** Documentación en inglés, ejemplos bilingües
-
-**Justificación:** Facilita colaboración internacional, mantiene consistencia con librerías/frameworks, y permite comprensión local del equipo.
+### Comentarios y documentación interna generada por agentes:
+- Los comentarios explicativos de lógica de negocio y diseño en el código generado deben estar en **castellano** (excepto casos en los que la especificación o el equipo indique lo contrario).
+- La documentación técnica generada (ej. archivos en `docs/`), debe estar en castellano, salvo que la especificación indique expresamente lo contrario.
 
 ## Reglas de Nomenclatura de Archivos
 
