@@ -1,9 +1,10 @@
 ---
-name: ❓ Pregunta o Soporte
-description: Haz una pregunta sobre el proyecto
+name: "❓ Pregunta o Soporte"
+about: Puedes resolver tus dudas y solicitar asistencia a la comunidad aquí
 title: "❓ [QUESTION]: "
-labels: ["question", "help-wanted"]
-assignees: []
+labels: question
+assignees: ''
+
 ---
 
 ## 🤔 Pregunta

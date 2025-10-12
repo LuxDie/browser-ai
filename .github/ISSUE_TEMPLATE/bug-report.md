@@ -1,9 +1,10 @@
 ---
-name: 🐛 Reporte de Bug
-description: Reporta un error o problema en la aplicación
-title: "🐛 [BUG]: "
-labels: ["bug", "triage"]
-assignees: []
+name: "\U0001F41B Reporte de Bug"
+about: Ayúdanos a mejorar el software indicándonos qué está fallando
+title: "\U0001F41B [BUG]: "
+labels: bug
+assignees: ''
+
 ---
 
 ## 📋 Descripción del Bug

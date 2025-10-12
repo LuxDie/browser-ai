@@ -1,9 +1,10 @@
 ---
-name: ✨ Solicitud de Funcionalidad
-description: Propón una nueva funcionalidad o mejora
+name: "✨ Solicitud de Funcionalidad"
+about: "¿Tienes una idea o consejo? ¡Cuéntanos sobre ello!"
 title: "✨ [FEATURE]: "
-labels: ["enhancement", "feature-request"]
-assignees: []
+labels: enhancement
+assignees: ''
+
 ---
 
 ## 📋 Descripción de la Funcionalidad
