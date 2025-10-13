@@ -2,6 +2,7 @@
 
 [![Liberapay](https://img.shields.io/liberapay/receives/ecicala.svg?logo=liberapay)](https://liberapay.com/ecicala/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/mombidalkepdcflpimineeacinniphdp?logo=google-chrome&logoColor=white&label=Chrome%20Web%2dStore)](https://chromewebstore.google.com/detail/browser-ai/mombidalkepdcflpimineeacinniphdp)
 
 ## Estado del Proyecto
 

@@ -26,3 +26,9 @@ El proyecto se adapta automáticamente a las capacidades disponibles en cada nav
 ## Público Objetivo
 
 Está dirigida a usuarios que buscan incorporar funciones propulsadas por Inteligencia Artificial directamente en su navegador, aprovechando las ventajas de la IA integrada (privacidad, velocidad, disponibilidad offline) mientras mantienen la flexibilidad de utilizar servicios en la nube cuando sea necesario.
+
+## Disponibilidad
+
+Browser AI está disponible en la Chrome Web Store:
+
+[Descargar Browser AI](https://chromewebstore.google.com/detail/browser-ai/mombidalkepdcflpimineeacinniphdp)
