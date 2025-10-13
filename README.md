@@ -1,5 +1,8 @@
 # Browser AI (Título Provisional)
 
+[![Liberapay](https://img.shields.io/liberapay/receives/ecicala.svg?logo=liberapay)](https://liberapay.com/ecicala/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 ## Estado del Proyecto
 
 **Título Provisional:** Browser AI  
@@ -59,15 +62,25 @@ La documentación técnica completa se encuentra en la carpeta `docs/`:
 
 ## Apoya el Proyecto
 
-Si te gusta este proyecto y quieres apoyar su desarrollo, puedes hacer una donación:
+Si sintonizas con este proyecto y quieres apoyar su desarrollo, puedes hacer una donación:
 
-### 🌍 Donaciones Internacionales
+### 🌍 Donaciones Recurrentes
+
+[Donar a través de Liberapay](https://liberapay.com/ecicala/donate)
+
+Liberapay es una organización sin fines de lucro que facilita a los desarrolladores de software libre un soporte mensual para sostener su trabajo continuado:
+
+
+### Donaciones por única vez
+
+#### 🌍 Donaciones Internacionales
 
 [![Donar con PayPal](https://www.paypalobjects.com/es_ES/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate/?business=Q74CJ2GU8MSML&no_recurring=0&item_name=%C2%A1Hola%21+Soy+desarrollador+web+y+estoy+trabajando+en+mi+primer+proyecto+de+c%C3%B3digo+abierto+y+gratuito.&currency_code=USD)
 
-### 🇦🇷 Donaciones Locales (Argentina)
+#### 🇦🇷 Donaciones Locales (Argentina)
 
 - **Alias**: `ecicala.nx`
+- **CBU**: `4530000800011535996333`
 - **Titular**: Ezequiel Cicala
 
 ## Instalación y Uso
