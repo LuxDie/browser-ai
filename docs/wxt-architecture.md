@@ -81,7 +81,7 @@ export interface ProtocolMap {
   // Mensajes push del background al sidepanel
   notifyTranslationProgress(data: { progress: number }): void;
   notifyModelDownloadComplete(data: { source: string; target: string }): void;
-  notifyTranslationComplete(data: { translatedText: string; usingCloud: boolean }): void;
+  notifyTranslationComplete(string): void;
 }
 
 const messaging = defineExtensionMessaging<ProtocolMap>();

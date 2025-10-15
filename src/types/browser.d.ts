@@ -54,7 +54,7 @@ interface PendingTranslation {
 }
 
 interface AvailableLanguagesResponse {
-  languages: Array<{ code: string; name: string }>
+  languages: { code: string; name: string }[]
 }
 
 interface ModelAvailabilityResponse {
@@ -90,7 +90,6 @@ interface TranslationCompleted {
   translatedText: string
   sourceLanguage: string
   targetLanguage: string
-  usingCloud?: boolean
 }
 
 interface TranslationError {

@@ -9,7 +9,7 @@ export default defineConfig({
   publicDir: false,
   resolve: {
     alias: {
-      '@': resolve(__dirname, './extension/src')
+      '@': resolve(__dirname, './src')
     }
   },
   esbuild: {
@@ -19,8 +19,8 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        background: resolve(__dirname, 'extension/src/background.ts'),
-        sidepanel: resolve(__dirname, 'extension/src/sidepanel/sidepanel.ts')
+        background: resolve(__dirname, 'src/background.ts'),
+        sidepanel: resolve(__dirname, 'src/sidepanel/sidepanel.ts')
       },
       output: {
         entryFileNames: '[name].js',
@@ -41,11 +41,11 @@ export default defineConfig({
         this.emitFile({
           type: 'asset',
           fileName: 'manifest.json',
-          source: readFileSync(resolve(__dirname, 'extension/public/manifest.json'), 'utf-8')
+          source: readFileSync(resolve(__dirname, 'public/manifest.json'), 'utf-8')
         })
         
         // Copy icons directory
-        const iconsDir = resolve(__dirname, 'extension/public/icons')
+        const iconsDir = resolve(__dirname, 'public/icons')
         
         if (existsSync(iconsDir)) {
           const iconFiles = readdirSync(iconsDir)
@@ -62,7 +62,7 @@ export default defineConfig({
         this.emitFile({
           type: 'asset',
           fileName: 'sidepanel.html',
-          source: readFileSync(resolve(__dirname, 'extension/src/sidepanel/sidepanel.html'), 'utf-8')
+          source: readFileSync(resolve(__dirname, 'src/sidepanel/sidepanel.html'), 'utf-8')
         })
       }
     }

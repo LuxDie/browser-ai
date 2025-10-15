@@ -91,6 +91,5 @@ export const isValidContextMenuInput = (
   return menuItemId === 'translate-selected-text' && 
          selectionText !== undefined && 
          selectionText.trim().length > 0 && 
-         tab !== undefined && 
-         tab.id !== undefined;
+         tab?.id !== undefined;
 };

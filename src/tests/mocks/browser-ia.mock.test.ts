@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   createChromeMock,
   createAIMock,
@@ -10,12 +10,10 @@ import {
   createTranslatorErrorMock,
   setupLanguageDetectorMock,
   setupTranslatorMock,
-  setupStorageMock
-} from './test-utils'
+} from '@/tests/mocks';
 import {
-  createStorageMock,
   isValidLanguageCode
-} from '../core'
+} from '@/utils';
 
 // Mock de las APIs de Chrome y IA antes de importar los módulos
 const mockChrome = createChromeMock();
@@ -26,8 +24,8 @@ setupAIMock(mockAI);
 
 describe('Translation Core', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-  })
+    vi.clearAllMocks();
+  });
 
   describe('Language Detection', () => {
     it('should detect language using Language Detector API', async () => {
@@ -39,48 +37,48 @@ describe('Translation Core', () => {
       expect(mockDetector.detect).toHaveBeenCalledWith('Hello world');
       expect(result.language).toBe('en');
       expect(result.confidence).toBeGreaterThan(0.9);
-    })
+    });
 
     it('should handle language detection errors gracefully', async () => {
       const mockDetector = createLanguageDetectorErrorMock('Detection failed');
       setupLanguageDetectorMock(mockDetector);
 
       await expect(mockDetector.detect('test')).rejects.toThrow('Detection failed');
-    })
+    });
 
 
     it('should validate language codes correctly', () => {
 
       // Valid codes
-      expect(isValidLanguageCode('en')).toBe(true)
-      expect(isValidLanguageCode('ES')).toBe(true)
-      expect(isValidLanguageCode('zh')).toBe(true)
-      expect(isValidLanguageCode('ja')).toBe(true)
+      expect(isValidLanguageCode('en')).toBe(true);
+      expect(isValidLanguageCode('ES')).toBe(true);
+      expect(isValidLanguageCode('zh')).toBe(true);
+      expect(isValidLanguageCode('ja')).toBe(true);
 
       // Invalid codes
-      expect(isValidLanguageCode('xx')).toBe(false)
-      expect(isValidLanguageCode('')).toBe(false)
-      expect(isValidLanguageCode('invalid')).toBe(false)
-      expect(isValidLanguageCode('123')).toBe(false)
-    })
-  })
+      expect(isValidLanguageCode('xx')).toBe(false);
+      expect(isValidLanguageCode('')).toBe(false);
+      expect(isValidLanguageCode('invalid')).toBe(false);
+      expect(isValidLanguageCode('123')).toBe(false);
+    });
+  });
 
   describe('Translation', () => {
     it('should translate text using Translator API', async () => {
-      const mockTranslator = createTranslatorMock('Hola mundo', 'en', 'es');
+      const mockTranslator = createTranslatorMock('Hola mundo');
       setupTranslatorMock(mockTranslator);
 
       const result = await mockTranslator.translate('Hello world', {
         from: 'en',
         to: 'es'
-      }) as { translatedText: string };
+      }) as string;
 
       expect(mockTranslator.translate).toHaveBeenCalledWith('Hello world', {
         from: 'en',
         to: 'es'
       });
-      expect(result.translatedText).toBe('Hola mundo');
-    })
+      expect(result).toBe('Hola mundo');
+    });
 
     it('should handle translation errors gracefully', async () => {
       const mockTranslator = createTranslatorErrorMock('Translation failed');
@@ -88,41 +86,15 @@ describe('Translation Core', () => {
 
       await expect(mockTranslator.translate('test', { to: 'es' }))
         .rejects.toThrow('Translation failed');
-    })
+    });
 
     it('should handle empty or invalid input', async () => {
-      const mockTranslator = createTranslatorMock('', '', 'es');
+      const mockTranslator = createTranslatorMock('');
       setupTranslatorMock(mockTranslator);
 
-      const result = await mockTranslator.translate('', { to: 'es' }) as { translatedText: string };
+      const result = await mockTranslator.translate('', { to: 'es' }) as string;
       
-      expect(result.translatedText).toBe('');
-    })
-  })
-
-  describe('Storage Operations', () => {
-    it('should save and retrieve settings', async () => {
-      const mockStorage = createStorageMock({
-        defaultTargetLanguage: 'es',
-        privacyMode: false
-      });
-      setupStorageMock(mockStorage);
-
-      // Test getting settings
-      const settings = await mockStorage.get(['defaultTargetLanguage', 'privacyMode']) as { defaultTargetLanguage: string, privacyMode: boolean }
-      expect(settings.defaultTargetLanguage).toBe('es')
-      expect(settings.privacyMode).toBe(false)
-
-      // Test setting new values
-      await mockStorage.set({
-        defaultTargetLanguage: 'en',
-        privacyMode: true
-      })
-
-      expect(mockStorage.set).toHaveBeenCalledWith({
-        defaultTargetLanguage: 'en',
-        privacyMode: true
-      })
-    })
-  })
-})
+      expect(result).toBe('');
+    });
+  });
+});

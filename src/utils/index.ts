@@ -6,14 +6,8 @@
 // Funciones de validación
 export * from './validation';
 
-// Funciones de detección de idioma
-export * from './language-detection';
-
 // Funciones del menú contextual
 export * from './context-menu';
 
 // Funciones de gestión de modelos
 export * from './model-management';
-
-// Funciones de traducción
-export * from './translation';

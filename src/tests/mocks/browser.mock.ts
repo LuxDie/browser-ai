@@ -11,9 +11,7 @@ interface ChromeMessageSender {
   };
 }
 
-interface ChromeMessageSendResponse {
-  (response?: unknown): void;
-}
+type ChromeMessageSendResponse = (response?: unknown) => void;
 
 type ChromeMessageListener = (
   message: ChromeMessage,
@@ -43,7 +41,7 @@ export const createChromeMock = () => {
         removeListener: vi.fn(),
         // Custom trigger para simular la recepción de mensajes en las pruebas
         trigger: (message: ChromeMessage) => {
-          onMessageListeners.forEach(listener => listener(message, {}, () => {}));
+          onMessageListeners.forEach(listener => { listener(message, {}, () => { /* empty */ }); });
         },
       },
       sendMessage: vi.fn(),
@@ -108,7 +106,7 @@ export const setupChromeMock = (mockChrome: ReturnType<typeof createChromeMock>)
  */
 export const clearChromeMocks = (mockChrome: ReturnType<typeof createChromeMock>) => {
   Object.values(mockChrome).forEach((api) => {
-    if (typeof api === 'object' && api !== null) {
+    if (typeof api === 'object') {
       Object.values(api).forEach((method) => {
         if (typeof method === 'object' && method !== null && 'mockClear' in method) {
           (method as { mockClear: () => void }).mockClear();
