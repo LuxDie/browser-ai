@@ -253,7 +253,7 @@ Si tienes preguntas o necesitas ayuda:
 1. Revisa la documentación en `docs/`
 2. Busca issues existentes
 3. Crea un nuevo issue con la etiqueta `question`
-4. Contacta al equipo de mantenimiento
+4. Contacta al desarrollador
 
 ## 🙏 Código de Conducta
 
