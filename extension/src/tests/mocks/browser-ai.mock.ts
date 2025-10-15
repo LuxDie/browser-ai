@@ -32,7 +32,7 @@ export const setupAIMock = (mockAI: ReturnType<typeof createAIMock>) => {
  * @param language - El idioma a detectar
  * @param confidence - El nivel de confianza (0-1)
  */
-export const createLanguageDetectorMock = (language: string, confidence: number = 0.95) => ({
+export const createLanguageDetectorMock = (language: string, confidence = 0.95) => ({
   detect: vi.fn().mockResolvedValue({
     language,
     confidence,
@@ -42,19 +42,9 @@ export const createLanguageDetectorMock = (language: string, confidence: number 
 /**
  * Crea un mock específico para el traductor
  * @param translatedText - El texto traducido
- * @param sourceLanguage - Idioma origen
- * @param targetLanguage - Idioma destino
  */
-export const createTranslatorMock = (
-  translatedText: string,
-  sourceLanguage: string,
-  targetLanguage: string
-) => ({
-  translate: vi.fn().mockResolvedValue({
-    translatedText,
-    sourceLanguage,
-    targetLanguage,
-  }),
+export const createTranslatorMock = (translatedText = '') => ({
+  translate: vi.fn().mockResolvedValue(translatedText),
 });
 
 /**

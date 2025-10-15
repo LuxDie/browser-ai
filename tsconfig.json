@@ -1,12 +1,12 @@
 {
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
     "target": "ES2022",
     "useDefineForClassFields": false,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "types": ["chrome", "node", "dom-chromium-ai"],
-    "typeRoots": ["./node_modules/@types", "./extension/src/types"],
+    "noUncheckedIndexedAccess": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -28,6 +28,7 @@
       "@/*": ["./extension/src/*"]
     }
   },
-  "include": ["extension/src/**/*", "extension/src/**/*.d.ts"],
+  "include": ["**/*.ts", "**/*.d.ts", "**/*.vue", "**/*.jsx", "**/*.tsx"],
+  "exclude": ["vite.config.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

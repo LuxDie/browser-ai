@@ -14,6 +14,7 @@ export interface PendingTranslation {
   text: string;
   sourceLanguage: string;
   targetLanguage: string;
+  tabId?: number;
 }
 
 /**
@@ -56,7 +57,7 @@ export const getModelStatus = (
   modelStatusCache: Map<string, ModelStatus>
 ): ModelStatus | null => {
   const key = getLanguagePairKey(source, target);
-  return modelStatusCache.get(key) || null;
+  return modelStatusCache.get(key) ?? null;
 };
 
 /**
@@ -157,11 +158,11 @@ export const determineTranslationFlow = (
  */
 export const updateDownloadProgress = (currentProgress: number, newProgress: number) => {
   if (newProgress < 0 || newProgress > 100) {
-    throw new Error('Progress must be between 0 and 100');
+    throw new Error('El progreso debe estar entre 0 y 100');
   }
   
   if (newProgress < currentProgress) {
-    throw new Error('Progress cannot decrease');
+    throw new Error('El progreso no puede disminuir');
   }
   
   return {

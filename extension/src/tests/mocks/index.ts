@@ -1,13 +1,11 @@
 // Re-exportar todas las funciones de los mocks para facilitar las importaciones
-export * from './chrome-mocks';
-export * from './ai-mocks';
+export * from '@/tests/mocks/browser.mock';
+export * from '@/tests/mocks/browser-ai.mock';
 
 // Funciones adicionales para mocks específicos
 import { vi } from 'vitest';
 
-interface StorageData {
-  [key: string]: unknown;
-}
+type StorageData = Record<string, unknown>;
 
 interface LanguageDetectorMock {
   detect: ReturnType<typeof vi.fn>;
