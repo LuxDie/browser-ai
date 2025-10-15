@@ -9,22 +9,23 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:ui": "vitest --ui",
-    "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
+    "@eslint/js": "^9.37.0",
     "@types/chrome": "^0.0.268",
     "@types/dom-chromium-ai": "^0.0.10",
     "@types/node": "^24.5.2",
-    "@typescript-eslint/eslint-plugin": "^8.45.0",
-    "@typescript-eslint/parser": "^8.45.0",
     "@vitest/coverage-v8": "^3.2.4",
     "autoprefixer": "^10.4.17",
-    "eslint": "^8.56.0",
+    "eslint": "^9.37.0",
+    "globals": "^16.4.0",
     "jsdom": "^23.0.1",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.2.2",
+    "typescript-eslint": "^8.46.1",
     "vite": "^7.1.8",
     "vitest": "^3.2.4"
   }
