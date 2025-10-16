@@ -57,12 +57,12 @@ describe('Model Management', () => {
 
   describe('Pending Translations Management', () => {
     it('should manage pending translations correctly', () => {
-      const pendingTranslations: Array<{
+      const pendingTranslations: {
         text: string
         sourceLanguage: string
         targetLanguage: string
         timestamp: number
-      }> = []
+      }[] = []
 
       // Add pending translations
       addPendingTranslation('Hello world', 'en', 'es', pendingTranslations)
@@ -85,12 +85,12 @@ describe('Model Management', () => {
     })
 
     it('should handle pending translation timestamps correctly', () => {
-      const pendingTranslations: Array<{
+      const pendingTranslations: {
         text: string
         sourceLanguage: string
         targetLanguage: string
         timestamp: number
-      }> = []
+      }[] = []
 
       const beforeTime = Date.now()
       addPendingTranslation('Test text', 'en', 'es', pendingTranslations)

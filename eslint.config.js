@@ -24,6 +24,7 @@ export default defineConfig(
   autoImports,
   eslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
+  // TODO: agregar reglas estrictas
   {
     languageOptions: {
       parserOptions: {

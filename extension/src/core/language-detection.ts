@@ -10,7 +10,7 @@
  * @returns Nombre del idioma en español
  */
 export const getLanguageName = (code: string): string => {
-  const names: { [key: string]: string } = {
+  const names: Record<string, string> = {
     'ar': 'Árabe',
     'bg': 'Búlgaro',
     'bn': 'Bengalí',

@@ -1,18 +1,5 @@
 import { vi } from 'vitest'
 
-// Deep mock of Chrome APIs
-const deepMock = <T>(): T => {
-  return new Proxy(() => {}, {
-    get: (_, prop): unknown => {
-      if (prop === 'then') return undefined; // Make it not then-able
-      return deepMock();
-    },
-    apply: (): unknown => deepMock(),
-  }) as T;
-};
-
-globalThis.chrome = deepMock<typeof chrome>();
-
 // Mock de las APIs de IA integradas
 Object.defineProperty(globalThis, 'translator', {
   value: {

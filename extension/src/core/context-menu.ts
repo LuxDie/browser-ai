@@ -9,7 +9,7 @@
  * @param sidePanelState - Estado del side panel por pestaña
  * @returns true si el panel está abierto, false en caso contrario
  */
-export const isSidePanelOpen = (tabId: number, sidePanelState: { [tabId: number]: boolean }): boolean => {
+export const isSidePanelOpen = (tabId: number, sidePanelState: Record<number, boolean>): boolean => {
   return sidePanelState[tabId] === true;
 };
 
@@ -79,7 +79,7 @@ export const generateNotificationHTML = (selectedText: string): string => {
  * @param maxLength - Longitud máxima (por defecto 200)
  * @returns Texto truncado
  */
-export const truncateTextForNotification = (text: string, maxLength: number = 200): string => {
+export const truncateTextForNotification = (text: string, maxLength = 200): string => {
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 };
 

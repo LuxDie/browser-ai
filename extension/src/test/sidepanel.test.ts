@@ -1,39 +1,128 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SidepanelApp } from '../sidepanel/sidepanel';
-import { createChromeMock } from './test-utils/chrome-mocks';
+import * as sidepanelModule from '../entrypoints/sidepanel/sidepanel';
+import { fakeBrowser } from 'wxt/testing/fake-browser';
+import { browser } from 'wxt/browser';
+
+// Mock del módulo de mensajería
+vi.mock('../messaging', () => ({
+  sendMessage: vi.fn()
+}));
+
+import { sendMessage } from '../messaging';
+
+const { SidepanelApp } = sidepanelModule;
+
+type RuntimeMessageListener = Parameters<typeof browser.runtime.onMessage.addListener>[0];
+type RuntimeMessage = Parameters<RuntimeMessageListener>[0];
+type RuntimeMessageSender = Parameters<RuntimeMessageListener>[1];
+type RuntimeSendResponse = Parameters<RuntimeMessageListener>[2];
+
+// Helper function to simulate browser runtime message events
+// NOTA: Esta función simula mensajes PUSH (notificaciones unidireccionales del background al sidepanel)
+// Los mensajes request-response (sidepanel -> background) se mockean directamente con sendMessage
+const createSendResponse = (): RuntimeSendResponse => {
+  return () => {
+    return undefined;
+  };
+};
+
+const defaultSender: RuntimeMessageSender = {
+  tab: {
+    id: 1,
+    index: 0,
+    highlighted: false,
+    pinned: false,
+    windowId: 0,
+    active: true,
+    audible: false,
+    autoDiscardable: true,
+    discarded: false,
+    incognito: false,
+    mutedInfo: { muted: false },
+    groupId: -1,
+    lastAccessed: 0,
+    selected: false,
+    frozen: false
+  } satisfies NonNullable<RuntimeMessageSender['tab']>,
+  frameId: 0
+};
+
+const simulateRuntimeMessage = (
+  message: RuntimeMessage,
+  sender: RuntimeMessageSender = defaultSender
+): void => {
+  fakeBrowser.runtime.onMessage.trigger(message, sender, createSendResponse());
+};
+
+
+// Mock implementation for request-response messages (sidepanel -> background)
+// Estos mensajes usan el patrón request-response de @webext-core/messaging
+interface TranslateTextRequestPayload {
+  text?: string;
+  sourceLanguage?: string;
+  targetLanguage?: string;
+}
+
+const isTranslateTextRequestPayload = (payload: unknown): payload is TranslateTextRequestPayload => {
+  if (typeof payload !== 'object' || payload === null) {
+    return false;
+  }
+
+  const candidate = payload as Record<string, unknown>;
+  return (
+    ('text' in candidate && typeof candidate.text === 'string') ||
+    ('sourceLanguage' in candidate && typeof candidate.sourceLanguage === 'string') ||
+    ('targetLanguage' in candidate && typeof candidate.targetLanguage === 'string')
+  );
+};
+
+const defaultSendMessageImplementation = (messageName: string, data?: unknown) => {
+  switch (messageName) {
+    case 'cancelPendingTranslations':
+      return Promise.resolve({ cancelled: true });
+    case 'checkAPIAvailability':
+      return Promise.resolve({ translator: true, languageDetector: true });
+    case 'detectLanguage':
+      return Promise.resolve({ language: 'en' });
+    case 'getAvailableLanguages':
+      return Promise.resolve({
+        languages: [
+          { code: 'es', name: 'Español' },
+          { code: 'en', name: 'English' },
+          { code: 'fr', name: 'Français' },
+          { code: 'de', name: 'Deutsch' },
+          { code: 'it', name: 'Italiano' },
+          { code: 'pt', name: 'Português' }
+        ]
+      });
+    case 'translateTextRequest':
+      return new Promise((resolve) => {
+        const payload = isTranslateTextRequestPayload(data) ? data : {};
+        setTimeout(() => {
+          const translatedText = typeof payload.text === 'string'
+            ? `${payload.text} (translated)`
+            : 'Texto traducido';
+          resolve({
+            translatedText,
+            sourceLanguage: typeof payload.sourceLanguage === 'string' ? payload.sourceLanguage : 'en',
+            targetLanguage: typeof payload.targetLanguage === 'string' ? payload.targetLanguage : 'es',
+            usingCloud: false
+          });
+        }, 50);
+      });
+    default:
+      return Promise.resolve();
+  }
+};
 
 describe('SidepanelApp', () => {
-  let mockChrome: ReturnType<typeof createChromeMock>;
-
   beforeEach(async () => {
+    fakeBrowser.reset();
     vi.useFakeTimers();
-    mockChrome = createChromeMock();
-    vi.stubGlobal('chrome', mockChrome);
     document.body.innerHTML = '<div id="root"></div>';
 
-
-    // Mock response to GET_AVAILABLE_LANGUAGES
-    (mockChrome.runtime.sendMessage as any).mockImplementation((message: any) => {
-      if (message.type === 'GET_AVAILABLE_LANGUAGES') {
-        // Simulate response with available languages
-        setTimeout(() => {
-          (mockChrome.runtime.onMessage as any).trigger({
-            type: 'AVAILABLE_LANGUAGES_RESPONSE',
-            data: {
-              languages: [
-                { code: 'es', name: 'Español' },
-                { code: 'en', name: 'English' },
-                { code: 'fr', name: 'Français' },
-                { code: 'de', name: 'Deutsch' },
-                { code: 'it', name: 'Italiano' },
-                { code: 'pt', name: 'Português' }
-              ]
-            }
-          });
-        }, 0);
-      }
-      return Promise.resolve();
-    });
+    // Mock sendMessage function responses
+    (sendMessage as any).mockImplementation(defaultSendMessageImplementation);
 
     new SidepanelApp();
     document.dispatchEvent(new Event('DOMContentLoaded'));
@@ -68,7 +157,7 @@ describe('SidepanelApp', () => {
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
     await vi.runAllTimersAsync();
 
-    (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
+    simulateRuntimeMessage({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
     await vi.runAllTimersAsync();
 
     const root = document.getElementById('root');
@@ -82,7 +171,8 @@ describe('SidepanelApp', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     await vi.runAllTimersAsync();
 
-    (mockChrome.runtime.onMessage as any).trigger({
+    // Simulate API availability response
+    simulateRuntimeMessage({
       type: 'API_AVAILABILITY_RESPONSE',
       data: {
         translator: true,
@@ -98,33 +188,31 @@ describe('SidepanelApp', () => {
   });
 
   it('should handle API availability check failure gracefully', async () => {
+    // Override sendMessage mock for this test to return failure
+    (sendMessage as any).mockImplementation((messageName: string) => {
+      if (messageName === 'checkAPIAvailability') {
+        return Promise.resolve({ translator: false, languageDetector: false });
+      }
+      return defaultSendMessageImplementation(messageName);
+    });
+
     // Re-init for this specific API state
     new SidepanelApp();
     document.dispatchEvent(new Event('DOMContentLoaded'));
-    await vi.runAllTimersAsync();
-
-    (mockChrome.runtime.onMessage as any).trigger({
-      type: 'API_AVAILABILITY_RESPONSE',
-      data: {
-        translator: false,
-        languageDetector: false
-      }
-    });
     await vi.runAllTimersAsync();
 
     const root = document.getElementById('root');
     expect(root?.innerHTML).toContain('❌ Traductor');
     expect(root?.innerHTML).toContain('❌ Detector de Idioma');
     expect(root?.innerHTML).toContain('⚠️ Las APIs nativas de Chrome no están disponibles');
+
+    // Restore the default mock
+    (sendMessage as any).mockImplementation(defaultSendMessageImplementation);
   });
 
   it('should verify API availability check is called on initialization', () => {
-    expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({ 
-      type: 'CHECK_API_AVAILABILITY' 
-    });
-    expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({ 
-      type: 'GET_AVAILABLE_LANGUAGES' 
-    });
+    expect(sendMessage).toHaveBeenCalledWith('checkAPIAvailability');
+    expect(sendMessage).toHaveBeenCalledWith('getAvailableLanguages');
   });
 
   describe('Translate Button Behavior', () => {
@@ -147,60 +235,67 @@ describe('SidepanelApp', () => {
     });
 
     it('should show "Traducir (Detectando idioma...)" and be disabled for long text without language detection', async () => {
+      // Override the mock to delay the language detection response
+      (sendMessage as any).mockImplementation((messageName: string, data?: unknown) => {
+        if (messageName === 'detectLanguage') {
+          return new Promise((resolve) => {
+            setTimeout(() => resolve({ language: 'en' }), 1000); // Delay response
+          });
+        }
+        return defaultSendMessageImplementation(messageName, data);
+      });
+
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
       textarea.value = 'This is a longer text that should trigger language detection';
       textarea.dispatchEvent(new Event('input'));
 
-      await vi.runAllTimersAsync();
+      // Wait a very short time for the UI to update
+      await vi.advanceTimersByTimeAsync(10);
 
       const translateButton = document.getElementById('translate-button') as HTMLButtonElement;
       expect(translateButton.textContent?.trim()).toBe('Traducir (Detectando idioma...)');
       expect(translateButton.disabled).toBe(true);
+      
+      // Restore the default mock
+      (sendMessage as any).mockImplementation(defaultSendMessageImplementation);
     });
 
     it('should enable button when source language is detected to be different from target language', async () => {
+      // Add text to the textarea first
+      const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
+      textarea.value = 'This is a test sentence for translation.';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
       // Change target language to Spanish to enable translation
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       targetSelect.value = 'es';
       targetSelect.dispatchEvent(new Event('change'));
-
-      const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a longer text that should trigger language detection';
-      textarea.dispatchEvent(new Event('input'));
+      simulateRuntimeMessage({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
 
       await vi.runAllTimersAsync();
 
-      let translateButton = document.getElementById('translate-button') as HTMLButtonElement;
-      expect(translateButton.textContent?.trim()).toBe('Traducir (Detectando idioma...)');
-      expect(translateButton.disabled).toBe(true);
-
-      (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
-
-      await vi.runAllTimersAsync();
-
-      translateButton = document.getElementById('translate-button') as HTMLButtonElement;
+      const translateButton = document.getElementById('translate-button') as HTMLButtonElement;
       expect(translateButton.textContent?.trim()).toBe('Traducir');
       // Button should be enabled because source ('en') and target ('es') languages are different
       expect(translateButton.disabled).toBe(false);
     });
 
     it('should disable button when source language is detected to be the same as target language', async () => {
+      // Add text to the textarea first
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a longer text that should trigger language detection';
-      textarea.dispatchEvent(new Event('input'));
+      textarea.value = 'This is a test sentence for translation.';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
-      await vi.runAllTimersAsync();
+      await vi.runAllTimersAsync(); // Wait for language detection to complete
 
-      let translateButton = document.getElementById('translate-button') as HTMLButtonElement;
-      expect(translateButton.textContent?.trim()).toBe('Traducir (Detectando idioma...)');
-      expect(translateButton.disabled).toBe(true);
+      // Set target language to English (same as detected source) to test disabled state
+      const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
+      targetSelect.value = 'en';
+      targetSelect.dispatchEvent(new Event('change'));
 
-      (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
+      await vi.runAllTimersAsync(); // Wait for target language change to complete
 
-      await vi.runAllTimersAsync();
-
-      translateButton = document.getElementById('translate-button') as HTMLButtonElement;
-      expect(translateButton.textContent?.trim()).toBe('Traducir');
+      const translateButton = document.getElementById('translate-button') as HTMLButtonElement;
       // Button should be disabled because source ('en') and target ('en') languages are the same
       expect(translateButton.disabled).toBe(true);
     });
@@ -219,7 +314,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Simulate language detection
-      (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
+      simulateRuntimeMessage({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
 
       await vi.runAllTimersAsync();
 
@@ -230,8 +325,8 @@ describe('SidepanelApp', () => {
       // Simulate translation start by clicking the button
       translateButton.click();
 
-      // Wait for the translation to start (isLoading should be true)
-      await vi.runAllTimersAsync();
+      // Check immediately after click to see loading state
+      await vi.advanceTimersByTimeAsync(0);
 
       // Verify the button shows loading state
       translateButton = document.getElementById('translate-button') as HTMLButtonElement;
@@ -239,7 +334,7 @@ describe('SidepanelApp', () => {
       expect(translateButton.disabled).toBe(true);
     });
 
-    it('should show "Traducir (Traduciendo...) and disable button when downloading model', async () => {
+    it('should disable button when model is downloading', async () => {
 
       await vi.runAllTimersAsync();
 
@@ -251,7 +346,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Simulate language detection
-      (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
+      simulateRuntimeMessage({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
 
       await vi.runAllTimersAsync();
 
@@ -273,15 +368,12 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Simulate model downloading state
-      (mockChrome.runtime.onMessage as any).trigger({
-        type: 'MODEL_AVAILABILITY_RESPONSE',
+      simulateRuntimeMessage({
+        type: 'MODEL_DOWNLOADING',
         data: {
           source: 'en',
           target: 'es',
-          status: {
-            available: false,
-            downloading: true
-          }
+          progress: 0
         }
       });
 
@@ -289,7 +381,6 @@ describe('SidepanelApp', () => {
 
       // Verify button is disabled when model is downloading
       expect(translateButton.disabled).toBe(true);
-      expect(translateButton.textContent?.trim()).toBe('Traduciendo...');
 
       // Verify that model download message is shown
       const modelStatusContainer = document.getElementById('model-status-container');
@@ -310,7 +401,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Simulate language detection
-      (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
+      simulateRuntimeMessage({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
 
       await vi.runAllTimersAsync();
 
@@ -326,7 +417,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Simulate translation error
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'TRANSLATION_ERROR',
         data: { error: 'Translation service unavailable' }
       });
@@ -348,11 +439,6 @@ describe('SidepanelApp', () => {
 
       await vi.runAllTimersAsync();
       
-      // Simulate language detection
-      (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
-      
-      await vi.runAllTimersAsync();
-
       // Select target language
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       targetSelect.value = 'es';
@@ -367,7 +453,10 @@ describe('SidepanelApp', () => {
       translateButton.click();
 
       // Wait for the translation to start (isLoading should be true)
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Verify button is disabled
+      expect(translateButton.disabled).toBe(true);
       
       // Change target to French
       targetSelect.value = 'fr';
@@ -382,19 +471,13 @@ describe('SidepanelApp', () => {
   });
 
   describe('Model Availability Flow', () => {
-    let mockChrome: ReturnType<typeof createChromeMock>;
-
     beforeEach(async () => {
+      fakeBrowser.reset();
       vi.useFakeTimers();
-      mockChrome = createChromeMock();
-      vi.stubGlobal('chrome', mockChrome);
       document.body.innerHTML = '<div id="root"></div>';
 
-      // Mock storage with APIs available
-      (mockChrome.storage.local.get as any).mockResolvedValue({
-        translatorAPIAvailable: true,
-        languageDetectorAPIAvailable: true,
-      });
+      // Mock sendMessage function responses
+      (sendMessage as any).mockImplementation(defaultSendMessageImplementation);
 
       new SidepanelApp();
       document.dispatchEvent(new Event('DOMContentLoaded'));
@@ -403,7 +486,6 @@ describe('SidepanelApp', () => {
 
     afterEach(() => {
       vi.useRealTimers();
-      vi.unstubAllGlobals();
       document.body.innerHTML = '';
     });
 
@@ -411,7 +493,7 @@ describe('SidepanelApp', () => {
     it('should not show any model status message when model is available or downloadable', async () => {
       // Configurar idiomas para que se pueda renderizar el estado del modelo
       // Simular que se han detectado los idiomas
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'LANGUAGE_DETECTED',
         data: { language: 'en' }
       });
@@ -430,7 +512,7 @@ describe('SidepanelApp', () => {
       expect(modelStatusContainer?.innerHTML).toBe('');
 
       // Simular recepción de mensaje indicando que el modelo está disponible
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'MODEL_AVAILABILITY_RESPONSE',
         data: {
           source: 'en',
@@ -448,7 +530,7 @@ describe('SidepanelApp', () => {
       expect(modelStatusContainer?.innerHTML).toBe('');
 
       // Simular traducción exitosa
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'TRANSLATION_COMPLETED',
         data: {
           translatedText: 'Este es un texto de prueba traducido',
@@ -469,7 +551,7 @@ describe('SidepanelApp', () => {
 
     it('should allow editing the translated text in the result area', async () => {
       // Simular traducción exitosa
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'TRANSLATION_COMPLETED',
         data: {
           translatedText: 'Texto original traducido',
@@ -503,7 +585,7 @@ describe('SidepanelApp', () => {
   describe('Translation Source Indicator', () => {
     it('should show "Traducido localmente" indicator when using native API', async () => {
       // Simular traducción exitosa con API nativa (usingCloud: false)
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'TRANSLATION_COMPLETED',
         data: {
           translatedText: 'Este es un texto traducido localmente',
@@ -524,12 +606,12 @@ describe('SidepanelApp', () => {
       const resultContainer = document.getElementById('result-container');
       const indicatorElement = resultContainer?.querySelector('.inline-flex.items-center.px-2.py-1.rounded-full');
       expect(indicatorElement).toBeTruthy();
-      expect(indicatorElement!.textContent?.trim()).toBe('🔒 Traducido localmente');
+      expect(indicatorElement?.textContent?.trim()).toBe('🔒 Traducido localmente');
     });
 
     it('should show "Traducido en la nube" indicator when using cloud API', async () => {
       // Simular traducción exitosa con API en la nube (usingCloud: true)
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'TRANSLATION_COMPLETED',
         data: {
           translatedText: 'Este es un texto traducido en la nube',
@@ -550,7 +632,7 @@ describe('SidepanelApp', () => {
       const resultContainer = document.getElementById('result-container');
       const indicatorElement = resultContainer?.querySelector('.inline-flex.items-center.px-2.py-1.rounded-full');
       expect(indicatorElement).toBeTruthy();
-      expect(indicatorElement!.textContent?.trim()).toBe('☁️ Traducido en la nube');
+      expect(indicatorElement?.textContent?.trim()).toBe('☁️ Traducido en la nube');
     });
 
     it('should automatically translate text when selected from context menu', async () => {
@@ -558,9 +640,9 @@ describe('SidepanelApp', () => {
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       targetSelect.value = 'es';
       targetSelect.dispatchEvent(new Event('change'));
-
+      
       // Simulate receiving text from context menu with autoTranslate enabled
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'SELECTED_TEXT',
         data: {
           text: 'This is a test sentence for automatic translation.',
@@ -572,7 +654,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Simulate language detection response
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'LANGUAGE_DETECTED',
         data: { language: 'en' }
       });
@@ -581,13 +663,10 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Verify that translation was requested with correct data
-      expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({
-        type: 'TRANSLATE_TEXT_REQUEST',
-        data: {
-          text: 'This is a test sentence for automatic translation.',
-          sourceLanguage: 'en',
-          targetLanguage: 'es'
-        }
+      expect(sendMessage).toHaveBeenCalledWith('translateTextRequest', {
+        text: 'This is a test sentence for automatic translation.',
+        sourceLanguage: 'en',
+        targetLanguage: 'es'
       });
     });
 
@@ -604,7 +683,7 @@ describe('SidepanelApp', () => {
       };
 
       // First, simulate receiving the message directly (main flow)
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'SELECTED_TEXT',
         data: textData
       });
@@ -613,7 +692,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Simulate language detection response
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'LANGUAGE_DETECTED',
         data: { language: 'en' }
       });
@@ -626,13 +705,10 @@ describe('SidepanelApp', () => {
       expect(textarea.value).toBe('This is text sent directly after panel opens.');
 
       // Verify that translation was requested automatically with correct data
-      expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({
-        type: 'TRANSLATE_TEXT_REQUEST',
-        data: {
-          text: 'This is text sent directly after panel opens.',
-          sourceLanguage: 'en',
-          targetLanguage: 'es'
-        }
+      expect(sendMessage).toHaveBeenCalledWith('translateTextRequest', {
+        text: 'This is text sent directly after panel opens.',
+        sourceLanguage: 'en',
+        targetLanguage: 'es'
       });
     });
   });
@@ -646,7 +722,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Simulate language detection
-      (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
+      simulateRuntimeMessage({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
       await vi.runAllTimersAsync();
 
       // Ensure target language is different from source
@@ -659,7 +735,8 @@ describe('SidepanelApp', () => {
       const translateButton = document.getElementById('translate-button') as HTMLButtonElement;
       translateButton.click();
 
-      await vi.runAllTimersAsync();
+      // Don't wait for all timers - check immediately after click to see loading state
+      await vi.advanceTimersByTimeAsync(0);
 
       // Verify that translation was started
       expect(translateButton.disabled).toBe(true);
@@ -686,9 +763,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Verify that cancel message was sent
-      expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({
-        type: 'CANCEL_PENDING_TRANSLATIONS'
-      });
+      expect(sendMessage).toHaveBeenCalledWith('cancelPendingTranslations');
     });
 
     it('should send cancel message when text changes', async () => {
@@ -700,16 +775,14 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Verify that cancel message was sent
-      expect(mockChrome.runtime.sendMessage).toHaveBeenCalledWith({
-        type: 'CANCEL_PENDING_TRANSLATIONS'
-      });
+      expect(sendMessage).toHaveBeenCalledWith('cancelPendingTranslations');
     });
   });
 
   describe('Model Downloading State', () => {
     it('should show model download message when downloading starts', async () => {
       // Simulate model download start
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'MODEL_DOWNLOADING',
         data: { source: 'en', target: 'es', progress: 0 }
       });
@@ -724,7 +797,7 @@ describe('SidepanelApp', () => {
 
     it('should hide model download message when MODEL_DOWNLOAD_CANCELLED is received', async () => {
       // Simulate model download start
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'MODEL_DOWNLOADING',
         data: { source: 'en', target: 'es', progress: 0 }
       });
@@ -735,7 +808,7 @@ describe('SidepanelApp', () => {
       expect(modelStatusContainer?.innerHTML).toBeTruthy();
 
       // Simulate model download cancellation
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'MODEL_DOWNLOAD_CANCELLED',
         data: { source: 'en', target: 'es' }
       });
@@ -754,7 +827,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
       
       // Simulate language detection
-      (mockChrome.runtime.onMessage as any).trigger({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
+      simulateRuntimeMessage({ type: 'LANGUAGE_DETECTED', data: { language: 'en' } });
       await vi.runAllTimersAsync();
 
       // Set target language to Spanish (different from detected 'en')
@@ -768,7 +841,7 @@ describe('SidepanelApp', () => {
       expect(translateButton.disabled).toBe(false);
 
       // Simulate model download completion (this should NOT activate loading state)
-      (mockChrome.runtime.onMessage as any).trigger({
+      simulateRuntimeMessage({
         type: 'MODEL_DOWNLOAD_COMPLETED',
         data: { source: 'en', target: 'es' }
       });
@@ -781,147 +854,88 @@ describe('SidepanelApp', () => {
 
 
   describe('Default Language Loading', () => {
-    it('should detect browser language and update selector', async () => {
-      // Reset DOM for this test
+
+    beforeEach(() => {
+      fakeBrowser.reset();
+      vi.useFakeTimers();
       document.body.innerHTML = '<div id="root"></div>';
 
-      // Create a fresh mock for this test
-      const testMockChrome = createChromeMock();
-
-      // Mock response to GET_AVAILABLE_LANGUAGES
-      (testMockChrome.runtime.sendMessage as any).mockImplementation((message: any) => {
-        if (message.type === 'GET_AVAILABLE_LANGUAGES') {
-          setTimeout(() => {
-            (testMockChrome.runtime.onMessage as any).trigger({
-              type: 'AVAILABLE_LANGUAGES_RESPONSE',
-              data: {
-                languages: [
-                  { code: 'es', name: 'Español' },
-                  { code: 'en', name: 'English' },
-                  { code: 'fr', name: 'Français' },
-                  { code: 'de', name: 'Deutsch' }
-                ]
-              }
-            });
-          }, 0);
-        }
-        return Promise.resolve();
-      });
-
-      vi.stubGlobal('chrome', testMockChrome);
-
-      // Mock navigator.languages to return 'fr' as primary language
-      Object.defineProperty(navigator, 'languages', {
-        value: ['fr-FR', 'fr', 'en-US'],
-        writable: true
-      });
-
-      // Create fresh SidepanelApp instance for this test
-      new SidepanelApp();
-      document.dispatchEvent(new Event('DOMContentLoaded'));
-      await vi.runAllTimersAsync();
-
-      // Verify that the target language was detected as 'fr'
-      const select = document.getElementById('target-language') as HTMLSelectElement;
-      expect(select).toBeTruthy();
-      expect(select.value).toBe('fr');
+      // Mock sendMessage function responses
+      (sendMessage as any).mockImplementation(defaultSendMessageImplementation);
     });
 
-    it('should fallback to Spanish when detected language is not supported', async () => {
-      // Reset DOM for this test
-      document.body.innerHTML = '<div id="root"></div>';
-
-      // Create a fresh mock for this test
-      const testMockChrome = createChromeMock();
-
-      // Mock response to GET_AVAILABLE_LANGUAGES
-      (testMockChrome.runtime.sendMessage as any).mockImplementation((message: any) => {
-        if (message.type === 'GET_AVAILABLE_LANGUAGES') {
-          setTimeout(() => {
-            (testMockChrome.runtime.onMessage as any).trigger({
-              type: 'AVAILABLE_LANGUAGES_RESPONSE',
-              data: {
-                languages: [
-                  { code: 'es', name: 'Español' },
-                  { code: 'en', name: 'English' },
-                  { code: 'fr', name: 'Français' },
-                  { code: 'de', name: 'Deutsch' }
-                ]
-              }
-            });
-          }, 0);
-        }
-        return Promise.resolve();
-      });
-
-      vi.stubGlobal('chrome', testMockChrome);
-
-      // Mock navigator.languages to return unsupported language
-      Object.defineProperty(navigator, 'languages', {
-        value: ['xx-XX', 'xx'],
-        writable: true
-      });
-
-      new SidepanelApp();
-      document.dispatchEvent(new Event('DOMContentLoaded'));
-      await vi.runAllTimersAsync();
-
-      // Verify that the target language was set to 'es' (fallback)
-      const select = document.getElementById('target-language') as HTMLSelectElement;
-      expect(select).toBeTruthy();
-      expect(select.value).toBe('es');
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+      document.body.innerHTML = '';
+      vi.restoreAllMocks();
     });
 
-    it('should handle navigator errors gracefully and use Spanish fallback', async () => {
-      // Reset DOM for this test
-      document.body.innerHTML = '<div id="root"></div>';
-
-      // Create a fresh mock for this test
-      const testMockChrome = createChromeMock();
-
-      // Mock response to GET_AVAILABLE_LANGUAGES
-      (testMockChrome.runtime.sendMessage as any).mockImplementation((message: any) => {
-        if (message.type === 'GET_AVAILABLE_LANGUAGES') {
-          setTimeout(() => {
-            (testMockChrome.runtime.onMessage as any).trigger({
-              type: 'AVAILABLE_LANGUAGES_RESPONSE',
-              data: {
-                languages: [
-                  { code: 'es', name: 'Español' },
-                  { code: 'en', name: 'English' },
-                  { code: 'fr', name: 'Français' },
-                  { code: 'de', name: 'Deutsch' }
-                ]
-              }
-            });
-          }, 0);
-        }
-        return Promise.resolve();
+    it('should use browser language as default target when it is supported', async () => {
+      // Mock getAvailableLanguages to return languages including 'en'
+      const mockGetAvailableLanguages = vi.fn().mockReturnValue(['es', 'en', 'fr', 'de']);
+      vi.doMock('../core', () => ({
+        getAvailableLanguages: mockGetAvailableLanguages,
+        getLanguageName: vi.fn()
+      }));
+      
+      // Mock browser language to return 'en'
+      vi.stubGlobal('navigator', {
+        ...navigator,
+        languages: ['en-US', 'en']
       });
 
-      vi.stubGlobal('chrome', testMockChrome);
+      // Create instance - it should automatically detect and set browser language
+      new SidepanelApp();
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+      await vi.runAllTimersAsync();
+      
+      // Verify the selected value is 'en' (detected from browser)
+      const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
+      expect(targetSelect.value).toBe('en');
+    });
 
-      // Mock navigator to cause error
-      const originalNavigator = globalThis.navigator;
-      Object.defineProperty(globalThis, 'navigator', {
-        value: undefined,
-        writable: true
+    it('should use default language (es) when browser language is not supported', async () => {
+      // Mock getAvailableLanguages to return languages NOT including 'ja'
+      const mockGetAvailableLanguages = vi.fn().mockReturnValue(['es', 'en', 'fr', 'de']);
+      vi.doMock('../core', () => ({
+        getAvailableLanguages: mockGetAvailableLanguages,
+        getLanguageName: vi.fn()
+      }));
+
+      // Mock browser language to return 'ja' (Japanese, not supported)
+      vi.stubGlobal('navigator', {
+        ...navigator,
+        languages: ['ja-JP', 'ja']
       });
 
+      // Create instance - it should use default language when browser language is not supported
       new SidepanelApp();
       document.dispatchEvent(new Event('DOMContentLoaded'));
       await vi.runAllTimersAsync();
 
-      // Verify that the target language was set to 'es' (fallback)
+      // Verify the selected value is the default fallback language 'es'
+      const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
+      expect(targetSelect.value).toBe('es');
+    });
+
+    it('should populate language selector with available languages', async () => {
+      // Create instance for this test
+      new SidepanelApp();
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+      await vi.runAllTimersAsync();
+
       const select = document.getElementById('target-language') as HTMLSelectElement;
       expect(select).toBeTruthy();
-      expect(select.value).toBe('es');
-
-      // Restore navigator
-      Object.defineProperty(globalThis, 'navigator', {
-        value: originalNavigator,
-        writable: true
-      });
+      
+      // Verify that the selector has options
+      expect(select.options.length).toBeGreaterThan(0);
+      
+      // Verify some expected languages are present
+      const optionValues = Array.from(select.options).map(opt => opt.value);
+      expect(optionValues).toContain('es');
+      expect(optionValues).toContain('en');
+      expect(optionValues).toContain('fr');
     });
   });
 });

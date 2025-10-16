@@ -32,7 +32,7 @@ export const setupAIMock = (mockAI: ReturnType<typeof createAIMock>) => {
  * @param language - El idioma a detectar
  * @param confidence - El nivel de confianza (0-1)
  */
-export const createLanguageDetectorMock = (language: string, confidence: number = 0.95) => ({
+export const createLanguageDetectorMock = (language: string, confidence = 0.95) => ({
   detect: vi.fn().mockResolvedValue({
     language,
     confidence,

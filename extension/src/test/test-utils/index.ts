@@ -5,9 +5,7 @@ export * from './ai-mocks';
 // Funciones adicionales para mocks específicos
 import { vi } from 'vitest';
 
-interface StorageData {
-  [key: string]: unknown;
-}
+type StorageData = Record<string, unknown>;
 
 interface LanguageDetectorMock {
   detect: ReturnType<typeof vi.fn>;

@@ -54,7 +54,7 @@ interface PendingTranslation {
 }
 
 interface AvailableLanguagesResponse {
-  languages: Array<{ code: string; name: string }>
+  languages: { code: string; name: string }[]
 }
 
 interface ModelAvailabilityResponse {

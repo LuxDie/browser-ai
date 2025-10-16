@@ -9,7 +9,7 @@ export interface ModelStatus {
 }
 
 export interface AvailableLanguagesResponse {
-  languages: Array<{ code: string; name: string }>;
+  languages: { code: string; name: string }[];
 }
 
 export interface ModelAvailabilityResponse {

@@ -11,9 +11,7 @@ interface ChromeMessageSender {
   };
 }
 
-interface ChromeMessageSendResponse {
-  (response?: unknown): void;
-}
+type ChromeMessageSendResponse = (response?: unknown) => void;
 
 type ChromeMessageListener = (
   message: ChromeMessage,
@@ -43,7 +41,7 @@ export const createChromeMock = () => {
         removeListener: vi.fn(),
         // Custom trigger para simular la recepción de mensajes en las pruebas
         trigger: (message: ChromeMessage) => {
-          onMessageListeners.forEach(listener => listener(message, {}, () => {}));
+          onMessageListeners.forEach(listener => listener(message, {}, () => { /* empty */ }));
         },
       },
       sendMessage: vi.fn(),

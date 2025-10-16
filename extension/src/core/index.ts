@@ -14,6 +14,3 @@ export * from './context-menu';
 
 // Funciones de gestión de modelos
 export * from './model-management';
-
-// Funciones de traducción
-export * from './translation';

@@ -37,7 +37,7 @@ describe('Context Menu Behavior', () => {
     })
 
     it('should determine side panel state correctly', () => {
-      const sidePanelState: { [tabId: number]: boolean } = {}
+      const sidePanelState: Record<number, boolean> = {}
 
       // Panel closed by default
       expect(isSidePanelOpen(123, sidePanelState)).toBe(false)

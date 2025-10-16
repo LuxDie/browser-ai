@@ -1,8 +1,8 @@
-/// <reference types="../types/browser" />
-
 import './sidepanel.css'
-import type { LanguageDetectionError } from '../messages'
-import { getAvailableLanguages, getLanguageName } from '../core'
+import type { LanguageDetectionError } from '../../messages'
+import { getAvailableLanguages, getLanguageName } from '../../core'
+import { sendMessage } from '../../messaging'
+import { browser } from 'wxt/browser'
 
 interface TranslationState {
   text: string
@@ -24,48 +24,10 @@ interface TranslationState {
     progress?: number
     error?: string
   } | null
-  availableLanguages: Array<{code: string, name: string}>
+  availableLanguages: {code: string, name: string}[]
   pendingAutoTranslate: boolean // Indica si hay una traducción automática pendiente después de detección de idioma
 }
 
-/**
- * Detecta el idioma principal del navegador del usuario
- * @returns Código de idioma (ej: 'es', 'en', 'fr')
- */
-export const getBrowserLanguage = (): string => {
-  try {
-    // Prioridad: navigator.languages (array completo), luego navigator.language
-    let detectedLang = 'es' // fallback por defecto
-
-    if (navigator.languages && Array.isArray(navigator.languages) && navigator.languages.length > 0) {
-      // Tomar el primer idioma y convertir 'es-ES' a 'es'
-      const firstLanguage = navigator.languages[0] as string
-      const primaryLang = firstLanguage.split('-')[0]
-      // Verificar que el idioma sea soportado por la extensión
-      const supportedLanguages = getAvailableLanguages()
-      if (supportedLanguages.includes(primaryLang)) {
-        detectedLang = primaryLang
-      } else {
-        console.log('Browser language detected via navigator.languages:', primaryLang, '- not supported, using default')
-      }
-    } else if (navigator.language) {
-      // Fallback a navigator.language si navigator.languages no está disponible
-      const primaryLang = navigator.language.split('-')[0]
-      const supportedLanguages = getAvailableLanguages()
-      if (supportedLanguages.includes(primaryLang)) {
-        detectedLang = primaryLang
-      } else {
-        console.log('Browser language detected via navigator.language:', primaryLang, '- not supported, using default')
-      }
-    }
-
-    console.log('Browser language detected:', detectedLang)
-    return detectedLang
-  } catch (error) {
-    console.error('Error detecting browser language:', error)
-    return 'es' // fallback seguro
-  }
-}
 
 export class SidepanelApp {
   #state: TranslationState = {
@@ -104,14 +66,19 @@ export class SidepanelApp {
   }
 
   async #init(): Promise<void> {
-    // Solo establecer el idioma por defecto si no se ha establecido antes
-    if (!this.#state.targetLanguage) {
-      this.#state.targetLanguage = getBrowserLanguage()
-    }
     this.#state.apiAvailable = this.#checkAPIAvailability()
     // Verificar disponibilidad de APIs dinámicamente (el listener global manejará la respuesta)
     this.#refreshAPIAvailability()
     await this.#loadAvailableLanguages()
+    
+    // Solo establecer el idioma por defecto si no se ha establecido antes
+    if (!this.#state.targetLanguage) {
+      const browserLang = this.#getBrowserLanguage()
+      // Verificar si el idioma del navegador está soportado
+      const isBrowserLangSupported = this.#state.availableLanguages.some(lang => lang.code === browserLang)
+      this.#state.targetLanguage = (browserLang && isBrowserLangSupported) ? browserLang : 'es'
+    }
+    
     // Actualizar el selector de idiomas ahora que se cargaron los idiomas disponibles y el idioma por defecto
     this.#updateLanguageSelector()
     this.#setupEventListeners()
@@ -120,16 +87,43 @@ export class SidepanelApp {
   }
 
 
+  /**
+   * Detecta el idioma principal del navegador del usuario
+   * @returns Código de idioma (ej: 'es', 'en', 'fr') o null si no se puede detectar
+   */
+  #getBrowserLanguage(): string | null {
+    try {
+      let detectedLang: string | null = null
+
+      if (navigator.languages && Array.isArray(navigator.languages) && navigator.languages.length > 0) {
+        // Tomar el primer idioma y convertir 'es-ES' a 'es'
+        const firstLanguage = navigator.languages[0] as string
+        detectedLang = firstLanguage.split('-')[0]
+      } else if (navigator.language) {
+        // Fallback a navigator.language si navigator.languages no está disponible
+        detectedLang = navigator.language.split('-')[0]
+      }
+
+      console.log('Browser language detected:', detectedLang)
+      return detectedLang
+    } catch (error) {
+      console.error('Error detecting browser language:', error)
+      return null
+    }
+  }
+
   async #loadAvailableLanguages(): Promise<void> {
     try {
-      await chrome.runtime.sendMessage({ type: 'GET_AVAILABLE_LANGUAGES' })
+      const response = await sendMessage('getAvailableLanguages')
+      this.#state.availableLanguages = response.languages
     } catch (error) {
       console.error('Error loading available languages:', error)
+      this.#state.availableLanguages = []
     }
   }
 
   #setupMessageListener(): void {
-    chrome.runtime.onMessage.addListener((message: ChromeMessage) => {
+    browser.runtime.onMessage.addListener((message: ChromeMessage) => {
       console.log('Received message', message)
       switch (message.type) {
         case 'AVAILABLE_LANGUAGES_RESPONSE': {
@@ -188,68 +182,94 @@ export class SidepanelApp {
   }
 
   #detectLanguage(text: string): void {
-    try {
-      // Limpiar errores previos
-      this.#state.error = null
+    void (async () => {
+      try {
+        // Limpiar errores previos
+        this.#state.error = null
 
-      // Verificar que hay suficiente texto (mínimo 15 caracteres para detección confiable)
-      if (text.trim().length < 15) {
-        this.#state.sourceLanguage = ''
+        // Verificar que hay suficiente texto (mínimo 15 caracteres para detección confiable)
+        if (text.trim().length < 15) {
+          this.#state.sourceLanguage = ''
+          this.#render()
+          return
+        }
+
+        // Verificar si el detector de idioma está disponible antes de intentar detectar
+        if (!this.#state.apiAvailable.languageDetector) {
+          console.log('Language detector not available, attempting to refresh API availability')
+          this.#refreshAPIAvailability()
+          return
+        }
+
+        // Enviar la solicitud y esperar la respuesta
+        const response = await sendMessage('detectLanguage', { text })
+        this.#state.sourceLanguage = response.language
+        this.#state.error = null
         this.#render()
-        return
+
+        // Ejecutar traducción automáticamente si está configurado
+        const languagesAreDifferent = !this.#state.targetLanguage ||
+          this.#state.sourceLanguage.toLowerCase() !== this.#state.targetLanguage.toLowerCase()
+
+        if ((this.#state.autoTranslate || this.#state.pendingAutoTranslate) &&
+            this.#state.text.trim().length >= 15 &&
+            languagesAreDifferent) {
+          this.#state.pendingAutoTranslate = false
+          void this.#translateText()
+        } else if (this.#state.pendingAutoTranslate) {
+          this.#state.pendingAutoTranslate = false
+        }
+      } catch (error) {
+        console.error('Error detecting language:', error)
+        this.#state.sourceLanguage = ''
+        this.#state.error = error instanceof Error ? error.message : 'Error al detectar el idioma'
+        this.#render()
       }
-
-      // Verificar si el detector de idioma está disponible antes de intentar detectar
-      if (!this.#state.apiAvailable.languageDetector) {
-        console.log('Language detector not available, attempting to refresh API availability')
-        this.#refreshAPIAvailability()
-        return
-      }
-
-      // Enviar la solicitud de detección (el listener global manejará la respuesta)
-      void chrome.runtime.sendMessage({ type: 'DETECT_LANGUAGE', data: { text } })
-
-    } catch (error) {
-      console.error('Error sending language detection request:', error)
-      this.#state.error = 'Error al iniciar la detección de idioma.'
-      this.#render()
-    }
+    })()
   }
 
   #translateText(): void {
-    if (!this.#state.text.trim()) return
+    void (async () => {
+      try {
+        if (!this.#state.text.trim()) return
 
-    // Resetear la bandera de traducción automática después del primer uso
-    this.#state.autoTranslate = false
+        // Resetear la bandera de traducción automática después del primer uso
+        this.#state.autoTranslate = false
 
-    // Validar que se puede traducir antes de proceder
-    const hasEnoughText = this.#state.text.trim().length >= 15
-    if (!this.#state.sourceLanguage && hasEnoughText) {
-      this.#state.error = 'No se pudo detectar el idioma del texto. Intenta con más texto o selecciona el idioma manualmente.'
-      this.#render()
-      return
-    }
+        // Validar que se puede traducir antes de proceder
+        const hasEnoughText = this.#state.text.trim().length >= 15
+        if (!this.#state.sourceLanguage && hasEnoughText) {
+          this.#state.error = 'No se pudo detectar el idioma del texto. Intenta con más texto o selecciona el idioma manualmente.'
+          this.#render()
+          return
+        }
 
+        this.#state.isLoading = true
+        this.#state.error = null
+        this.#render()
 
-    this.#state.isLoading = true
-    this.#state.error = null
-    this.#render() // Solo para mostrar el estado de carga
-
-    try {
-      // Usar el nuevo TranslationService
-      void chrome.runtime.sendMessage({
-        type: 'TRANSLATE_TEXT_REQUEST',
-        data: {
+        // Enviar solicitud y esperar respuesta
+        const response = await sendMessage('translateTextRequest', {
           text: this.#state.text,
           targetLanguage: this.#state.targetLanguage,
           sourceLanguage: this.#state.sourceLanguage
-        }
-      })
-    } catch (error) {
-      this.#state.error = error instanceof Error ? error.message : 'Error de traducción'
-      this.#state.isLoading = false
-      this.#render()
-    }
+        })
+
+        // Manejar respuesta exitosa
+        this.#state.translatedText = response.translatedText
+        this.#state.editedTranslatedText = response.translatedText
+        this.#state.usingCloud = response.usingCloud
+        this.#state.isLoading = false
+        this.#state.error = null
+        this.#state.modelStatus = null
+        this.#render()
+      } catch (error) {
+        console.error('Error translating text:', error)
+        this.#state.error = error instanceof Error ? error.message : 'Error de traducción'
+        this.#state.isLoading = false
+        this.#render()
+      }
+    })()
   }
 
   #checkAPIAvailability(): {translator: boolean, languageDetector: boolean} {
@@ -277,13 +297,23 @@ export class SidepanelApp {
   }
 
   #refreshAPIAvailability(): void {
-    try {
-      // Solicitar verificación dinámica de APIs al background script
-      // El listener global manejará la respuesta cuando llegue
-      void chrome.runtime.sendMessage({ type: 'CHECK_API_AVAILABILITY' })
-    } catch (error) {
-      console.error('Error refreshing API availability:', error)
-    }
+    void (async () => {
+      try {
+        const availability = await sendMessage('checkAPIAvailability')
+        this.#state.apiAvailable = availability
+        console.log('API availability updated:', availability)
+
+        // Si el detector de idioma se volvió disponible y hay texto para detectar, intentar detectar
+        if (availability.languageDetector && this.#state.text.trim().length >= 15 && !this.#state.sourceLanguage) {
+          console.log('Language detector became available, attempting to detect language for existing text')
+          this.#detectLanguage(this.#state.text)
+        }
+
+        this.#render()
+      } catch (error) {
+        console.error('Error refreshing API availability:', error)
+      }
+    })()
   }
 
   async #copyToClipboard(): Promise<void> {
@@ -315,6 +345,10 @@ export class SidepanelApp {
     this.#elements.targetLanguage?.addEventListener('change', (e) => {
       const previousTargetLanguage = this.#state.targetLanguage
       this.#state.targetLanguage = (e.target as HTMLSelectElement).value
+      console.log({
+        previousTargetLanguage,
+        targetLanguage: this.#state.targetLanguage,
+      })
 
       // Cancelar traducciones pendientes cuando cambia el idioma destino
       if (previousTargetLanguage !== this.#state.targetLanguage) {
@@ -332,16 +366,14 @@ export class SidepanelApp {
   }
 
   #cancelPendingTranslations(): void {
+    // Enviar mensaje de cancelación sin esperar respuesta
+    void sendMessage('cancelPendingTranslations')
+    
+    // Actualizar estado inmediatamente
     this.#state.modelStatus = null
     this.#state.isLoading = false
     this.#state.error = null
-    try {
-      void chrome.runtime.sendMessage({
-        type: 'CANCEL_PENDING_TRANSLATIONS'
-      })
-    } catch (error) {
-      console.error('Error cancelling pending translations:', error)
-    }
+    this.#render()
   }
 
   // Métodos de manejo de eventos del ModelManager
@@ -468,7 +500,7 @@ export class SidepanelApp {
     this.#render()
   }
 
-  #setSelectedText(text: string, autoTranslate: boolean = false): void {
+  #setSelectedText(text: string, autoTranslate = false): void {
     console.log('Setting selected text:', { text: text.substring(0, 50) + '...', autoTranslate })
     this.#state.text = text
     this.#state.textReceived = true
@@ -600,13 +632,14 @@ export class SidepanelApp {
     if (this.#elements.targetLanguage) {
       const optionsHTML = this.#state.availableLanguages.length > 0 ?
         this.#state.availableLanguages.map(lang =>
-          `<option value="${lang.code}" ${this.#state.targetLanguage === lang.code ? 'selected' : ''}>${lang.name}</option>`
+          `<option value="${lang.code}">${lang.name}</option>`
         ).join('') :
         getAvailableLanguages().map(code =>
-          `<option value="${code}" ${this.#state.targetLanguage === code ? 'selected' : ''}>${getLanguageName(code)}</option>`
+          `<option value="${code}">${getLanguageName(code)}</option>`
         ).join('')
 
       this.#elements.targetLanguage.innerHTML = optionsHTML
+      this.#elements.targetLanguage.value = this.#state.targetLanguage
     }
   }
 
@@ -639,8 +672,11 @@ export class SidepanelApp {
         modelIsDownloading,
         isLoading: this.#state.isLoading,
         errorIsNull: this.#state.error === null,
+        targetLanguage: this.#state.targetLanguage,
+        sourceLanguage: this.#state.sourceLanguage,
         canTranslate
       })
+      console.count(`updateTranslateButton`)
       this.#elements.translateButton.disabled = !canTranslate
 
       this.#elements.translateButton.innerHTML = this.#state.isLoading ? `
