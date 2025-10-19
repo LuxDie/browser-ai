@@ -67,10 +67,11 @@ Si sintonizas con este proyecto y quieres apoyar su desarrollo, puedes hacer una
 
 ### 🌍 Donaciones Recurrentes
 
-[Donar a través de Liberapay](https://liberapay.com/ecicala/donate)
+- [Liberapay](https://liberapay.com/ecicala/donate)
 
-Liberapay es una organización sin fines de lucro que facilita a los desarrolladores de software libre un soporte mensual para sostener su trabajo continuado:
+  Liberapay es una organización sin fines de lucro que facilita a los desarrolladores de software libre un soporte mensual para sostener su trabajo continuado:
 
+- [Github Sponsors](https://github.com/sponsors/LuxDie)
 
 ### Donaciones por única vez
 
