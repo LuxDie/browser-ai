@@ -6,29 +6,7 @@
 - **Service Worker:** `background` para orquestación
 - **Content Scripts:** `content` para interacción con el DOM
 
-## Estructura propuesta del proyecto
 
-```
-/
-├── extension/
-│   ├── public/
-│   │   ├── icons/
-│   │   │   └── icon-128.png
-│   │   └── manifest.json
-│   ├── src/
-│   │   ├── sidepanel/
-│   │   │   ├── sidepanel.html
-│   │   │   └── sidepanel.ts
-│   │   ├── background.ts
-│   │   └── content.ts
-│   ├── tailwind.config.js
-│   ├── postcss.config.js
-│   └── vite.config.ts
-├── docs/
-│   ├── specs/
-│   │   └── extension-architecture.md
-└── package.json
-```
 
 ## Responsabilidades
 - **`manifest.json`**: metadatos, permisos (`sidePanel`, `storage`, `activeTab`, `scripting`, `notifications`)
@@ -39,25 +17,20 @@
 ## Componentes de Gestión de Modelos
 
 ### ModelManager (background)
-- **Detección de disponibilidad**: Verificar qué modelos están descargados
-- **Gestión de descargas**: Iniciar, monitorear y cancelar descargas
-- **Cache de estado**: Almacenar estado de modelos y descargas
+- **Detección de disponibilidad**: Verificar disponibilidad de API
+- **Gestión de descargas**: Iniciar y monitorear descargas
 - **Notificaciones**: Enviar notificaciones push cuando modelos estén listos
 
 ### TranslationService (background)
-- **Abstracción de proveedores**: Manejar APIs integradas vs nube
-- **Ejecución diferida**: Almacenar traducciones pendientes durante descargas
-- **Fallback automático**: Cambiar a nube si modelo local falla
+- **Abstracción de proveedores**: Manejar APIs integradas
+- **Ejecución diferida**: Almacenar traducción pendiente durante descarga de modelo
 - **Monitoreo de progreso**: Escuchar eventos de descarga de modelos
 
 ### UI Components (sidepanel)
 - **LanguageSelector**: Selector desplegable de idioma destino
-- **ModelStatusIndicator**: Mostrar estado de disponibilidad de modelos
 - **DownloadProgress**: Indicador de progreso de descarga
-- **ModelOptions**: Opciones para descargar modelo o usar nube
 - **NotificationHandler**: Manejar notificaciones push del sistema
 
 ## Integración con IA
 - Preferencia por APIs integradas del navegador
-- Abstracción de proveedores para alternar entre local/nube
-- Configuración persistente por función
+- Abstracción de proveedores

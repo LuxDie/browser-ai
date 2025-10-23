@@ -1,10 +1,8 @@
 # Flujos de Usuario y Estados
 
 ## Disparadores
-1. **Menú Contextual**: al seleccionar texto → mostrar notificación elegante → clic en "Abrir Traductor" → abrir `sidePanel` con entrada precargada.
-   - **Workaround implementado**: Debido a restricciones de user gesture en Chrome, se muestra una notificación intermedia
-   - **Todas las acciones**: ejecuta automáticamente la acción seleccionada al abrir el panel
-   - **Sin duplicados**: Si el panel ya está abierto, solo actualiza el texto sin mostrar notificación
+1. **Menú Contextual**: al seleccionar texto abrir `sidePanel` con entrada precargada.
+   - **Todas las acciones**: ejecuta automáticamente la acción seleccionada al abrir el panel. 
 2. **Icono de la Extensión**: abre `sidePanel` en estado inicial en la ventana activa.
 
 ## Maquetación y Flujo de Trabajo
@@ -13,72 +11,55 @@
 3. **Áreas de Resultados**: resultados encadenables
 
 ## Comportamientos
-- **Todas las acciones**: 
-  - Desde menú contextual: notificación → clic en botón → ejecución automática al abrir el panel
-  - Desde icono de extensión: requiere clic manual en el botón correspondiente
-  - **Panel ya abierto**: actualización directa del texto sin notificación
-- Corregir: mostrar diff de entrada/salida
-- Escribir/Reescribir: mostrar campo "Instrucciones"
-
-## Encadenamiento
-- Usar el resultado como nueva entrada para acciones posteriores
-
-## Configuración
-- Preferencias en página de Opciones (idioma, proveedor IA)
+- **Traducción**: 
+  - Desde menú contextual:
+    1. Clic en opción "Traducir"
+    2. Abre el panel si está cerrado
+    3. Copia texto al panel de traducción
+    4. Panel detecta idioma
+    5. Ejecuta traducción
+    6. Muestra resultado
 
 ## Estados
-- Carga: local vs nube
+- Carga: local
 - Error: IA local, conectividad, API, texto inválido
 - Éxito: insertado, reemplazado, configuración guardada
 
 ## Estados de Modelos de Traducción
 
-### Modelo No Disponible
-- **Descripción**: El par de idiomas solicitado no está descargado localmente
-- **Comportamiento**: 
-  - Mostrar mensaje informativo en el área de resultados
-  - Ofrecer opciones: descargar modelo, usar nube, cambiar idiomas
-  - Mantener funcionalidad de otras acciones disponibles
+### Modelo Disponible o Descargable
+- **Descripción**: El modelo está listo para usar o estará listo luego de descargarlo
+- **Comportamiento**: Ejecutar traducción normalmente
 
 ### Modelo Descargándose
-- **Descripción**: El modelo está siendo descargado en segundo plano
+- **Descripción**: El modelo está siendo descargado luego de iniciar la traducción
 - **Comportamiento**:
   - Mostrar indicador de progreso en el área de resultados
-  - Permitir cancelar la descarga
   - **Ejecutar automáticamente la traducción** cuando la descarga se complete
-  - **Notificación push no bloqueante** cuando esté listo
+  - **Notificación push** cuando esté listo
 
-### Modelo Disponible
-- **Descripción**: El modelo está listo para usar
-- **Comportamiento**: Ejecutar traducción normalmente
+### Modelo No Disponible
+- **Descripción**: El modelo no está disponible o hubo un error en el flujo (descarga, error del navegador)
+- **Comportamiento**: 
+  - Mostrar mensaje informativo en el área de resultados
+  - Ofrecer opciones: intentar de nuevo, reportar error
+  - Mantener funcionalidad de otras acciones disponibles
 
 ### Flujos Específicos de Modelos
 
-#### Flujo: Modelo No Disponible
-1. Usuario selecciona texto para traducir
-2. Sistema detecta idioma del texto y determina par de idiomas (origen → destino)
-3. Sistema detecta que el modelo para ese par no está descargado
-4. UI muestra opciones: "Descargar Modelo", "Usar Nube"
-5. Usuario elige una opción
-
 #### Flujo: Descarga en Progreso
-1. Usuario inicia descarga de modelo (después de seleccionar texto)
+1. Modelo inicia descarga (después de iniciar traducción de texto)
 2. UI muestra indicador de progreso con porcentaje
-3. **Al completar descarga**:
-   - Notificación push no bloqueante: "Modelo ES→EN listo"
-   - **Ejecución automática** de la traducción del texto seleccionado
+   - **Ejecución automática al completar la descarga** de la traducción del texto seleccionado
    - Actualización de UI con resultado traducido
+   - Notificación push: "Traducción completada"
 
 #### Flujo: Cambio de Idioma Destino
-1. Usuario selecciona nuevo idioma del selector desplegable (siempre visible)
-2. Sistema verifica disponibilidad del modelo para el nuevo par de idiomas
-3. Si disponible: ejecuta traducción automáticamente
-4. Si no disponible: muestra opciones de descarga o nube en el área de resultados
+1. Usuario selecciona nuevo idioma del selector desplegable
+2. Se cancela traducción previa si la hubiese
 
-#### Flujo: Fallback a Nube
-1. Usuario elige usar traducción en nube
-2. Sistema verifica configuración de API en nube
-3. Si configurada: ejecuta traducción normalmente
-4. Si no configurada: muestra mensaje para configurar API
+#### Flujo: Modelo No Disponible
+1. Si no disponible o error: muestra información
+2. Ofrecer opciones: intentar de nuevo, reportar error
 
 Ver también: `../ui.md`, `../ux.md`
