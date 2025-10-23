@@ -136,6 +136,13 @@ const age = +ageString; // no Number(ageString)
 
 // ✅ null para valores vacíos intencionales
 let selectedUser: User | null = null; // no undefined
+
+// ✅ Punto y coma al final de todas las líneas
+const apiUrl = 'https://api.example.com';
+const timeout = 5000;
+function connect(): void {
+  // implementación
+}
 ```
 
 ## 8. Constantes y Naming
@@ -245,3 +252,21 @@ const url = `${baseUrl}/users/${userId}`;
 13. Flujos asíncronos
 
 - La asincronía se maneja con `async/await`. No se utiliza `setTimeout` para manejar flujos asíncronos, ni el la implementación ni en las pruebas. Solo es válido para desistir de la operación luego de no recibir respuesta por un tiempo aceptable.
+
+## 14. Non-null Assertion Operator (!)
+
+✅ **Usar cuando el flujo de negocio garantiza que un valor existe:**
+```typescript
+// La UI valida la existencia
+<button 
+  disabled={!sourceLanguage}
+  onClick={() => translate(sourceLanguage!)}
+>
+```
+
+**Justificación**: Re-validar en cada función es código redundante cuando la UI o validaciones previas ya garantizan la existencia del valor.
+
+Si eslint se queja, configurar:
+```json
+"@typescript-eslint/no-non-null-assertion": "off"
+```
