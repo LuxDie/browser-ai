@@ -18,6 +18,7 @@
 ## Herramientas
 - **Vitest**: Framework de pruebas unitarias
 - **WXT Fake Browser**: Entorno de navegador simulado para pruebas de extensiones
+- **Vue Test Utils**: Utilidades para probar componentes Vue
 - **@types/chrome**: Tipos para Chrome Extension APIs
 - **@types/dom-chromium-ai**: Tipos para Chrome AI APIs
 
