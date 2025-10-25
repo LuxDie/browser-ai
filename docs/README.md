@@ -7,11 +7,12 @@ Este directorio organiza la documentación siguiendo un enfoque Specification-Fi
   - `general-description.md`
   - `roadmap.md`
   - `ai-architecture.md`
+  - `wxt-architecture.md`
+  - `ui.md`
+  - `ux.md`
 - Especificaciones
   - `specs/extension-architecture.md`
   - `specs/user-flows.md`
-  - `ui.md`
-  - `ux.md`
 - Guías de implementación
   - `guides/typescript.md`
   - `guides/tailwind.md`
