@@ -11,12 +11,14 @@ alwaysApply: false
 ## Formato Requerido
 
 - **Prefijo de tipo:** Usar tipos de commit convencionales: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`, `chore:`
+- **Ámbito de tipo:** Opcional, para señalar un área específica del cambio (spec, dev, mock, unit, etc.). Se debe usar una división por dominio en vez de por característica técnica (ej. `feature(user)` en vez de `feature(template)`)
 - **Línea de resumen:** Máximo 50 caracteres, escribir en inglés, ser conciso y claro
 - **Cuerpo del mensaje:** Opcional, para explicaciones detalladas si son necesarias
 - **Ejemplos:**
-  - `feat: add user authentication system`
-  - `fix: resolve memory leak in data processing`
-  - `docs: update API documentation`
+  - `feat(user): add user authentication system`
+  - `fix(data): resolve memory leak in data processing`
+  - `docs: update README.md`
+  - `docs(dev): update TypeScript guidelines`
   - `test: add unit tests for user service`
 
 ## ¿Por qué en inglés?
