@@ -31,6 +31,14 @@
 - **DownloadProgress**: Indicador de progreso de descarga
 - **NotificationHandler**: Manejar notificaciones push del sistema
 
+### Implementación Técnica de UI Components
+- **Framework Frontend**: Vue 3 con Composition API y `<script setup>`
+- **Lenguaje**: TypeScript para tipado fuerte
+- **Estilos**: Tailwind CSS para diseño responsivo y consistente
+- **Gestión de Estado**: Pinia para estado global compartido entre componentes
+- **Pruebas**: Vue Test Utils con Vitest para cobertura unitaria
+- **Build Tool**: WXT con módulo Vue para integración en extensiones
+
 ## Integración con IA
 - Preferencia por APIs integradas del navegador
 - Abstracción de proveedores
