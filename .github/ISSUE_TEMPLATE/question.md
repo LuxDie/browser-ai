@@ -9,19 +9,19 @@ assignees: ''
 
 ## 🤔 Pregunta
 
-Formula tu pregunta de manera clara y concisa.
+<!-- Formula tu pregunta de manera clara y concisa. -->
 
 ### 📚 Contexto
 
-Proporciona contexto adicional que ayude a entender tu pregunta:
+<!-- Proporciona contexto adicional que ayude a entender tu pregunta:
 
 - ¿Qué estabas intentando hacer?
 - ¿Dónde encontraste la información que te confundió?
-- ¿Qué documentación ya revisaste?
+- ¿Qué documentación ya revisaste? -->
 
 ### 🔍 Investigación Previa
 
-¿Ya intentaste buscar la respuesta en:
+<!-- ¿Ya intentaste buscar la respuesta en: -->
 
 - [ ] Documentación en `docs/`
 - [ ] Issues existentes
@@ -31,11 +31,11 @@ Proporciona contexto adicional que ayude a entender tu pregunta:
 
 ### 💡 Tu Hipótesis
 
-Si tienes alguna idea de cuál podría ser la respuesta, compártela.
+<!-- Si tienes alguna idea de cuál podría ser la respuesta, compártela. -->
 
 ### 🖥️ Información del Entorno
 
-Si tu pregunta está relacionada con un problema técnico:
+<!-- Si tu pregunta está relacionada con un problema técnico: -->
 
 - **Sistema Operativo:** [ej: Windows 10, Ubuntu 20.04]
 - **Node.js versión:** [ej: 18.15.0]
@@ -44,7 +44,7 @@ Si tu pregunta está relacionada con un problema técnico:
 
 ### 📎 Archivos Relevantes
 
-Si aplica, menciona archivos específicos del proyecto relacionados con tu pregunta.
+<!-- Si aplica, menciona archivos específicos del proyecto relacionados con tu pregunta. -->
 
 ---
 

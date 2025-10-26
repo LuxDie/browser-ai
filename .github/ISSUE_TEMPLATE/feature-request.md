@@ -9,34 +9,34 @@ assignees: ''
 
 ## 📋 Descripción de la Funcionalidad
 
-Describe claramente qué funcionalidad propones y cuál problema resolvería.
+<!-- Describe claramente qué funcionalidad propones y cuál problema resolvería. -->
 
 ### 🎯 Problema que Resuelve
 
-Explica el problema actual que esta funcionalidad solucionaría.
+<!-- Explica el problema actual que esta funcionalidad solucionaría. -->
 
 ### 💡 Solución Propuesta
 
-Describe cómo imaginas que funcionaría esta nueva funcionalidad.
+<!-- Describe cómo imaginas que funcionaría esta nueva funcionalidad. -->
 
 ### 🔄 Alternativas Consideradas
 
-Describe otras soluciones o funcionalidades que consideraste.
+<!-- Describe otras soluciones o funcionalidades que consideraste. -->
 
 ### 📊 Impacto y Beneficios
 
-- **Usuarios afectados:** ¿Qué usuarios se beneficiarían?
-- **Impacto:** ¿Cómo mejoraría la experiencia del usuario?
-- **Alcance:** ¿Es una funcionalidad pequeña o grande?
+- **Usuarios afectados:** <!-- ¿Qué usuarios se beneficiarían? -->
+- **Impacto:** <!-- ¿Cómo mejoraría la experiencia del usuario? -->
+- **Alcance:** <!-- ¿Es una funcionalidad pequeña o grande? -->
 
 ### 🎨 Detalles de Implementación
 
 Si tienes ideas específicas sobre cómo implementarlo:
 
-- **Arquitectura:** Cambios necesarios en la arquitectura
-- **Tecnologías:** Nuevas dependencias o tecnologías
-- **UI/UX:** Cambios en la interfaz de usuario
-- **API:** Nuevos endpoints o cambios en la API
+- **Arquitectura:** <!-- Cambios necesarios en la arquitectura -->
+- **Tecnologías:** <!-- Nuevas dependencias o tecnologías -->
+- **UI/UX:** <!-- Cambios en la interfaz de usuario -->
+- **API:** <!-- Nuevos endpoints o cambios en la API -->
 
 ### 📈 Prioridad
 
@@ -53,9 +53,11 @@ Si tienes ideas específicas sobre cómo implementarlo:
 
 ### 🔗 Issues Relacionados
 
+<!--
 - Relacionado con #XXX
 - Depende de #XXX
 - Bloqueado por #XXX
+-->
 
 ---
 

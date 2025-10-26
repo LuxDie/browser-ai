@@ -9,26 +9,28 @@ assignees: ''
 
 ## 📋 Descripción del Bug
 
-Describe claramente cuál es el problema que estás experimentando.
+<!-- Describe claramente cuál es el problema que estás experimentando. -->
 
 ### 🔄 Pasos para Reproducir
 
+<!--
 1. Ve a '...'
 2. Haz clic en '....'
 3. Desplázate hacia '....'
 4. Observa el error
+-->
 
 ### ✅ Comportamiento Esperado
 
-Describe qué debería suceder normalmente.
+<!-- Describe qué debería suceder normalmente. -->
 
 ### ❌ Comportamiento Actual
 
-Describe qué está sucediendo en realidad.
+<!-- Describe qué está sucediendo en realidad. -->
 
 ### 📸 Capturas de Pantalla
 
-Si aplica, agrega capturas de pantalla que muestren el problema.
+<!-- Si aplica, agrega capturas de pantalla que muestren el problema. -->
 
 ### 🖥️ Información del Entorno
 
@@ -39,11 +41,11 @@ Si aplica, agrega capturas de pantalla que muestren el problema.
 
 ### 📊 Información Adicional
 
-Agrega cualquier otra información relevante:
+<!-- Agrega cualquier otra información relevante:
 - Logs de error en consola
 - Configuración específica
 - Pasos que ya intentaste
-- Impacto del bug
+- Impacto del bug -->
 
 ### 🔍 Prioridad
 
