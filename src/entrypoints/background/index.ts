@@ -1,12 +1,12 @@
 import { defineBackground } from 'wxt/utils/define-background';
 import { browser } from 'wxt/browser';
 import {
-  getLanguagePairKey,
-  type ModelStatus,
   type PendingTranslation
 } from '@/utils';
 import { AVAILABLE_LANGUAGES, type LanguageCode } from '@/entrypoints/background/available-languages';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
+import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
+import type { TranslatorAPI, LanguageDetectorAPI } from '@/entrypoints/background/model-manager/model-manager.model';
 
 export type { LanguageCode } from '@/entrypoints/background/available-languages';
 export type AvailableLanguages = typeof AVAILABLE_LANGUAGES;
@@ -15,31 +15,8 @@ export const DEFAULT_TARGET_LANGUAGE: LanguageCode = 'es';
 export default defineBackground({
   type: 'module',
   main() {
-  // Declare Chrome AI API interfaces for type safety
-  interface TranslatorAPI {
-    availability(options: { sourceLanguage: string; targetLanguage: string }): Promise<string>;
-    create(options: { sourceLanguage: string; targetLanguage: string }): Promise<TranslatorInstance>;
-  }
 
-  interface TranslatorInstance {
-    translate(text: string): Promise<string>;
-  }
-
-  interface LanguageDetectionResult {
-    confidence: number;
-    detectedLanguage: LanguageCode;
-  }
-
-  interface LanguageDetectorInstance {
-    detect(text: string): Promise<LanguageDetectionResult[]>;
-  }
-
-  interface LanguageDetectorAPI {
-    availability(): Promise<string>;
-    create(): Promise<LanguageDetectorInstance>;
-  }
-
-  // Type-safe access helpers for buil-in AI APIs
+  // Type-safe access helpers for built-in AI APIs
   const getTranslatorAPI = (): TranslatorAPI | undefined => {
     return (self as typeof self & { Translator?: TranslatorAPI }).Translator;
   };
@@ -50,9 +27,6 @@ export default defineBackground({
 
   // Background script para Browser AI
   // Maneja eventos del navegador y comunicación entre componentes
-
-  // Cache de estado de modelos
-  const modelStatusCache = new Map<string, ModelStatus>();
 
   // Traducción pendiente durante descarga
   let pendingTranslation: PendingTranslation | null = null;
@@ -80,159 +54,6 @@ export default defineBackground({
     return detectedLang;
   }
 
-  // ModelManager: Gestión de modelos de traducción
-  class ModelManager {
-    static #instance: ModelManager | null = null;
-
-    static getInstance(): ModelManager {
-      if (!ModelManager.#instance) {
-        ModelManager.#instance = new ModelManager();
-      }
-      return ModelManager.#instance;
-    }
-
-    // Generar clave única para par de idiomas
-    #getLanguagePairKey(source: string, target: string): string {
-      return getLanguagePairKey(source, target);
-    }
-
-    // Verificar disponibilidad de modelo
-    async checkModelAvailability(source: string, target: string): Promise<ModelStatus> {
-      const key = this.#getLanguagePairKey(source, target);
-      const translator = getTranslatorAPI();
-
-      if (!translator) {
-        return {
-          available: false,
-          downloading: false,
-          error: 'Chrome AI APIs no disponibles'
-        };
-      }
-
-      try {
-        const availability = await translator.availability({
-          sourceLanguage: source,
-          targetLanguage: target
-        });
-
-        console.log(`🔍 Checking model availability for ${source}→${target}:`, availability);
-
-        let status: ModelStatus;
-
-        if (availability === 'available') {
-          status = {
-            available: true,
-            downloading: false
-          };
-        } else if (availability === 'downloadable') {
-          status = {
-            available: false,
-            downloading: false,
-            error: 'Modelo descargable pero no disponible localmente'
-          };
-        } else if (availability === 'downloading') {
-          status = {
-            available: false,
-            downloading: true,
-            progress: 0
-          };
-        } else {
-          status = {
-            available: false,
-            downloading: false,
-            error: `Modelo no soportado: ${availability}`
-          };
-        }
-
-        // Actualizar caché solo para estados de descarga en progreso
-        if (availability === 'downloading') {
-          modelStatusCache.set(key, status);
-        } else if (availability === 'available') {
-          // Limpiar caché cuando el modelo está disponible
-          modelStatusCache.delete(key);
-        }
-
-        return status;
-      } catch (error: unknown) {
-        console.error(`❌ Error al verificar la disponibilidad del modelo para ${source}→${target}:`, error);
-        return {
-          available: false,
-          downloading: false,
-          error: `Error al verificar la disponibilidad del modelo: ${error instanceof Error ? error.message : String(error)}`
-        };
-      }
-    }
-
-    // Descargar modelo
-    async downloadModel(source: string, target: string): Promise<ModelStatus> {
-      const key = this.#getLanguagePairKey(source, target);
-      const translator = getTranslatorAPI();
-
-      if (!translator) {
-        const status: ModelStatus = {
-          available: false,
-          downloading: false,
-          error: 'Chrome AI APIs no disponibles para descarga'
-        };
-        modelStatusCache.set(key, status);
-        return status;
-      }
-
-      modelStatusCache.set(key, {
-        available: false,
-        downloading: true,
-        progress: 0
-      });
-
-      try {
-        console.log(`⏳ Downloading model for ${source}→${target}...`);
-        // Crear el traductor (esto descarga el modelo si es necesario)
-        await translator.create({
-          sourceLanguage: source,
-          targetLanguage: target
-        });
-
-        console.log(`✅ Model for ${source}→${target} downloaded successfully.`);
-        modelStatusCache.delete(key);
-        return {
-          available: true,
-          downloading: false
-        };
-      } catch (error: unknown) {
-        console.error(`❌ Error al descargar el modelo para ${source}→${target}:`, error);
-        const status: ModelStatus = {
-          available: false,
-          downloading: false,
-          error: `Error al descargar el modelo: ${error instanceof Error ? error.message : String(error)}`
-        };
-        modelStatusCache.set(key, status);
-        return status;
-      }
-    }
-
-    // Traducir texto
-    async translate(text: string, source: string, target: string): Promise<string> {
-      const translator = getTranslatorAPI();
-
-      if (!translator) {
-        return 'Error: Chrome AI APIs no disponibles para traducción';
-      }
-
-      try {
-        console.log(`Translating "${text}" from ${source} to ${target}`);
-        const translatorInstance = await translator.create({
-          sourceLanguage: source,
-          targetLanguage: target
-        });
-        const translatedText = await translatorInstance.translate(text);
-        console.log(`Translated: "${translatedText}"`);
-        return translatedText;
-      } catch (error: unknown) {
-        console.error('❌ Error al traducir texto:', error);
-        return `Error al traducir: ${error instanceof Error ? error.message : String(error)}`;
-      }
-    }
-  }
 
   // TranslationService: Abstracción de proveedores y gestión de traducciones
   class TranslationService {
