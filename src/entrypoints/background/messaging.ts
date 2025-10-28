@@ -1,5 +1,5 @@
 import { defineExtensionMessaging } from '@webext-core/messaging';
-import { AvailableLanguages, LanguageCode } from '@/entrypoints/background/index';
+import { AvailableLanguages, LanguageCode } from '@/entrypoints/background';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
 export interface AvailableLanguagesResponse {
@@ -59,6 +59,15 @@ export interface ProtocolMap {
   selectedText(text: string): void;
   translationCompleted(data: TranslationCompleted): void;
   modelStatusUpdate(data: AIModelStatus): void;
+}
+
+export interface APIAvailability {
+  translator: boolean;
+  languageDetector: boolean;
+  summarizer: boolean;
+  languageDetectorState?: string;
+  translatorState?: string;
+  summarizerState?: string;
 }
 
 const messaging = defineExtensionMessaging<ProtocolMap>();

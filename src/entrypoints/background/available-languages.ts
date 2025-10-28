@@ -43,3 +43,7 @@ export const AVAILABLE_LANGUAGES = [
 ] as const;
 
 export type LanguageCode = typeof AVAILABLE_LANGUAGES[number]['code'];
+
+export const SUMMARIZER_LANGUAGE_CODES = ['en', 'es', 'ja'] as const;
+
+export type SummarizerLanguageCode = typeof SUMMARIZER_LANGUAGE_CODES[number];

@@ -9,7 +9,7 @@ export default defineConfig({
     environment: 'happy-dom',
     globals: true,
     setupFiles: ['./src/tests/setup.ts'],
-    clearMocks: true,
+    mockReset: true,
   },
   resolve: {
     alias: {

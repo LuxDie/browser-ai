@@ -1,4 +1,12 @@
 import { vi } from 'vitest';
+import { createAIMock, setupAIMock } from '@/tests/mocks';
+
+// Mock de las APIs de IA integradas
+const mockAI = createAIMock();
+setupAIMock(mockAI);
+
+vi.stubGlobal('self', mockAI);
+
 
 // Mock de las APIs de IA integradas
 Object.defineProperty(globalThis, 'translator', {

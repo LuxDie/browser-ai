@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi, MockInstance } from 'vitest';
 import { fakeBrowser } from 'wxt/testing';
 import { browser } from 'wxt/browser';
-import { createAIMock, createTranslatorMock } from '@/tests/mocks';
+import { createAIMock, createTranslatorMock, detectorInstance } from '@/tests/mocks';
 import {
   sendMessage,
   onMessage,
@@ -93,35 +93,22 @@ describe('Background Script', () => {
 
   describe('onMessage Listener', () => {
     describe('when receiving a detectLanguage message', () => {
-      const testText = 'This is a test';
-      const detectedLanguage = 'en';
-      
-      // Crear la instancia del detector que será retornada por el mock
-      const detectorInstance = {
-        detect: vi.fn().mockResolvedValue([
+      it('should call the language detection API with the correct text', async () => {
+        const testText = 'This is a test';
+        await sendMessage('detectLanguage', { text: testText });
+        expect(detectorInstance.detect).toHaveBeenCalledOnce();
+        expect(detectorInstance.detect).toHaveBeenCalledWith(testText);
+      });
+
+      it('should return the detected language', async () => {
+        const detectedLanguage = 'en';
+        detectorInstance.detect.mockResolvedValue([
           {
             confidence: 1,
             detectedLanguage,
           },
-        ]),
-      };
-      
-      // Configurar el mock para retornar siempre la misma instancia
-      const detectMock = detectorInstance.detect;
-
-      beforeAll(() => {
-        // Configurar el mock de LanguageDetector.create para retornar nuestra instancia
-        mockAI.LanguageDetector.create.mockResolvedValue(detectorInstance);
-      });
-
-      it('should call the language detection API with the correct text', async () => {
-        await sendMessage('detectLanguage', { text: testText });
-        expect(detectMock).toHaveBeenCalledOnce();
-        expect(detectMock).toHaveBeenCalledWith(testText);
-      });
-
-      it('should return the detected language', async () => {
-        const result = await sendMessage('detectLanguage', { text: testText });
+        ]);
+        const result = await sendMessage('detectLanguage', { text: 'test' });
         expect(result).toEqual({ languageCode: detectedLanguage });
       });
     });
@@ -195,7 +182,7 @@ describe('Background Script', () => {
 
         expect(browser.notifications.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            message: 'La traducción se ha completado'
+            message: 'El texto se ha procesado'
           })
         );
       });

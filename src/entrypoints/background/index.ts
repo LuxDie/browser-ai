@@ -6,10 +6,14 @@ import {
 import { AVAILABLE_LANGUAGES, type LanguageCode } from '@/entrypoints/background/available-languages';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
-import type { TranslatorAPI, LanguageDetectorAPI } from '@/entrypoints/background/model-manager/model-manager.model';
+import { registerAIService } from '@/entrypoints/background/ai/ai.service';
+
+// Registrar servicios proxy
+registerAIService();
 
 export type { LanguageCode } from '@/entrypoints/background/available-languages';
 export type AvailableLanguages = typeof AVAILABLE_LANGUAGES;
+export type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 export const DEFAULT_TARGET_LANGUAGE: LanguageCode = 'es';
 
 export default defineBackground({
@@ -17,12 +21,12 @@ export default defineBackground({
   main() {
 
   // Type-safe access helpers for built-in AI APIs
-  const getTranslatorAPI = (): TranslatorAPI | undefined => {
-    return (self as typeof self & { Translator?: TranslatorAPI }).Translator;
+  const getTranslatorAPI = (): typeof Translator | undefined => {
+    return (self as typeof self & { Translator?: typeof Translator }).Translator;
   };
 
-  const getLanguageDetectorAPI = (): LanguageDetectorAPI | undefined => {
-    return (self as typeof self & { LanguageDetector?: LanguageDetectorAPI }).LanguageDetector;
+  const getLanguageDetectorAPI = (): typeof LanguageDetector | undefined => {
+    return (self as typeof self & { LanguageDetector?: typeof LanguageDetector }).LanguageDetector;
   };
 
   // Background script para Browser AI
@@ -77,21 +81,24 @@ export default defineBackground({
         if (availability === 'available') {
           const detector = await languageDetectorAPI.create();
           const results = await detector.detect(text);
-          const detected = results[0]?.detectedLanguage;
-          if (!detected) {
+          // Take the most probable detected language
+          const result = results[0];
+          const detectedLanguage = result?.detectedLanguage;
+          if (!detectedLanguage) {
             throw new Error('No se pudo detectar el idioma del texto proporcionado');
           }
-          return detected;
+          return detectedLanguage as LanguageCode;
         } else if (availability === 'downloadable') {
           console.log('LanguageDetector model is downloadable, attempting to download...');
           // Intentar crear el detector para iniciar la descarga
           const detector = await languageDetectorAPI.create();
           const results = await detector.detect(text);
-          const detected = results[0]?.detectedLanguage;
-          if (!detected) {
+          const result = results[0];
+          const detectedLanguage = result?.detectedLanguage;
+          if (!detectedLanguage) {
             throw new Error('No se pudo detectar el idioma del texto proporcionado');
           }
-          return detected;
+          return detectedLanguage as LanguageCode;
         } else if (availability === 'downloading') {
           console.log('LanguageDetector model is currently downloading, waiting...');
           throw new Error('El modelo LanguageDetector se está descargando actualmente. Por favor, espere e inténtelo de nuevo.');
@@ -196,7 +203,7 @@ export default defineBackground({
   // Manejadores de mensajes usando @webext-core/messaging
   onMessage('getModelStatus', async (message) => {
     const { source, target } = message.data as { source: string; target: string };
-    return await modelManager.checkModelAvailability(source, target);
+    return await modelManager.checkModelStatus({ type: 'translation', source, target });
   });
 
   onMessage('detectLanguage', async (message) => {
@@ -211,13 +218,13 @@ export default defineBackground({
     let sendNotification = false;
 
     // Verificar disponibilidad del modelo
-    let modelStatus = await modelManager.checkModelAvailability(sourceLanguage, targetLanguage);
+    let modelStatus = await modelManager.checkModelStatus({ type: 'translation', source: sourceLanguage, target: targetLanguage });
     if (modelStatus.state === 'downloadable') {
       // Si la traducción requiere descargar un modelo, mostraremos una notificación al finalizar
       sendNotification = true;
       modelStatus.state = 'downloading';
       void sendMessage('modelStatusUpdate', modelStatus);
-      modelStatus = await modelManager.downloadModel(sourceLanguage, targetLanguage);
+      modelStatus = await modelManager.downloadModel({ type: 'translation', source: sourceLanguage, target: targetLanguage });
       void sendMessage('modelStatusUpdate', modelStatus);
     }
 
@@ -226,8 +233,8 @@ export default defineBackground({
     if (sendNotification) {
       void browser.notifications.create({
         type: 'basic',
-        title: 'Notificación de traducción',
-        message: 'La traducción se ha completado',
+        title: 'Browser AI',
+        message: 'El texto se ha procesado',
         iconUrl: 'icons/icon-128.png'
       });
     }
@@ -235,10 +242,8 @@ export default defineBackground({
     return translatedText;
   });
 
-  onMessage('checkAPIAvailability', async () => {
-    const availability = await translationService.checkAPIAvailability();
-    console.log('API availability check:', availability);
-    return availability;
+  onMessage('checkAPIAvailability', () => {
+    return modelManager.checkAPIAvailability();
   });
 
   onMessage('cancelPendingTranslations', () => {
