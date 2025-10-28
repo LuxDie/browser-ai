@@ -1,31 +1,13 @@
-import type { LanguageCode } from '@/entrypoints/background/available-languages';
 
-// Declare Chrome AI API interfaces for type safety
-export interface TranslatorAPI {
-  availability(options: { sourceLanguage: string; targetLanguage: string }): Promise<string>;
-  create(options: { sourceLanguage: string; targetLanguage: string }): Promise<TranslatorInstance>;
-}
+import type { SummarizerLanguageCode } from '@/entrypoints/background/available-languages';
 
-export interface TranslatorInstance {
-  translate(text: string): Promise<string>;
-}
-
-export interface LanguageDetectionResult {
-  confidence: number;
-  detectedLanguage: LanguageCode;
-}
-
-export interface LanguageDetectorInstance {
-  detect(text: string): Promise<LanguageDetectionResult[]>;
-}
-
-export interface LanguageDetectorAPI {
-  availability(): Promise<string>;
-  create(): Promise<LanguageDetectorInstance>;
+export interface SummarizerOptions extends Omit<SummarizerCreateOptions, 'expectedInputLanguages' | 'outputLanguage'> {
+  expectedInputLanguages: SummarizerLanguageCode[];
+  outputLanguage: SummarizerLanguageCode;
 }
 
 export interface AIModelStatus {
-  state: 'available' | 'downloadable' | 'downloading' | 'unavailable'
+  state: Availability;
   errorMessage?: string;
   downloadProgress?: number;
 }

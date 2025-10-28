@@ -1,21 +1,34 @@
 import { vi } from 'vitest';
 
+export const detectorInstance = {
+  detect: vi.fn(() => Promise.resolve([
+    {
+      confidence: 1,
+      detectedLanguage: 'en',
+    },
+  ])),
+};
+
 /**
- * Mock para las APIs de IA (self.Translator, self.LanguageDetector)
+ * Mock para las APIs de IA (self.Translator, self.LanguageDetector, self.Summarizer)
  * Este mock simula el comportamiento de las APIs de IA del navegador
  */
 export const createAIMock = () => ({
   Translator: {
-    availability: vi.fn().mockResolvedValue('available'),
-    create: vi.fn().mockResolvedValue({
+    availability: vi.fn(() => Promise.resolve('available')),
+    create: vi.fn(() => Promise.resolve({
       translate: vi.fn(),
-    }),
+    })),
   },
   LanguageDetector: {
-    availability: vi.fn().mockResolvedValue('available'),
-    create: vi.fn().mockResolvedValue({
-      detect: vi.fn(),
-    }),
+    availability: vi.fn(() => Promise.resolve('available')),
+    create: vi.fn(() => Promise.resolve(detectorInstance)),
+  },
+  Summarizer: {
+    availability: vi.fn(() => Promise.resolve('available')),
+    create: vi.fn(() => Promise.resolve({
+      summarize: vi.fn(),
+    })),
   },
 });
 
@@ -62,3 +75,39 @@ export const createLanguageDetectorErrorMock = (errorMessage: string) => ({
 export const createTranslatorErrorMock = (errorMessage: string) => ({
   translate: vi.fn().mockRejectedValue(new Error(errorMessage)),
 });
+
+/**
+ * Crea un mock específico para el summarizer
+ * @param summaryText - El texto resumido a retornar
+ */
+export const createSummarizerMock = (summaryText = '') => ({
+  summarize: vi.fn().mockResolvedValue(summaryText),
+});
+
+/**
+ * Crea un mock que simula un error en el resumen
+ * @param errorMessage - Mensaje de error
+ */
+export const createSummarizerErrorMock = (errorMessage: string) => ({
+  summarize: vi.fn().mockRejectedValue(new Error(errorMessage)),
+});
+
+/**
+ * Configura el mock del traductor en el mock global de AI
+ * @param mockTranslator - El mock del traductor a configurar
+ */
+export const setupTranslatorMock = (mockTranslator: ReturnType<typeof createTranslatorMock>) => {
+  const mockAI = createAIMock();
+  mockAI.Translator.create = vi.fn().mockResolvedValue(mockTranslator);
+  vi.stubGlobal('self', mockAI);
+};
+
+/**
+ * Configura el mock del detector de idiomas en el mock global de AI
+ * @param mockDetector - El mock del detector a configurar
+ */
+export const setupLanguageDetectorMock = (mockDetector: ReturnType<typeof createLanguageDetectorMock>) => {
+  const mockAI = createAIMock();
+  mockAI.LanguageDetector.create = vi.fn().mockResolvedValue(mockDetector);
+  vi.stubGlobal('self', mockAI);
+};
