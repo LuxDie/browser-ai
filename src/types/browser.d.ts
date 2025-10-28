@@ -40,13 +40,6 @@ interface ChromeMessage {
   data?: unknown
 }
 
-interface ModelStatus {
-  available: boolean
-  downloading: boolean
-  progress?: number
-  error?: string
-}
-
 interface PendingTranslation {
   text: string
   sourceLanguage: string

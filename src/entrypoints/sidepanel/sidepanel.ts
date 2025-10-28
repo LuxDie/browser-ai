@@ -1,13 +1,17 @@
-import './sidepanel.css';
-import { onMessage, sendMessage } from '../background/messaging';
-import { DEFAULT_TARGET_LANGUAGE } from '../background';
-import type { AvailableLanguages, LanguageCode } from '../background';
+import '@/entrypoints/sidepanel/sidepanel.css';
+import {
+  DEFAULT_TARGET_LANGUAGE,
+  AvailableLanguages,
+  LanguageCode,
+} from '@/entrypoints/background';
+import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '../background/model-manager/model-manager.model';
 
 interface TranslationState {
   text: string
   translatedText: string
   editedTranslatedText: string
+  summaryText: string
   sourceLanguage: LanguageCode | null
   targetLanguage: LanguageCode
   isLoading: boolean
@@ -22,6 +26,7 @@ export class SidepanelApp {
     text: '',
     translatedText: '',
     editedTranslatedText: '',
+    summaryText: '',
     sourceLanguage: null,
     targetLanguage: DEFAULT_TARGET_LANGUAGE,
     isLoading: false,

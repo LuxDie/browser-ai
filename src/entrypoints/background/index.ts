@@ -7,9 +7,14 @@ import { AVAILABLE_LANGUAGES, type LanguageCode } from '@/entrypoints/background
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import type { TranslatorAPI, LanguageDetectorAPI } from '@/entrypoints/background/model-manager/model-manager.model';
+import { registerProcessTextService } from '@/entrypoints/background/process-text/process-text.service';
+
+// Registrar servicios proxy
+registerProcessTextService();
 
 export type { LanguageCode } from '@/entrypoints/background/available-languages';
 export type AvailableLanguages = typeof AVAILABLE_LANGUAGES;
+export type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 export const DEFAULT_TARGET_LANGUAGE: LanguageCode = 'es';
 
 export default defineBackground({
@@ -196,7 +201,7 @@ export default defineBackground({
   // Manejadores de mensajes usando @webext-core/messaging
   onMessage('getModelStatus', async (message) => {
     const { source, target } = message.data as { source: string; target: string };
-    return await modelManager.checkModelAvailability(source, target);
+    return await modelManager.checkModelStatus({ type: 'translation', source, target });
   });
 
   onMessage('detectLanguage', async (message) => {
@@ -211,13 +216,13 @@ export default defineBackground({
     let sendNotification = false;
 
     // Verificar disponibilidad del modelo
-    let modelStatus = await modelManager.checkModelAvailability(sourceLanguage, targetLanguage);
+    let modelStatus = await modelManager.checkModelStatus({ type: 'translation', source: sourceLanguage, target: targetLanguage });
     if (modelStatus.state === 'downloadable') {
       // Si la traducción requiere descargar un modelo, mostraremos una notificación al finalizar
       sendNotification = true;
       modelStatus.state = 'downloading';
       void sendMessage('modelStatusUpdate', modelStatus);
-      modelStatus = await modelManager.downloadModel(sourceLanguage, targetLanguage);
+      modelStatus = await modelManager.downloadModel({ type: 'translation', source: sourceLanguage, target: targetLanguage });
       void sendMessage('modelStatusUpdate', modelStatus);
     }
 
@@ -226,8 +231,8 @@ export default defineBackground({
     if (sendNotification) {
       void browser.notifications.create({
         type: 'basic',
-        title: 'Notificación de traducción',
-        message: 'La traducción se ha completado',
+        title: 'Browser AI',
+        message: 'El texto se ha procesado',
         iconUrl: 'icons/icon-128.png'
       });
     }
@@ -235,10 +240,8 @@ export default defineBackground({
     return translatedText;
   });
 
-  onMessage('checkAPIAvailability', async () => {
-    const availability = await translationService.checkAPIAvailability();
-    console.log('API availability check:', availability);
-    return availability;
+  onMessage('checkAPIAvailability', () => {
+    return modelManager.checkAPIAvailability();
   });
 
   onMessage('cancelPendingTranslations', () => {
