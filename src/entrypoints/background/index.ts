@@ -287,7 +287,7 @@ export default defineBackground({
     }
 
     // Verificar disponibilidad real de APIs
-    async checkAPIAvailability(): Promise<{translator: boolean, languageDetector: boolean, languageDetectorState?: string, translatorState?: string}> {
+    async checkAPIAvailability(): Promise<boolean> {
       const result = { 
         translator: false, 
         languageDetector: false,
@@ -330,7 +330,7 @@ export default defineBackground({
         console.error('Error checking API availability:', error);
       }
 
-      return result;
+      return result.languageDetector || result.translator;
     }
   }
 

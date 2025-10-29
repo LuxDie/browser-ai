@@ -50,12 +50,7 @@ export interface ProtocolMap {
   getModelStatus(data: { source: string; target: string }): ModelStatus;
   detectLanguage(data: { text: string }): { languageCode: LanguageCode };
   translateText(data: { text: string; targetLanguage: LanguageCode; sourceLanguage: LanguageCode }): string;
-  checkAPIAvailability(): { 
-    translator: boolean; 
-    languageDetector: boolean;
-    languageDetectorState?: string;
-    translatorState?: string;
-  };
+  checkAPIAvailability(): boolean;
   cancelPendingTranslations(): { cancelled: boolean };
   getAvailableLanguages(): { languages: AvailableLanguages };
   getBrowserLanguage(): LanguageCode | null;
