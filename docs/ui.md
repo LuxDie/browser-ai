@@ -1,3 +1,8 @@
+# Documentación de UI
+
+**Versión:** v0.3.0
+**Última modificación:** 2025-10-29
+
 La UI se presenta en un panel lateral con una única vista para facilitar el uso combinado y encadenado de las distintas funciones.
 
 ## Disparadores de la Extensión
@@ -47,23 +52,22 @@ Para encadenar acciones (ej. resumir y luego traducir), el usuario puede usar el
 
 ## Indicadores de Disponibilidad
 
-### Píldoras de Estado de APIs (Solo Disponibilidad de APIs)
-En la parte superior del panel se muestran píldoras que indican únicamente si las APIs nativas de Chrome están disponibles en el entorno:
+### Advertencia de Indisponibilidad de Funcionalidad
+Cuando las APIs principales para traducción no están disponibles y no hay alternativas funcionales, se muestra una advertencia amarilla en la parte superior del panel:
 
 ```
 ┌─────────────────────────────────────┐
 │ Browser AI                          │
 │ Traducción con IA integrada         │
-│                                     │
-│ ✅ Traductor    ✅ Detector de Idioma│
+│ ⚠️ Las APIs nativas de Chrome no    │
+│ están disponibles. Asegúrate de     │
+│ usar Chrome 138+ con               │
+│ características de IA habilitadas.  │
 └─────────────────────────────────────┘
 ```
 
-**Estados de las píldoras:**
-- ✅ **Verde**: API disponible en el entorno
-- ❌ **Rojo**: API no disponible en este entorno
-
-**Importante**: Estas píldoras indican únicamente si las APIs nativas de Chrome están disponibles en el entorno. NO muestran información sobre descarga de modelos específicos.
+**Comportamiento:**
+- Se muestra únicamente cuando no hay ninguna funcionalidad de procesamiento de texto disponible
 
 ## Indicador de Origen de Traducción
 
@@ -156,11 +160,11 @@ La configuración general (como el idioma de traducción predeterminado) se gest
 
 ## Separación de Conceptos: APIs vs Modelos
 
-### Disponibilidad de APIs (Píldoras Superiores)
-- **Propósito**: Indicar si las APIs nativas de Chrome están disponibles en el entorno
-- **Ubicación**: Parte superior del panel, junto al título
-- **Estados**: Disponible, No disponible
-- **Alcance**: General para todas las funciones (traducción, detección de idioma)
+### Disponibilidad de Funcionalidad (Advertencia)
+- **Propósito**: Alertar cuando no hay ninguna funcionalidad de procesamiento de texto disponible
+- **Ubicación**: Parte superior del panel (solo cuando hay problemas)
+- **Estados**: Oculta (cuando funciona), Visible (cuando no hay funcionalidad disponible)
+- **Alcance**: General para todas las funciones de procesamiento de texto
 
 ### Disponibilidad de Modelos (Sección Específica)
 - **Propósito**: Indicar si el modelo específico para el par de idiomas está descargado
@@ -169,6 +173,5 @@ La configuración general (como el idioma de traducción predeterminado) se gest
 - **Alcance**: Específico para el par de idiomas actual (ej: ES→EN)
 
 Esta separación permite al usuario entender claramente:
-1. Si su entorno soporta las APIs nativas (píldoras)
+1. Si hay funcionalidad básica disponible (presencia/ausencia de advertencia)
 2. Si el modelo específico para su traducción está listo (sección de modelo)
-
