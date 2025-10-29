@@ -121,28 +121,6 @@ describe('SidepanelApp', () => {
     expect(messageHandlerSpies.sidepanelReady).toHaveBeenCalled();
   });
 
-  it('should initialize with correct API availability information', async () => {
-    await initSidepanelApp({
-      checkAPIAvailability: () => ({ translator: true, languageDetector: true })
-    });
-
-    const root = document.getElementById('root');
-    expect(root?.innerHTML).toContain('✅ Traductor');
-    expect(root?.innerHTML).toContain('✅ Detector de Idioma');
-    expect(root?.innerHTML).not.toContain('⚠️ Las APIs nativas de Chrome no están disponibles');
-  });
-
-  it('should handle API availability check failure gracefully', async () => {
-    await initSidepanelApp({
-      checkAPIAvailability: () => ({ translator: false, languageDetector: false })
-    });
-
-    const root = document.getElementById('root');
-    expect(root?.innerHTML).toContain('❌ Traductor');
-    expect(root?.innerHTML).toContain('❌ Detector de Idioma');
-    expect(root?.innerHTML).toContain('⚠️ Las APIs nativas de Chrome no están disponibles');
-  });
-
   it('should show detected language after text input', async () => {
     const testLanguageCode: LanguageCode = 'en';
     messageHandlerSpies.detectLanguage.mockImplementation(() => ({ languageCode: testLanguageCode }));
@@ -464,15 +442,39 @@ describe('SidepanelApp', () => {
     });
   });
 
+  describe('API Availability Warning', () => {
+    it('should show warning when native browser APIs are not available', async () => {
+      // Initialize app with translator API not available
+      await initSidepanelApp({
+        checkAPIAvailability: () => (false)
+      });
+
+      // Verify that the warning is displayed
+      const apiWarningContainer = document.getElementById('api-warning-container');
+      expect(apiWarningContainer?.innerHTML).toContain('Las APIs nativas del navegador no están disponibles');
+    });
+
+    it('should not show warning when native browser APIs are available', async () => {
+      // Initialize app with translator API available (default behavior)
+      await initSidepanelApp({
+        checkAPIAvailability: () => (true)
+      });
+
+      // Verify that no warning is displayed
+      const apiWarningContainer = document.getElementById('api-warning-container');
+      expect(apiWarningContainer?.innerHTML).toBe('');
+    });
+  });
+
   describe('Default Language Loading', () => {
     it('should use browser language as default target when it is supported', async () => {
       const browserLanguage = 'fr';
-      
+
       // Create instance with override for browser language
       await initSidepanelApp({
         getBrowserLanguage: () => browserLanguage
       });
-      
+
       // Verify the selected value is the browser language
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       expect(targetSelect.value).toBe(browserLanguage);
@@ -497,10 +499,10 @@ describe('SidepanelApp', () => {
 
       const select = document.getElementById('target-language') as HTMLSelectElement;
       expect(select).toBeTruthy();
-      
+
       // Verify that the selector has options
       expect(select.options.length).toBeGreaterThan(0);
-      
+
       // Verify some expected languages are present
       const optionValues = Array.from(select.options).map(opt => opt.value);
       expect(optionValues).toContain('es');

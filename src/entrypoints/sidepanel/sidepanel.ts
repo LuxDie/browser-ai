@@ -11,7 +11,7 @@ interface TranslationState {
   targetLanguage: LanguageCode
   isLoading: boolean
   error: string | null
-  apiAvailable: {translator: boolean, languageDetector: boolean}
+  apiAvailable: boolean
   modelStatus: ModelStatus | null
   availableLanguages: AvailableLanguages | null
 }
@@ -25,7 +25,7 @@ export class SidepanelApp {
     targetLanguage: DEFAULT_TARGET_LANGUAGE,
     isLoading: false,
     error: null,
-    apiAvailable: {translator: false, languageDetector: false},
+    apiAvailable: false,
     modelStatus: null,
     availableLanguages: null,
   };
@@ -94,16 +94,13 @@ export class SidepanelApp {
     this.#render();
   }
 
-  async #checkAPIAvailability(): Promise<{translator: boolean, languageDetector: boolean}> {
+  async #checkAPIAvailability(): Promise<boolean> {
     try {
       const response = await sendMessage('checkAPIAvailability');
       return response;
     } catch (error) {
       console.error('Error checking API availability:', error);
-      return {
-        translator: false,
-        languageDetector: false
-      };
+      return false;
     }
   }
 
@@ -213,7 +210,6 @@ export class SidepanelApp {
           <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-800 mb-2">Browser AI</h1>
             <p class="text-sm text-gray-600">Traducción con IA integrada</p>
-            <div id="api-status-container" class="mt-3 flex gap-2 text-xs"></div>
             <div id="api-warning-container"></div>
           </div>
 
@@ -255,7 +251,6 @@ export class SidepanelApp {
     }
 
     // Update dynamic content without re-rendering the whole structure
-    this.#updateAPIStatus();
     this.#updateAPIWarning();
     this.#updateInputField();
     this.#updateLanguageSelector();
@@ -267,23 +262,13 @@ export class SidepanelApp {
     this.#updateLanguageInfo();
   }
 
-  #updateAPIStatus(): void {
-    const apiStatusContainer = document.getElementById('api-status-container');
-    if (apiStatusContainer) {
-      apiStatusContainer.innerHTML = `
-        ${this.#renderAPIStatus('Traductor', this.#state.apiAvailable.translator)}
-        ${this.#renderAPIStatus('Detector de Idioma', this.#state.apiAvailable.languageDetector)}
-      `;
-    }
-  }
-
   #updateAPIWarning(): void {
     const apiWarningContainer = document.getElementById('api-warning-container');
     if (apiWarningContainer) {
-      apiWarningContainer.innerHTML = !this.#state.apiAvailable.translator ? `
+      apiWarningContainer.innerHTML = !this.#state.apiAvailable ? `
         <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p class="text-yellow-800 text-xs">
-            ⚠️ Las APIs nativas de Chrome no están disponibles. Asegúrate de usar Chrome 138+ con características de IA habilitadas.
+            ⚠️ Las APIs nativas del navegador no están disponibles. Asegúrate de tener la versión más reciente de tu navegador.
           </p>
         </div>
       ` : '';
@@ -328,7 +313,7 @@ export class SidepanelApp {
       const hasText = this.#state.text.trim().length > 0;
       const hasSourceLanguage = this.#state.sourceLanguage !== null;
       const languagesAreSame = this.#state.sourceLanguage?.toLowerCase() === this.#state.targetLanguage.toLowerCase();
-      const modelIsDownloading = this.#state.apiAvailable.translator && this.#state.modelStatus?.downloading === true;
+      const modelIsDownloading = this.#state.modelStatus?.downloading === true;
       const canTranslate = hasText 
         && !this.#state.isLoading 
         && this.#state.error === null 
@@ -429,22 +414,6 @@ export class SidepanelApp {
       } else {
         languageInfoContainer.innerHTML = '';
       }
-    }
-  }
-
-  #renderAPIStatus(name: string, isAvailable: boolean): string {
-    if (isAvailable) {
-      return `
-        <span class="inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-800">
-          ✅ ${name}
-        </span>
-      `;
-    } else {
-      return `
-        <span class="inline-flex items-center px-2 py-1 rounded-full bg-red-100 text-red-800">
-          ❌ ${name}
-        </span>
-      `;
     }
   }
 
