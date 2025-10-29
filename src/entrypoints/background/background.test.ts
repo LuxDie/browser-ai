@@ -6,9 +6,9 @@ import {
   sendMessage,
   onMessage,
   removeMessageListeners,
-  ModelStatus
 } from '@/entrypoints/background/messaging';
 import background, { LanguageCode } from '@/entrypoints/background';
+import { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
 // Mock para las APIs de Chrome AI que no están disponibles en el entorno de prueba de Vitest (Node.js)
 const mockAI = createAIMock();
@@ -178,8 +178,8 @@ describe('Background Script', () => {
         expect(messageHandlerSpies.modelStatusUpdate).toHaveBeenCalledWith(
           expect.objectContaining({
             data: expect.objectContaining({
-              downloading: true,
-            }) as ModelStatus,
+              state: 'downloading',
+            }) as AIModelStatus,
           })
         );
       });

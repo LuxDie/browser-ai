@@ -23,3 +23,9 @@ export interface LanguageDetectorAPI {
   availability(): Promise<string>;
   create(): Promise<LanguageDetectorInstance>;
 }
+
+export interface AIModelStatus {
+  state: 'available' | 'downloadable' | 'downloading' | 'unavailable'
+  errorMessage?: string;
+  downloadProgress?: number;
+}

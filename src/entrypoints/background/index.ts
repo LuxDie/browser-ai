@@ -2,7 +2,7 @@ import { defineBackground } from 'wxt/utils/define-background';
 import { browser } from 'wxt/browser';
 import {
   type PendingTranslation
-} from '@/utils';
+} from '@/entrypoints/background/background.model';
 import { AVAILABLE_LANGUAGES, type LanguageCode } from '@/entrypoints/background/available-languages';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
@@ -212,10 +212,10 @@ export default defineBackground({
 
     // Verificar disponibilidad del modelo
     let modelStatus = await modelManager.checkModelAvailability(sourceLanguage, targetLanguage);
-    if (!modelStatus.available) {
+    if (modelStatus.state === 'downloadable') {
       // Si la traducción requiere descargar un modelo, mostraremos una notificación al finalizar
       sendNotification = true;
-      modelStatus.downloading = true;
+      modelStatus.state = 'downloading';
       void sendMessage('modelStatusUpdate', modelStatus);
       modelStatus = await modelManager.downloadModel(sourceLanguage, targetLanguage);
       void sendMessage('modelStatusUpdate', modelStatus);
