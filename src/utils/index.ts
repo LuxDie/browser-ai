@@ -8,6 +8,3 @@ export * from './validation';
 
 // Funciones del menú contextual
 export * from './context-menu';
-
-// Funciones de gestión de modelos
-export * from './model-management';
