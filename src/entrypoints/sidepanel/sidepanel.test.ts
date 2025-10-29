@@ -371,7 +371,7 @@ describe('SidepanelApp', () => {
   describe('Model Downloading State', () => {
     it('should show model download message when downloading starts', async () => {
       // Trigger the modelStatusUpdate message to sidepanel
-      await sendMessage('modelStatusUpdate', { available: false, downloading: true, progress: 0 });
+      await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
       await vi.runAllTimersAsync();
 
       // Verify that model download message is shown
@@ -392,7 +392,7 @@ describe('SidepanelApp', () => {
         return new Promise<void>((resolve) => { setTimeout(() => { resolve(); }, 1000);});
       });
       // Simulate model downloading message
-      await sendMessage('modelStatusUpdate', { available: true, downloading: true, progress: 0 });
+      await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
       const modelStatusContainer = document.getElementById('model-status-container');
       expect(modelStatusContainer?.innerHTML).toBeTruthy();
       await vi.runAllTimersAsync();
@@ -403,7 +403,7 @@ describe('SidepanelApp', () => {
 
     it('should hide model download message when source language changes', async () => {
       // Trigger the modelStatusUpdate message to sidepanel
-      await sendMessage('modelStatusUpdate', { available: false, downloading: true, progress: 0 });
+      await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
       await vi.runAllTimersAsync();
       // Verify that model download message is shown
       const modelStatusContainer = document.getElementById('model-status-container');
@@ -421,7 +421,7 @@ describe('SidepanelApp', () => {
 
     it('should hide model download message when target language changes', async () => {
       // Trigger the modelStatusUpdate message to sidepanel
-      await sendMessage('modelStatusUpdate', { available: false, downloading: true, progress: 0 });
+      await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
       await vi.runAllTimersAsync();
 
       // Verify that model download message is shown

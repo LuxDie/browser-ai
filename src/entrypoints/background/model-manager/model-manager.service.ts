@@ -1,8 +1,4 @@
-import {
-  getLanguagePairKey,
-  type ModelStatus
-} from '@/utils';
-import type { TranslatorAPI } from './model-manager.model';
+import type { TranslatorAPI, AIModelStatus } from './model-manager.model';
 
 // Type-safe access helpers for built-in AI APIs
 const getTranslatorAPI = (): TranslatorAPI | undefined => {
@@ -21,19 +17,18 @@ export class ModelManager {
 
   // Generar clave única para par de idiomas
   #getLanguagePairKey(source: string, target: string): string {
-    return getLanguagePairKey(source, target);
+    return `${source}-${target}`;
   }
 
   // Verificar disponibilidad de modelo
-  async checkModelAvailability(source: string, target: string): Promise<ModelStatus> {
+  async checkModelAvailability(source: string, target: string): Promise<AIModelStatus> {
     const key = this.#getLanguagePairKey(source, target);
     const translator = getTranslatorAPI();
 
     if (!translator) {
       return {
-        available: false,
-        downloading: false,
-        error: 'Chrome AI APIs no disponibles'
+        state: 'unavailable',
+        errorMessage: 'Chrome AI APIs no disponibles'
       };
     }
 
@@ -45,32 +40,11 @@ export class ModelManager {
 
       console.log(`🔍 Checking model availability for ${source}→${target}:`, availability);
 
-      let status: ModelStatus;
-
-      if (availability === 'available') {
-        status = {
-          available: true,
-          downloading: false
-        };
-      } else if (availability === 'downloadable') {
-        status = {
-          available: false,
-          downloading: false,
-          error: 'Modelo descargable pero no disponible localmente'
-        };
-      } else if (availability === 'downloading') {
-        status = {
-          available: false,
-          downloading: true,
-          progress: 0
-        };
-      } else {
-        status = {
-          available: false,
-          downloading: false,
-          error: `Modelo no soportado: ${availability}`
-        };
-      }
+      let status: AIModelStatus = {
+        state: availability as AIModelStatus['state'],
+        downloadProgress: availability === 'downloading' ? 0 : undefined,
+        errorMessage: availability === 'unavailable' ? `Modelo no soportado: ${availability}` : undefined
+      };
 
       // Actualizar caché solo para estados de descarga en progreso
       if (availability === 'downloading') {
@@ -84,32 +58,29 @@ export class ModelManager {
     } catch (error: unknown) {
       console.error(`❌ Error al verificar la disponibilidad del modelo para ${source}→${target}:`, error);
       return {
-        available: false,
-        downloading: false,
-        error: `Error al verificar la disponibilidad del modelo: ${error instanceof Error ? error.message : String(error)}`
+        state: 'unavailable',
+        errorMessage: `Error al verificar la disponibilidad del modelo: ${error instanceof Error ? error.message : String(error)}`
       };
     }
   }
 
   // Descargar modelo
-  async downloadModel(source: string, target: string): Promise<ModelStatus> {
+  async downloadModel(source: string, target: string): Promise<AIModelStatus> {
     const key = this.#getLanguagePairKey(source, target);
     const translator = getTranslatorAPI();
 
     if (!translator) {
-      const status: ModelStatus = {
-        available: false,
-        downloading: false,
-        error: 'Chrome AI APIs no disponibles para descarga'
+      const status: AIModelStatus = {
+        state: 'unavailable',
+        errorMessage: 'Chrome AI APIs no disponibles para descarga'
       };
       modelStatusCache.set(key, status);
       return status;
     }
 
     modelStatusCache.set(key, {
-      available: false,
-      downloading: true,
-      progress: 0
+      state: 'downloading',
+      downloadProgress: 0
     });
 
     try {
@@ -123,15 +94,13 @@ export class ModelManager {
       console.log(`✅ Model for ${source}→${target} downloaded successfully.`);
       modelStatusCache.delete(key);
       return {
-        available: true,
-        downloading: false
+        state: 'available'
       };
     } catch (error: unknown) {
       console.error(`❌ Error al descargar el modelo para ${source}→${target}:`, error);
-      const status: ModelStatus = {
-        available: false,
-        downloading: false,
-        error: `Error al descargar el modelo: ${error instanceof Error ? error.message : String(error)}`
+      const status: AIModelStatus = {
+        state: 'unavailable',
+        errorMessage: `Error al descargar el modelo: ${error instanceof Error ? error.message : String(error)}`
       };
       modelStatusCache.set(key, status);
       return status;
@@ -163,4 +132,4 @@ export class ModelManager {
 }
 
 // Cache de estado de modelos (mover aquí también)
-const modelStatusCache = new Map<string, ModelStatus>();
+const modelStatusCache = new Map<string, AIModelStatus>();

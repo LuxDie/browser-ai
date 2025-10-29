@@ -1,12 +1,13 @@
 import { defineExtensionMessaging } from '@webext-core/messaging';
-import { AvailableLanguages, LanguageCode } from '.';
+import { AvailableLanguages, LanguageCode } from '@/entrypoints/background/index';
+import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
 export interface AvailableLanguagesResponse {
   languages: { code: string; name: string }[];
 }
 
 export interface ModelAvailabilityResponse {
-  status: ModelStatus;
+  status: AIModelStatus;
 }
 
 export interface ModelDownloadProgress {
@@ -47,7 +48,7 @@ export interface LanguageDetectionError {
 }
 
 export interface ProtocolMap {
-  getModelStatus(data: { source: string; target: string }): ModelStatus;
+  getModelStatus(data: { source: string; target: string }): AIModelStatus;
   detectLanguage(data: { text: string }): { languageCode: LanguageCode };
   translateText(data: { text: string; targetLanguage: LanguageCode; sourceLanguage: LanguageCode }): string;
   checkAPIAvailability(): boolean;
@@ -57,14 +58,7 @@ export interface ProtocolMap {
   sidepanelReady(): void;
   selectedText(text: string): void;
   translationCompleted(data: TranslationCompleted): void;
-  modelStatusUpdate(data: ModelStatus): void;
-}
-
-export interface ModelStatus {
-  available: boolean;
-  downloading: boolean;
-  progress?: number;
-  error?: string;
+  modelStatusUpdate(data: AIModelStatus): void;
 }
 
 const messaging = defineExtensionMessaging<ProtocolMap>();

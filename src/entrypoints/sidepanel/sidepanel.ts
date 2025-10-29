@@ -2,6 +2,7 @@ import './sidepanel.css';
 import { onMessage, sendMessage } from '../background/messaging';
 import { DEFAULT_TARGET_LANGUAGE } from '../background';
 import type { AvailableLanguages, LanguageCode } from '../background';
+import type { AIModelStatus } from '../background/model-manager/model-manager.model';
 
 interface TranslationState {
   text: string
@@ -12,7 +13,7 @@ interface TranslationState {
   isLoading: boolean
   error: string | null
   apiAvailable: boolean
-  modelStatus: ModelStatus | null
+  modelStatus: AIModelStatus | null
   availableLanguages: AvailableLanguages | null
 }
 
@@ -178,7 +179,7 @@ export class SidepanelApp {
   }
 
   // Métodos de manejo de eventos del ModelManager
-  #handleModelStatusUpdate(data: ModelStatus): void {
+  #handleModelStatusUpdate(data: AIModelStatus): void {
     this.#state.modelStatus = data;
     this.#render();
   }
@@ -313,7 +314,7 @@ export class SidepanelApp {
       const hasText = this.#state.text.trim().length > 0;
       const hasSourceLanguage = this.#state.sourceLanguage !== null;
       const languagesAreSame = this.#state.sourceLanguage?.toLowerCase() === this.#state.targetLanguage.toLowerCase();
-      const modelIsDownloading = this.#state.modelStatus?.downloading === true;
+      const modelIsDownloading = this.#state.modelStatus?.state === 'downloading';
       const canTranslate = hasText 
         && !this.#state.isLoading 
         && this.#state.error === null 
@@ -418,7 +419,7 @@ export class SidepanelApp {
   }
 
   #renderModelStatus(): string {
-    if (this.#state.modelStatus?.downloading) {
+    if (this.#state.modelStatus?.state === 'downloading') {
       return `
         <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div class="flex items-center mb-3">
