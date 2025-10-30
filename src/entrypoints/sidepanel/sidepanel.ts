@@ -6,6 +6,9 @@ import {
 } from '@/entrypoints/background';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '../background/model-manager/model-manager.model';
+import { getAIService } from '../background/ai/ai.service';
+import { Component, createApp, nextTick } from 'vue';
+import ProcessControls from './components/ProcessControls.vue';
 
 interface TranslationState {
   text: string
@@ -14,6 +17,7 @@ interface TranslationState {
   summaryText: string
   sourceLanguage: LanguageCode | null
   targetLanguage: LanguageCode
+  summarize: boolean
   isLoading: boolean
   error: string | null
   apiAvailable: boolean
@@ -22,6 +26,7 @@ interface TranslationState {
 }
 
 export class SidepanelApp {
+  #AIService = getAIService();
   #state: TranslationState = {
     text: '',
     translatedText: '',
@@ -29,6 +34,7 @@ export class SidepanelApp {
     summaryText: '',
     sourceLanguage: null,
     targetLanguage: DEFAULT_TARGET_LANGUAGE,
+    summarize: false,
     isLoading: false,
     error: null,
     apiAvailable: false,
@@ -39,7 +45,8 @@ export class SidepanelApp {
   #elements = {
     inputText: null as HTMLTextAreaElement | null,
     targetLanguage: null as HTMLSelectElement | null,
-    translateButton: null as HTMLButtonElement | null,
+    summarizeCheckbox: null as HTMLInputElement | null,
+    processButton: null as HTMLButtonElement | null,
     translatedText: null as HTMLDivElement | null,
     resultTextArea: null as HTMLTextAreaElement | null,
     copyButton: null as HTMLButtonElement | null,
@@ -82,22 +89,29 @@ export class SidepanelApp {
     });
   }
 
-  async #translateText(): Promise<void> {
+  async #processText(): Promise<void> {
     this.#state.isLoading = true;
     this.#state.error = null;
     this.#render();
 
-    const response = await sendMessage('translateText', {
-      text: this.#state.text,
-      targetLanguage: this.#state.targetLanguage,
-      sourceLanguage: this.#state.sourceLanguage!
-    });
+    try {
+      const response = await this.#AIService.processText(this.#state.text, {
+        sourceLanguage: this.#state.sourceLanguage!,
+        targetLanguage: this.#state.targetLanguage,
+        summarize: this.#state.summarize
+      });
 
-    // Manejar respuesta exitosa
-    this.#state.translatedText = response;
-    this.#state.editedTranslatedText = response;
-    this.#resetTranslationState();
-    this.#render();
+      // Manejar respuesta exitosa
+      // TODO: tipar mejor response
+      this.#state.translatedText = response ?? '';
+      this.#state.editedTranslatedText = response ?? '';
+    } catch (error) {
+      this.#state.error = error instanceof Error ? error.message : 'Error al procesar el texto';
+    } finally {
+      this.#state.isLoading = false;
+
+      this.#render();
+    }
   }
 
   async #checkAPIAvailability(): Promise<boolean> {
@@ -122,13 +136,27 @@ export class SidepanelApp {
   }
 
   #setupEventListeners(): void {
+    // Solo para elementos que no están en el componente Vue montado
     // Cuando se modifica el texto del textarea:
     this.#elements.inputText?.addEventListener('input', (e) => {
       const text = (e.target as HTMLTextAreaElement).value;
       void this.#handleInputChange(text);
     });
+  }
 
-    // Target language change
+  #setupAllEventListeners(): void {
+    this.#setupEventListeners();
+    this.#setupProcessRowEventListeners();
+  }
+
+  #setupProcessRowEventListeners(): void {
+    // Listener de casilla de verificación "Resumir"
+    this.#elements.summarizeCheckbox?.addEventListener('change', (e) => {
+      this.#state.summarize = (e.target as HTMLInputElement).checked;
+      this.#render();
+    });
+
+    // Listener de selector de idioma destino
     this.#elements.targetLanguage?.addEventListener('change', (e) => {
       const previousTargetLanguage = this.#state.targetLanguage;
       this.#state.targetLanguage = (e.target as HTMLSelectElement).value as LanguageCode;
@@ -141,11 +169,10 @@ export class SidepanelApp {
       // Actualizar la interfaz después del cambio de idioma
       this.#render();
     });
-    
 
-    // Translate button
-    this.#elements.translateButton?.addEventListener('click', () => {
-      void this.#translateText();
+    // Listener del botón "Procesar"
+    this.#elements.processButton?.addEventListener('click', () => {
+      void this.#processText();
     });
   }
   async #handleInputChange(text: string): Promise<void> {
@@ -191,7 +218,7 @@ export class SidepanelApp {
 
   async #handleSelectedText(text: string) {
     await this.#handleInputChange(text);
-    
+
     // Verificar si los idiomas son iguales antes de traducción automática desde menú contextual
     if (this.#state.sourceLanguage === this.#state.targetLanguage) {
       this.#state.isLoading = false;
@@ -199,8 +226,8 @@ export class SidepanelApp {
       this.#render();
       return;
     }
-    
-    void this.#translateText();
+
+    void this.#processText();
   }
 
   // Métodos de UI para manejo de modelos
@@ -209,20 +236,20 @@ export class SidepanelApp {
     const container = document.getElementById('root');
     if (!container) return;
 
-    // Only render the initial structure once
+    // Solo renderizar la estructura inicial una vez
     if (container.innerHTML === '') {
       container.innerHTML = `
         <div class="h-full flex flex-col p-4">
           <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-800 mb-2">Browser AI</h1>
-            <p class="text-sm text-gray-600">Traducción con IA integrada</p>
+            <p class="text-sm text-gray-600">Procesamiento de texto con IA integrada</p>
             <div id="api-warning-container"></div>
           </div>
 
           <div class="mb-4">
             <div class="flex items-center justify-between mb-2">
               <label for="input-text" class="block text-sm font-medium text-gray-700">
-                Texto a traducir
+                Texto a procesar
               </label>
               <div id="language-info-container"></div>
             </div>
@@ -233,36 +260,52 @@ export class SidepanelApp {
             ></textarea>
           </div>
 
-          <div class="mb-4">
-            <label for="target-language" class="block text-sm font-medium text-gray-700 mb-2">
-              Idioma destino
-            </label>
-            <select id="target-language" class="input-field"></select>
-          </div>
+          <div id="process-row" class="mb-4"></div>
+          
+          <div id="error-container"></div>
+          <div id="process-warning-container" class="mb-4"></div>
 
           <div id="model-status-container" class="mb-4"></div>
 
-          <button id="translate-button" class="btn-primary w-full mb-4 disabled:opacity-50 disabled:cursor-not-allowed"></button>
-
-          <div id="translate-warning-container" class="mb-4"></div>
 
           <div id="result-container"></div>
-          <div id="error-container"></div>
         </div>
       `;
       this.#elements.inputText = document.getElementById('input-text') as HTMLTextAreaElement;
-      this.#elements.targetLanguage = document.getElementById('target-language') as HTMLSelectElement;
-      this.#elements.translateButton = document.getElementById('translate-button') as HTMLButtonElement;
-      this.#setupEventListeners();
+
+      // Montar el componente Vue una vez
+      const processRow = document.getElementById('process-row');
+      if (processRow) {
+        const app = createApp(ProcessControls as Component);
+        app.mount(processRow);
+
+        void nextTick(() => {
+          // Obtener referencias después de mount
+          this.#elements.targetLanguage = document.getElementById('target-language') as HTMLSelectElement;
+          this.#elements.summarizeCheckbox = document.getElementById('summarize-checkbox') as HTMLInputElement;
+          this.#elements.processButton = document.getElementById('process-button') as HTMLButtonElement;
+
+          // Configurar todos los event listeners
+          this.#setupAllEventListeners();
+
+          // Actualizaciones iniciales
+          this.#updateLanguageSelector();
+          this.#updateProcessButton();
+          this.#elements.summarizeCheckbox.checked = this.#state.summarize;
+        });
+      } else {
+        // TODO: revisar si esto es plausible
+        // Si por algún motivo no se monta, configurar listeners básicos
+        this.#setupEventListeners();
+      }
     }
 
-    // Update dynamic content without re-rendering the whole structure
+    // Actualizar contenido dinámico sin re-renderizar toda la estructura
     this.#updateAPIWarning();
     this.#updateInputField();
-    this.#updateLanguageSelector();
     this.#updateModelStatus();
-    this.#updateTranslateButton();
-    this.#updateTranslateWarning();
+    this.#updateProcessButton();
+    this.#updateProcessRowWarning();
     this.#updateResult();
     this.#updateError();
     this.#updateLanguageInfo();
@@ -314,26 +357,24 @@ export class SidepanelApp {
     }
   }
 
-  #updateTranslateButton(): void {
-    if (this.#elements.translateButton) {
+  #updateProcessButton(): void {
+    if (this.#elements.processButton) {
       const hasText = this.#state.text.trim().length > 0;
       const hasSourceLanguage = this.#state.sourceLanguage !== null;
-      const languagesAreSame = this.#state.sourceLanguage?.toLowerCase() === this.#state.targetLanguage.toLowerCase();
+      const languagesAreSame = this.#state.sourceLanguage?.toLowerCase() === this.#state.targetLanguage.toLowerCase() && !this.#state.summarize;
       const modelIsDownloading = this.#state.modelStatus?.state === 'downloading';
-      const canTranslate = hasText 
-        && !this.#state.isLoading 
-        && this.#state.error === null 
-        && hasSourceLanguage 
-        && !languagesAreSame 
+      const canProcess = (hasText && hasSourceLanguage && (!languagesAreSame || this.#state.summarize))
+        && !this.#state.isLoading
         && !modelIsDownloading;
-      this.#elements.translateButton.disabled = !canTranslate;
 
-      this.#elements.translateButton.innerHTML = this.#state.isLoading ? `
+      this.#elements.processButton.disabled = !canProcess;
+
+      this.#elements.processButton.innerHTML = this.#state.isLoading ? `
         <div class="flex items-center justify-center">
           <div class="loading-spinner mr-2"></div>
-          Traduciendo...
+          Procesando...
         </div>
-      ` : 'Traducir';
+      ` : 'Procesar';
     }
   }
 
@@ -346,10 +387,10 @@ export class SidepanelApp {
             <div class="flex justify-between items-center mb-2">
               <div class="flex items-center gap-2">
                 <label class="text-sm font-medium text-gray-700">
-                  Traducción
+                  Resultado
                 </label>
-                <span id="translation-source" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
-                  🔒 Traducido localmente
+                <span id="processing-source" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                  🔒 Procesado localmente
                 </span>
               </div>
               <button id="copy-button" class="btn-secondary text-xs">
@@ -425,10 +466,14 @@ export class SidepanelApp {
 
   #renderModelStatus(): string {
     if (this.#state.modelStatus?.state === 'downloading') {
+      const downloadingText = this.#state.summarize
+        ? '📥 Descargando resumidor por única vez...'
+        : `📥 Descargando traductor (${this.#state.sourceLanguage!} - ${this.#state.targetLanguage}) por única vez...`;
+
       return `
         <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div class="flex items-center mb-3">
-            <span class="font-medium text-blue-800">📥 Descargando traductor (${this.#state.sourceLanguage!} - ${this.#state.targetLanguage}) por única vez...</span>
+            <span class="font-medium text-blue-800">${downloadingText}</span>
           </div>
           <div id="download-progress-bar" class="progress-indeterminate mb-2"></div>
           <div class="text-sm text-blue-700">
@@ -441,19 +486,18 @@ export class SidepanelApp {
     return '';
   }
 
-
-  #updateTranslateWarning(): void {
-    const warningContainer = document.getElementById('translate-warning-container');
+  #updateProcessRowWarning(): void {
+    const warningContainer = document.getElementById('process-warning-container');
     if (warningContainer) {
       const hasText = this.#state.text.trim().length > 0;
       const hasSourceLanguage = this.#state.sourceLanguage !== null;
-      const languagesAreSame = this.#state.sourceLanguage?.toLowerCase() === this.#state.targetLanguage.toLowerCase();
+      const languagesAreSame = this.#state.sourceLanguage?.toLowerCase() === this.#state.targetLanguage.toLowerCase() && !this.#state.summarize;
 
       if (hasText && hasSourceLanguage && languagesAreSame) {
         warningContainer.innerHTML = `
           <div id="warning-container" class="p-2 bg-amber-50 border border-amber-200 rounded-lg">
             <p class="text-amber-800 text-xs">
-              ⚠️ Los idiomas de origen y destino son iguales. Selecciona un idioma destino diferente.
+              ⚠️ Los idiomas de origen y destino son iguales. Selecciona un idioma destino diferente o activa la opción "Resumir".
             </p>
           </div>
         `;

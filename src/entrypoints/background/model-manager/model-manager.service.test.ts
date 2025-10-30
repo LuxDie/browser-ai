@@ -101,6 +101,7 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should handle download errors gracefully', async () => {
+      // TODO: manejar rechazo con `rejects.toThrow`
       mockAI.Summarizer.create.mockRejectedValueOnce(new Error('Download failed'));
 
       const result = await modelManager.downloadModel({ type: 'summarization' });
