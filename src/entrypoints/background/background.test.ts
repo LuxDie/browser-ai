@@ -74,11 +74,29 @@ describe('Background Script', () => {
       await fakeBrowser.runtime.onInstalled.trigger();
     });
 
-    it('should create the context menu exactly once', () => {
-      expect(browser.contextMenus.create).toHaveBeenCalledOnce();
+    it('should create the context menu', () => {
+      expect(browser.contextMenus.create).toHaveBeenCalledTimes(3);
+
+      // Check that the parent menu is created
       expect(browser.contextMenus.create).toHaveBeenCalledWith({
+        id: 'browserAI',
+        title: 'Browser AI',
+        contexts: ['selection'],
+      });
+
+      // Check that translate option is created
+      expect(browser.contextMenus.create).toHaveBeenCalledWith({
+        parentId: 'browserAI',
         id: 'translateSelection',
-        title: 'Traducir con Browser AI',
+        title: 'Traducir',
+        contexts: ['selection'],
+      });
+
+      // Check that summarize option is created
+      expect(browser.contextMenus.create).toHaveBeenCalledWith({
+        parentId: 'browserAI',
+        id: 'summarizeSelection',
+        title: 'Resumir',
         contexts: ['selection'],
       });
     });
@@ -230,7 +248,7 @@ describe('Background Script', () => {
       // Verify that selectedText message was received
       await vi.waitFor(() => {
         expect(messageHandlerSpies.selectedText).toHaveBeenCalledWith(
-          expect.objectContaining({ data: selectedText })
+          expect.objectContaining({ data: { text: selectedText, summarize: false } })
         );
       });
     });
@@ -249,7 +267,7 @@ describe('Background Script', () => {
       
       // Verify that selectedText message was received
       expect(messageHandlerSpies.selectedText).toHaveBeenCalledWith(
-        expect.objectContaining({ data: selectedText })
+        expect.objectContaining({ data: { text: selectedText, summarize: false } })
       );
     });
   });

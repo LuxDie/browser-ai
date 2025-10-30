@@ -47,6 +47,11 @@ export interface LanguageDetectionError {
   error: string;
 }
 
+export interface SelectedTextData {
+  text: string;
+  summarize?: boolean;
+}
+
 export interface ProtocolMap {
   getModelStatus(data: { source: string; target: string }): AIModelStatus;
   detectLanguage(data: { text: string }): { languageCode: LanguageCode };
@@ -56,7 +61,7 @@ export interface ProtocolMap {
   getAvailableLanguages(): { languages: AvailableLanguages };
   getBrowserLanguage(): LanguageCode | null;
   sidepanelReady(): void;
-  selectedText(text: string): void;
+  selectedText(data: SelectedTextData): void;
   translationCompleted(data: TranslationCompleted): void;
   modelStatusUpdate(data: AIModelStatus): void;
 }

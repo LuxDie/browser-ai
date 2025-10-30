@@ -37,7 +37,7 @@ export default defineBackground({
   let pendingTranslation: PendingTranslation | null = null;
 
   // Texto seleccionado pendiente para envío al sidepanel
-  let pendingSelectedText: string | null = null;
+  let pendingRequest: { text: string, summarize: boolean } | null = null;
 
   /**
    * Detecta el idioma principal del navegador del usuario
@@ -165,9 +165,27 @@ export default defineBackground({
   async function createContextMenu(): Promise<void> {
     // Eliminar menús contextuales existentes para evitar duplicados
     await browser.contextMenus.removeAll();
+
+    // Crear menú padre
+    browser.contextMenus.create({
+      id: 'browserAI',
+      title: 'Browser AI',
+      contexts: ['selection']
+    });
+
+    // Opción de traducción
     browser.contextMenus.create({
       id: 'translateSelection',
-      title: 'Traducir con Browser AI',
+      parentId: 'browserAI',
+      title: 'Traducir',
+      contexts: ['selection']
+    });
+
+    // Opción de resumen
+    browser.contextMenus.create({
+      id: 'summarizeSelection',
+      parentId: 'browserAI',
+      title: 'Resumir',
       contexts: ['selection']
     });
   }
@@ -178,18 +196,20 @@ export default defineBackground({
       throw new Error('No se encontró la pestaña para el clic del menú contextual');
     }
 
-    if (info.menuItemId === 'translateSelection' && info.selectionText) {
+    if (info.selectionText && (info.menuItemId === 'translateSelection' || info.menuItemId === 'summarizeSelection')) {
       const selectedText = info.selectionText;
+      const summarize = info.menuItemId === 'summarizeSelection';
+
       void (async () => {
         await browser.sidePanel.open({ windowId: tab.windowId });
 
         // Intentar enviar el texto al sidepanel inmediatamente
         try {
-          await sendMessage('selectedText', selectedText);
+          await sendMessage('selectedText', { text: selectedText, summarize });
         } catch (error) {
           if (error instanceof Error && error.message === 'Could not establish connection. Receiving end does not exist.') {
             // El panel lateral está cerrado, guardar el texto seleccionado para enviarlo cuando esté listo
-            pendingSelectedText = selectedText;
+            pendingRequest = { text: selectedText, summarize };
           } else {
             throw error;
           }
@@ -262,9 +282,9 @@ export default defineBackground({
   });
 
   onMessage('sidepanelReady', () => {
-    if (pendingSelectedText) {
-      void sendMessage('selectedText', pendingSelectedText);
-      pendingSelectedText = null;
+    if (pendingRequest) {
+      void sendMessage('selectedText', pendingRequest);
+      pendingRequest = null;
     }
   });
 
