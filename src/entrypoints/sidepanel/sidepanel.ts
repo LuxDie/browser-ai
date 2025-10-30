@@ -4,7 +4,7 @@ import {
   AvailableLanguages,
   LanguageCode,
 } from '@/entrypoints/background';
-import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
+import { onMessage, sendMessage, type SelectedTextData } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '../background/model-manager/model-manager.model';
 import { getAIService } from '../background/ai/ai.service';
 import { Component, createApp, nextTick } from 'vue';
@@ -216,11 +216,15 @@ export class SidepanelApp {
     this.#render();
   }
 
-  async #handleSelectedText(text: string) {
-    await this.#handleInputChange(text);
+  async #handleSelectedText(data: SelectedTextData): Promise<void> {
+    await this.#handleInputChange(data.text);
+
+    // Si viene de menú de resumen, activar resumen; si viene de menú de traducción, desactivar resumen
+    this.#state.summarize = data.summarize ?? false;
+    this.#render(); // Actualizar checkbox antes de procesar
 
     // Verificar si los idiomas son iguales antes de traducción automática desde menú contextual
-    if (this.#state.sourceLanguage === this.#state.targetLanguage) {
+    if (this.#state.sourceLanguage === this.#state.targetLanguage && !this.#state.summarize) {
       this.#state.isLoading = false;
       this.#state.modelStatus = null;
       this.#render();
@@ -281,6 +285,7 @@ export class SidepanelApp {
 
         void nextTick(() => {
           // Obtener referencias después de mount
+          // TODO: verificar que los elementos tienen el tipo correcto en vez de castear
           this.#elements.targetLanguage = document.getElementById('target-language') as HTMLSelectElement;
           this.#elements.summarizeCheckbox = document.getElementById('summarize-checkbox') as HTMLInputElement;
           this.#elements.processButton = document.getElementById('process-button') as HTMLButtonElement;
@@ -303,6 +308,7 @@ export class SidepanelApp {
     // Actualizar contenido dinámico sin re-renderizar toda la estructura
     this.#updateAPIWarning();
     this.#updateInputField();
+    this.#updateSummarizeCheckbox();
     this.#updateModelStatus();
     this.#updateProcessButton();
     this.#updateProcessRowWarning();
@@ -327,6 +333,12 @@ export class SidepanelApp {
   #updateInputField(): void {
     if (this.#elements.inputText && this.#elements.inputText.value !== this.#state.text) {
       this.#elements.inputText.value = this.#state.text;
+    }
+  }
+
+  #updateSummarizeCheckbox(): void {
+    if (this.#elements.summarizeCheckbox) {
+      this.#elements.summarizeCheckbox.checked = this.#state.summarize;
     }
   }
 
