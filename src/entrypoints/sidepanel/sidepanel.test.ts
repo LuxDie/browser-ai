@@ -170,7 +170,7 @@ describe('SidepanelApp', () => {
 
   it('should automatically detect language from text selected from context menu', async () => {
     // Simular recepción de texto desde menú contextual
-    await sendMessage('selectedText', 'This is a test sentence for automatic translation.');
+    await sendMessage('selectedText', { text: 'This is a test sentence for automatic translation.', summarize: false });
     // Esperar a que se active la traducción automática
     await vi.runAllTimersAsync();
 
@@ -180,7 +180,7 @@ describe('SidepanelApp', () => {
 
   it('should automatically process text when selected from context menu', async () => {
     // Simular recepción de texto desde menú contextual
-    await sendMessage('selectedText', 'This is a test sentence for automatic translation.');
+    await sendMessage('selectedText', { text: 'This is a test sentence for automatic translation.', summarize: false });
     // Esperar a que se active el procesamiento automático
     await vi.runAllTimersAsync();
     expect(mockAIService.processText).toHaveBeenCalledWith(
@@ -331,7 +331,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Simular recepción de texto desde menú contextual (debería activar procesamiento automático)
-      await sendMessage('selectedText', 'This is a test sentence for automatic translation.');
+      await sendMessage('selectedText', { text: 'This is a test sentence for automatic translation.', summarize: false });
       await vi.runAllTimersAsync();
 
       // Verificar que NO se solicitó procesamiento porque los idiomas son iguales y resumir está en false
@@ -639,6 +639,36 @@ describe('SidepanelApp', () => {
       // El botón debería estar habilitado ahora porque resumir está marcado
       processButton = document.getElementById('process-button') as HTMLButtonElement;
       expect(processButton.disabled).toBe(false);
+    });
+
+    it('should automatically check summarize checkbox when selectedText message has summarize: true', async () => {
+      // Simular recepción de texto desde menú contextual con summarize: true
+      await sendMessage('selectedText', { text: 'This is a test sentence for summarization.', summarize: true });
+
+      // Esperar a que se procese el mensaje y se actualice la UI
+      await vi.runAllTimersAsync();
+
+      // Verificar que la casilla de resumen esté marcada
+      const summarizeCheckbox = document.getElementById('summarize-checkbox') as HTMLInputElement;
+      expect(summarizeCheckbox.checked).toBe(true);
+    });
+
+    it('should uncheck summarize checkbox when selectedText message has summarize: false', async () => {
+      // Primero marcar la casilla manualmente para probar que se desmarca
+      const summarizeCheckbox = document.getElementById('summarize-checkbox') as HTMLInputElement;
+      summarizeCheckbox.checked = true;
+
+      // Verificar que esté marcada inicialmente
+      expect(summarizeCheckbox.checked).toBe(true);
+
+      // Simular recepción de texto desde menú contextual con summarize: false (menú "Traducir")
+      await sendMessage('selectedText', { text: 'This is a test sentence for translation.', summarize: false });
+
+      // Esperar a que se procese el mensaje y se actualice la UI
+      await vi.runAllTimersAsync();
+
+      // Verificar que la casilla de resumen se desmarca cuando viene del menú "Traducir"
+      expect(summarizeCheckbox.checked).toBe(false);
     });
   });
 
