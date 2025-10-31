@@ -1,0 +1,307 @@
+{
+  "extName": {
+    "message": "Browser AI"
+  },
+  "extDescription": {
+    "message": "AI-powered translation using Chrome's built-in APIs"
+  },
+  "processError": {
+    "message": "Error processing text"
+  },
+  "inputLabel": {
+    "message": "Text to process"
+  },
+  "inputPlaceholder": {
+    "message": "Write or paste text here..."
+  },
+  "processButton": {
+    "message": "Process"
+  },
+  "processingButton": {
+    "message": "Processing..."
+  },
+  "resultLabel": {
+    "message": "Result"
+  },
+  "localProcessingBadge": {
+    "message": "🔒 Processed locally"
+  },
+  "copyButton": {
+    "message": "Copy"
+  },
+  "apiWarning": {
+    "message": "⚠️ Browser native APIs are not available. Make sure you have the latest version of your browser."
+  },
+  "languagesUnavailable": {
+    "message": "Languages unavailable"
+  },
+  "downloadingSummarizer": {
+    "message": "📥 Downloading summarizer for the first time..."
+  },
+  "downloadingTranslator": {
+    "message": "📥 Downloading translator ($source$ - $target$) for the first time...",
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      },
+      "target": {
+        "content": "$2"
+      }
+    }
+  },
+  "downloadWaitMessage": {
+    "message": "Download may take a few minutes. Please wait..."
+  },
+  "sameLanguageWarning": {
+    "message": "⚠️ Source and target languages are the same. Select a different target language or activate the \"Summarize\" option."
+  },
+  "detectedLanguage": {
+    "message": "Detected language: $language$",
+    "placeholders": {
+      "language": {
+        "content": "$1"
+      }
+    }
+  },
+  "insufficientTextForDetection": {
+    "message": "Not enough text to detect language"
+  },
+  "optionsLabel": {
+    "message": "Options"
+  },
+  "summarizeLabel": {
+    "message": "Summarize"
+  },
+  "targetLanguageLabel": {
+    "message": "Target language"
+  },
+  "summarizeMenu": {
+    "message": "Summarize"
+  },
+  "translateMenu": {
+    "message": "Translate"
+  },
+  "browserAIMenu": {
+    "message": "Browser AI"
+  },
+  "languageDetectionFailed": {
+    "message": "Could not detect the language of the provided text"
+  },
+  "languageDetectorDownloading": {
+    "message": "The LanguageDetector model is currently downloading. Please wait and try again."
+  },
+  "languageDetectorUnavailable": {
+    "message": "The LanguageDetector API is not available"
+  },
+  "languageDetectorNotSupported": {
+    "message": "The LanguageDetector API is not compatible with this browser"
+  },
+  "textProcessedNotification": {
+    "message": "The text has been processed"
+  },
+  "tabNotFoundError": {
+    "message": "Tab not found for context menu click"
+  },
+  "connectionErrorMessage": {
+    "message": "Could not establish connection. Receiving end does not exist."
+  },
+  "lang_ar": {
+    "message": "Arabic"
+  },
+  "lang_bg": {
+    "message": "Bulgarian"
+  },
+  "lang_bn": {
+    "message": "Bengali"
+  },
+  "lang_cs": {
+    "message": "Czech"
+  },
+  "lang_da": {
+    "message": "Danish"
+  },
+  "lang_de": {
+    "message": "German"
+  },
+  "lang_el": {
+    "message": "Greek"
+  },
+  "lang_en": {
+    "message": "English"
+  },
+  "lang_es": {
+    "message": "Spanish"
+  },
+  "lang_fi": {
+    "message": "Finnish"
+  },
+  "lang_fr": {
+    "message": "French"
+  },
+  "lang_hi": {
+    "message": "Hindi"
+  },
+  "lang_hr": {
+    "message": "Croatian"
+  },
+  "lang_hu": {
+    "message": "Hungarian"
+  },
+  "lang_id": {
+    "message": "Indonesian"
+  },
+  "lang_it": {
+    "message": "Italian"
+  },
+  "lang_iw": {
+    "message": "Hebrew"
+  },
+  "lang_ja": {
+    "message": "Japanese"
+  },
+  "lang_kn": {
+    "message": "Kannada"
+  },
+  "lang_ko": {
+    "message": "Korean"
+  },
+  "lang_lt": {
+    "message": "Lithuanian"
+  },
+  "lang_mr": {
+    "message": "Marathi"
+  },
+  "lang_nl": {
+    "message": "Dutch"
+  },
+  "lang_no": {
+    "message": "Norwegian"
+  },
+  "lang_pl": {
+    "message": "Polish"
+  },
+  "lang_pt": {
+    "message": "Portuguese"
+  },
+  "lang_ro": {
+    "message": "Romanian"
+  },
+  "lang_ru": {
+    "message": "Russian"
+  },
+  "lang_sk": {
+    "message": "Slovak"
+  },
+  "lang_sl": {
+    "message": "Slovenian"
+  },
+  "lang_sv": {
+    "message": "Swedish"
+  },
+  "lang_ta": {
+    "message": "Tamil"
+  },
+  "lang_te": {
+    "message": "Telugu"
+  },
+  "lang_th": {
+    "message": "Thai"
+  },
+  "lang_tr": {
+    "message": "Turkish"
+  },
+  "lang_uk": {
+    "message": "Ukrainian"
+  },
+  "lang_vi": {
+    "message": "Vietnamese"
+  },
+  "lang_zh": {
+    "message": "Chinese"
+  },
+  "chromeAINotAvailable": {
+    "message": "Chrome AI APIs not available"
+  },
+  "modelNotSupported": {
+    "message": "Model not supported: $model$",
+    "placeholders": {
+      "model": {
+        "content": "$1"
+      }
+    }
+  },
+  "errorCheckingModelAvailability": {
+    "message": "Error checking model availability: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "summarizerAPINotAvailable": {
+    "message": "Summarizer API not available"
+  },
+  "summarizerModelNotAvailable": {
+    "message": "Summarizer model not available"
+  },
+  "translatorAPINotSupported": {
+    "message": "Translator API not supported"
+  },
+  "summarizerAPINotSupported": {
+    "message": "Summarizer API not supported"
+  },
+  "errorDownloadingModel": {
+    "message": "Error downloading model: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "errorDownloadingSummarizerModel": {
+    "message": "Error downloading summarizer model: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "chromeAINotAvailableForTranslation": {
+    "message": "Error: Chrome AI APIs not available for translation"
+  },
+  "errorTranslating": {
+    "message": "Error translating: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "summarizerAPINotSupportedError": {
+    "message": "Summarizer API not supported"
+  },
+  "errorGeneratingSummary": {
+    "message": "Error generating summary: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "invalidSourceLanguageCode": {
+    "message": "Invalid source language code: $code$",
+    "placeholders": {
+      "code": {
+        "content": "$1"
+      }
+    }
+  },
+  "invalidTargetLanguageCode": {
+    "message": "Invalid target language code: $code$",
+    "placeholders": {
+      "code": {
+        "content": "$1"
+      }
+    }
+  }
+}

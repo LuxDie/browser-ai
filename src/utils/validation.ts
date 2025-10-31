@@ -3,6 +3,8 @@
  * Estas funciones encapsulan la lógica de validación utilizada en la implementación
  */
 
+import { browser } from 'wxt/browser';
+
 /**
  * Valida si un código de idioma tiene el formato correcto (ISO 639-1 - 2 letras)
  * @param code - Código de idioma a validar
@@ -41,10 +43,10 @@ export const isValidTextForTranslation = (text: string): boolean => {
  */
 export const validateLanguagePair = (source: string, target: string): { valid: boolean; reason?: string } => {
   if (!isValidLanguageCodeFormat(source)) {
-    return { valid: false, reason: `Invalid source language code: ${source}` };
+    return { valid: false, reason: browser.i18n.getMessage('invalidSourceLanguageCode', [source]) || `Código de idioma origen inválido: ${source}` };
   }
   if (!isValidLanguageCodeFormat(target)) {
-    return { valid: false, reason: `Invalid target language code: ${target}` };
+    return { valid: false, reason: browser.i18n.getMessage('invalidTargetLanguageCode', [target]) || `Código de idioma destino inválido: ${target}` };
   }
   return { valid: true };
 };

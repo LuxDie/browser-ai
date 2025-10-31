@@ -1,3 +1,7 @@
+// TODO: eliminar cuando se corrija el problema de tipos en wxt
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../../../.wxt/types/i18n.d.ts" />
+
 import { defineBackground } from 'wxt/utils/define-background';
 import { browser } from 'wxt/browser';
 import {
@@ -85,7 +89,7 @@ export default defineBackground({
           const result = results[0];
           const detectedLanguage = result?.detectedLanguage;
           if (!detectedLanguage) {
-            throw new Error('No se pudo detectar el idioma del texto proporcionado');
+            throw new Error(browser.i18n.getMessage('languageDetectionFailed'));
           }
           return detectedLanguage as LanguageCode;
         } else if (availability === 'downloadable') {
@@ -96,18 +100,18 @@ export default defineBackground({
           const result = results[0];
           const detectedLanguage = result?.detectedLanguage;
           if (!detectedLanguage) {
-            throw new Error('No se pudo detectar el idioma del texto proporcionado');
+            throw new Error(browser.i18n.getMessage('languageDetectionFailed'));
           }
           return detectedLanguage as LanguageCode;
         } else if (availability === 'downloading') {
           console.log('LanguageDetector model is currently downloading, waiting...');
-          throw new Error('El modelo LanguageDetector se está descargando actualmente. Por favor, espere e inténtelo de nuevo.');
+          throw new Error(browser.i18n.getMessage('languageDetectorDownloading'));
         } else {
           console.log('LanguageDetector is unavailable');
-          throw new Error('La API LanguageDetector no está disponible');
+          throw new Error(browser.i18n.getMessage('languageDetectorUnavailable'));
         }
       } else {
-        throw new Error('La API LanguageDetector no es compatible con este navegador');
+        throw new Error(browser.i18n.getMessage('languageDetectorNotSupported'));
       }
     }
 
@@ -171,7 +175,7 @@ export default defineBackground({
     // Crear menú padre
     browser.contextMenus.create({
       id: 'browserAI',
-      title: 'Browser AI',
+      title: browser.i18n.getMessage('browserAIMenu'),
       contexts: ['selection']
     });
 
@@ -179,7 +183,7 @@ export default defineBackground({
     browser.contextMenus.create({
       id: 'translateSelection',
       parentId: 'browserAI',
-      title: 'Traducir',
+      title: browser.i18n.getMessage('translateMenu'),
       contexts: ['selection']
     });
 
@@ -187,7 +191,7 @@ export default defineBackground({
     browser.contextMenus.create({
       id: 'summarizeSelection',
       parentId: 'browserAI',
-      title: 'Resumir',
+      title: browser.i18n.getMessage('summarizeMenu'),
       contexts: ['selection']
     });
   }
@@ -195,7 +199,7 @@ export default defineBackground({
   // Manejador de clics en el menú contextual
   browser.contextMenus.onClicked.addListener((info, tab) => {
     if (!tab) {
-      throw new Error('No se encontró la pestaña para el clic del menú contextual');
+      throw new Error(browser.i18n.getMessage('tabNotFoundError'));
     }
 
     if (info.selectionText && (info.menuItemId === 'translateSelection' || info.menuItemId === 'summarizeSelection')) {
@@ -209,7 +213,7 @@ export default defineBackground({
         try {
           await sendMessage('selectedText', { text: selectedText, summarize });
         } catch (error) {
-          if (error instanceof Error && error.message === 'Could not establish connection. Receiving end does not exist.') {
+          if (error instanceof Error && error.message === browser.i18n.getMessage('connectionErrorMessage')) {
             // El panel lateral está cerrado, guardar el texto seleccionado para enviarlo cuando esté listo
             pendingRequest = { text: selectedText, summarize };
           } else {
@@ -253,8 +257,8 @@ export default defineBackground({
     if (sendNotification) {
       void browser.notifications.create({
         type: 'basic',
-        title: 'Browser AI',
-        message: 'El texto se ha procesado',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
         iconUrl: 'icons/icon-128.png'
       });
     }

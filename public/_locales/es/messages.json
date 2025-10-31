@@ -1,0 +1,307 @@
+{
+  "extName": {
+    "message": "Browser AI"
+  },
+  "extDescription": {
+    "message": "Procesamiento de texto con IA integrada"
+  },
+  "processError": {
+    "message": "Error al procesar el texto"
+  },
+  "inputLabel": {
+    "message": "Texto a procesar"
+  },
+  "inputPlaceholder": {
+    "message": "Escribe o pega el texto aquí..."
+  },
+  "processButton": {
+    "message": "Procesar"
+  },
+  "processingButton": {
+    "message": "Procesando..."
+  },
+  "resultLabel": {
+    "message": "Resultado"
+  },
+  "localProcessingBadge": {
+    "message": "🔒 Procesado localmente"
+  },
+  "copyButton": {
+    "message": "Copiar"
+  },
+  "apiWarning": {
+    "message": "⚠️ Las APIs nativas del navegador no están disponibles. Asegúrate de tener la versión más reciente de tu navegador."
+  },
+  "languagesUnavailable": {
+    "message": "Idiomas no disponibles"
+  },
+  "downloadingSummarizer": {
+    "message": "📥 Descargando resumidor por única vez..."
+  },
+  "downloadingTranslator": {
+    "message": "📥 Descargando traductor ($source$ - $target$) por única vez...",
+    "placeholders": {
+      "source": {
+        "content": "$1"
+      },
+      "target": {
+        "content": "$2"
+      }
+    }
+  },
+  "downloadWaitMessage": {
+    "message": "La descarga puede tomar algunos minutos. Por favor, espere..."
+  },
+  "sameLanguageWarning": {
+    "message": "⚠️ Los idiomas de origen y destino son iguales. Selecciona un idioma destino diferente o activa la opción \"Resumir\"."
+  },
+  "detectedLanguage": {
+    "message": "Idioma detectado: $language$",
+    "placeholders": {
+      "language": {
+        "content": "$1"
+      }
+    }
+  },
+  "insufficientTextForDetection": {
+    "message": "No hay suficiente texto para detectar el idioma"
+  },
+  "optionsLabel": {
+    "message": "Opciones"
+  },
+  "summarizeLabel": {
+    "message": "Resumir"
+  },
+  "targetLanguageLabel": {
+    "message": "Idioma destino"
+  },
+  "summarizeMenu": {
+    "message": "Resumir"
+  },
+  "translateMenu": {
+    "message": "Traducir"
+  },
+  "browserAIMenu": {
+    "message": "Browser AI"
+  },
+  "languageDetectionFailed": {
+    "message": "No se pudo detectar el idioma del texto proporcionado"
+  },
+  "languageDetectorDownloading": {
+    "message": "El modelo LanguageDetector se está descargando actualmente. Por favor, espere e inténtelo de nuevo."
+  },
+  "languageDetectorUnavailable": {
+    "message": "La API LanguageDetector no está disponible"
+  },
+  "languageDetectorNotSupported": {
+    "message": "La API LanguageDetector no es compatible con este navegador"
+  },
+  "textProcessedNotification": {
+    "message": "El texto se ha procesado"
+  },
+  "tabNotFoundError": {
+    "message": "No se encontró la pestaña para el clic del menú contextual"
+  },
+  "connectionErrorMessage": {
+    "message": "Could not establish connection. Receiving end does not exist."
+  },
+  "lang_ar": {
+    "message": "Árabe"
+  },
+  "lang_bg": {
+    "message": "Búlgaro"
+  },
+  "lang_bn": {
+    "message": "Bengalí"
+  },
+  "lang_cs": {
+    "message": "Checo"
+  },
+  "lang_da": {
+    "message": "Danés"
+  },
+  "lang_de": {
+    "message": "Alemán"
+  },
+  "lang_el": {
+    "message": "Griego"
+  },
+  "lang_en": {
+    "message": "Inglés"
+  },
+  "lang_es": {
+    "message": "Español"
+  },
+  "lang_fi": {
+    "message": "Finés"
+  },
+  "lang_fr": {
+    "message": "Francés"
+  },
+  "lang_hi": {
+    "message": "Hindi"
+  },
+  "lang_hr": {
+    "message": "Croata"
+  },
+  "lang_hu": {
+    "message": "Húngaro"
+  },
+  "lang_id": {
+    "message": "Indonesio"
+  },
+  "lang_it": {
+    "message": "Italiano"
+  },
+  "lang_iw": {
+    "message": "Hebreo"
+  },
+  "lang_ja": {
+    "message": "Japonés"
+  },
+  "lang_kn": {
+    "message": "Canarés"
+  },
+  "lang_ko": {
+    "message": "Coreano"
+  },
+  "lang_lt": {
+    "message": "Lituano"
+  },
+  "lang_mr": {
+    "message": "Maratí"
+  },
+  "lang_nl": {
+    "message": "Neerlandés"
+  },
+  "lang_no": {
+    "message": "Noruego"
+  },
+  "lang_pl": {
+    "message": "Polaco"
+  },
+  "lang_pt": {
+    "message": "Portugués"
+  },
+  "lang_ro": {
+    "message": "Rumano"
+  },
+  "lang_ru": {
+    "message": "Ruso"
+  },
+  "lang_sk": {
+    "message": "Eslovaco"
+  },
+  "lang_sl": {
+    "message": "Esloveno"
+  },
+  "lang_sv": {
+    "message": "Sueco"
+  },
+  "lang_ta": {
+    "message": "Tamil"
+  },
+  "lang_te": {
+    "message": "Telugu"
+  },
+  "lang_th": {
+    "message": "Tailandés"
+  },
+  "lang_tr": {
+    "message": "Turco"
+  },
+  "lang_uk": {
+    "message": "Ucraniano"
+  },
+  "lang_vi": {
+    "message": "Vietnamita"
+  },
+  "lang_zh": {
+    "message": "Chino"
+  },
+  "chromeAINotAvailable": {
+    "message": "Chrome AI APIs no disponibles"
+  },
+  "modelNotSupported": {
+    "message": "Modelo no soportado: $model$",
+    "placeholders": {
+      "model": {
+        "content": "$1"
+      }
+    }
+  },
+  "errorCheckingModelAvailability": {
+    "message": "Error al verificar la disponibilidad del modelo: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "summarizerAPINotAvailable": {
+    "message": "Summarizer API no disponible"
+  },
+  "summarizerModelNotAvailable": {
+    "message": "Modelo de resumen no disponible"
+  },
+  "translatorAPINotSupported": {
+    "message": "Translator API no soportada"
+  },
+  "summarizerAPINotSupported": {
+    "message": "Summarizer API no soportada"
+  },
+  "errorDownloadingModel": {
+    "message": "Error al descargar el modelo: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "errorDownloadingSummarizerModel": {
+    "message": "Error al descargar el modelo de resumen: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "chromeAINotAvailableForTranslation": {
+    "message": "Error: Chrome AI APIs no disponibles para traducción"
+  },
+  "errorTranslating": {
+    "message": "Error al traducir: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "summarizerAPINotSupportedError": {
+    "message": "Summarizer API no soportada"
+  },
+  "errorGeneratingSummary": {
+    "message": "Error al generar resumen: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "invalidSourceLanguageCode": {
+    "message": "Código de idioma origen inválido: $code$",
+    "placeholders": {
+      "code": {
+        "content": "$1"
+      }
+    }
+  },
+  "invalidTargetLanguageCode": {
+    "message": "Código de idioma destino inválido: $code$",
+    "placeholders": {
+      "code": {
+        "content": "$1"
+      }
+    }
+  }
+}
