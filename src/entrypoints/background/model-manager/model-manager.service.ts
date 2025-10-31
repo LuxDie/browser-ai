@@ -1,5 +1,6 @@
 import type { AIModelStatus, SummarizerOptions } from '@/entrypoints/background/model-manager/model-manager.model';
 import type { SummarizerLanguageCode } from '@/entrypoints/background/available-languages';
+import { browser } from 'wxt/browser';
 
 export class ModelManager {
   static #instance: ModelManager | null = null;
@@ -45,7 +46,7 @@ export class ModelManager {
       if (!translator) {
         return {
           state: 'unavailable',
-          errorMessage: 'Chrome AI APIs no disponibles'
+          errorMessage: browser.i18n.getMessage('chromeAINotAvailable') || 'Chrome AI APIs no disponibles'
         };
       }
 
@@ -60,7 +61,7 @@ export class ModelManager {
         return {
           state: availability,
           downloadProgress: availability === 'downloading' ? 0 : undefined,
-          errorMessage: availability === 'unavailable' ? `Modelo no soportado: ${availability}` : undefined
+          errorMessage: availability === 'unavailable' ? browser.i18n.getMessage('modelNotSupported', [availability]) || `Modelo no soportado: ${availability}` : undefined
         };
 
       } catch (error: unknown) {
@@ -68,7 +69,7 @@ export class ModelManager {
         console.error(`❌ Error al verificar la disponibilidad del modelo de traducción para ${source}→${target}:`, error);
         return {
           state: 'unavailable',
-          errorMessage: `Error al verificar la disponibilidad del modelo: ${errorMessage}`
+          errorMessage: browser.i18n.getMessage('errorCheckingModelAvailability', [errorMessage]) || `Error al verificar la disponibilidad del modelo: ${errorMessage}`
         };
       }
     } else {
@@ -78,7 +79,7 @@ export class ModelManager {
       if (!summarizer) {
         return {
           state: 'unavailable',
-          errorMessage: 'Summarizer API no disponible'
+          errorMessage: browser.i18n.getMessage('summarizerAPINotAvailable') || 'Summarizer API no disponible'
         };
       }
 
@@ -87,14 +88,14 @@ export class ModelManager {
         return {
           state: availability,
           downloadProgress: availability === 'downloading' ? 0 : undefined,
-          errorMessage: availability === 'unavailable' ? 'Modelo de resumen no disponible' : undefined
+          errorMessage: availability === 'unavailable' ? browser.i18n.getMessage('summarizerModelNotAvailable') || 'Modelo de resumen no disponible' : undefined
         };
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error('❌ Error al verificar la disponibilidad del summarizer:', error);
         return {
           state: 'unavailable',
-          errorMessage: `Error al verificar la disponibilidad del summarizer: ${errorMessage}`
+          errorMessage: (browser.i18n.getMessage('errorCheckingModelAvailability') || `Error al verificar la disponibilidad del summarizer: ${errorMessage}`)
         };
       }
     }
@@ -118,7 +119,7 @@ export class ModelManager {
       if (!translator) {
         const status: AIModelStatus = {
           state: 'unavailable',
-          errorMessage: 'Translator API no soportada'
+          errorMessage: browser.i18n.getMessage('translatorAPINotSupported') || 'Translator API no soportada'
         };
         modelStatusCache.set(key, status);
         return status;
@@ -147,7 +148,7 @@ export class ModelManager {
         console.error(`❌ Error al descargar el modelo de traducción para ${source}→${target}:`, error);
         const status: AIModelStatus = {
           state: 'unavailable',
-          errorMessage: `Error al descargar el modelo: ${errorMessage}`
+          errorMessage: browser.i18n.getMessage('errorDownloadingModel', [errorMessage]) || `Error al descargar el modelo: ${errorMessage}`
         };
         modelStatusCache.set(key, status);
         return status;
@@ -159,7 +160,7 @@ export class ModelManager {
       if (!summarizer) {
         const status: AIModelStatus = {
           state: 'unavailable',
-          errorMessage: 'Summarizer API no soportada'
+          errorMessage: browser.i18n.getMessage('summarizerAPINotSupported') || 'Summarizer API no soportada'
         };
         return status;
       }
@@ -187,7 +188,7 @@ export class ModelManager {
         console.error('❌ Error al descargar el modelo de resumen:', error);
         const status: AIModelStatus = {
           state: 'unavailable',
-          errorMessage: `Error al descargar el modelo de resumen: ${errorMessage}`
+          errorMessage: browser.i18n.getMessage('errorDownloadingSummarizerModel', [errorMessage]) || `Error al descargar el modelo de resumen: ${errorMessage}`
         };
         modelStatusCache.set(key, status);
         return status;
@@ -205,7 +206,7 @@ export class ModelManager {
     const translator = this.#browserAPIs.translator;
 
     if (!translator) {
-      return 'Error: Chrome AI APIs no disponibles para traducción';
+      return browser.i18n.getMessage('chromeAINotAvailableForTranslation') || 'Error: Chrome AI APIs no disponibles para traducción';
     }
 
     try {
@@ -219,7 +220,7 @@ export class ModelManager {
       return translatedText;
     } catch (error: unknown) {
       console.error('❌ Error al traducir texto:', error);
-      return `Error al traducir: ${error instanceof Error ? error.message : String(error)}`;
+      return browser.i18n.getMessage('errorTranslating', [error instanceof Error ? error.message : String(error)]) || `Error al traducir: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
 
@@ -228,7 +229,7 @@ export class ModelManager {
     const summarizer = this.#browserAPIs.summarizer;
 
     if (!summarizer) {
-      throw new Error('Summarizer API no soportada');
+      throw new Error(browser.i18n.getMessage('summarizerAPINotSupportedError') || 'Summarizer API no soportada');
     }
 
     try {
@@ -248,7 +249,7 @@ export class ModelManager {
       return summary;
     } catch (error: unknown) {
       console.error('❌ Error al generar resumen:', error);
-      return `Error al generar resumen: ${error instanceof Error ? error.message : String(error)}`;
+      return browser.i18n.getMessage('errorGeneratingSummary', [error instanceof Error ? error.message : String(error)]) || `Error al generar resumen: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
 }

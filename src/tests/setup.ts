@@ -50,3 +50,15 @@ Object.defineProperty(window, 'getSelection', {
   })),
   writable: true
 });
+
+// Extend browser with additional mocks (runtime and notifications are provided by fakeBrowser)
+import { browser } from 'wxt/browser';
+
+Object.assign(browser, {
+  i18n: {
+    getMessage: vi.fn((key: string) => {
+      // Return the key itself for simplicity in tests
+      return key;
+    }),
+  }
+});

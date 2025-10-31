@@ -63,7 +63,7 @@ describe('ModelManager - Summarization Features', () => {
       const result = await modelManager.checkModelStatus({ type: 'summarization' });
 
       expect(result.state).toBe('unavailable');
-      expect(result.errorMessage).toContain('no disponible');
+      expect(result.errorMessage).toBe('summarizerModelNotAvailable');
     });
 
     it('should handle API errors gracefully', async () => {
@@ -72,7 +72,7 @@ describe('ModelManager - Summarization Features', () => {
       const result = await modelManager.checkModelStatus({ type: 'summarization' });
 
       expect(result.state).toBe('unavailable');
-      expect(result.errorMessage).toContain('Error al verificar la disponibilidad del summarizer');
+      expect(result.errorMessage).toBe('errorCheckingModelAvailability');
     });
 
     it('should return error when Summarizer API is not available', async () => {
@@ -84,7 +84,7 @@ describe('ModelManager - Summarization Features', () => {
       const result = await modelManager.checkModelStatus({ type: 'summarization' });
 
       expect(result.state).toBe('unavailable');
-      expect(result.errorMessage).toContain('Summarizer API no disponible');
+      expect(result.errorMessage).toBe('summarizerAPINotAvailable');
 
       // Restore the global mock
       vi.stubGlobal('self', mockAI);
@@ -107,7 +107,7 @@ describe('ModelManager - Summarization Features', () => {
       const result = await modelManager.downloadModel({ type: 'summarization' });
 
       expect(result.state).toBe('unavailable');
-      expect(result.errorMessage).toContain('Error al descargar el modelo de resumen: Download failed');
+      expect(result.errorMessage).toBe('errorDownloadingSummarizerModel');
     });
 
     it('should return error when Summarizer API is not available', async () => {
@@ -119,7 +119,7 @@ describe('ModelManager - Summarization Features', () => {
       const result = await modelManager.downloadModel({ type: 'summarization' });
 
       expect(result.state).toBe('unavailable');
-      expect(result.errorMessage).toContain('Summarizer API no soportada');
+      expect(result.errorMessage).toBe('summarizerAPINotSupported');
 
       // Restore the global mock
       vi.stubGlobal('self', mockAI);
@@ -161,7 +161,7 @@ describe('ModelManager - Summarization Features', () => {
 
       const result = await modelManager.summarizeText('Text to summarize');
 
-      expect(result).toContain('Error al generar resumen');
+      expect(result).toBe('errorGeneratingSummary');
     });
 
     it('should return error when Summarizer API is not available', async () => {
@@ -172,7 +172,7 @@ describe('ModelManager - Summarization Features', () => {
       const modelManager = new ModelManager();
 
       await expect(modelManager.summarizeText('Text to summarize'))
-      .rejects.toThrow('Summarizer API no soportada');
+      .rejects.toThrow('summarizerAPINotSupportedError');
 
       // Restore the global mock
       vi.stubGlobal('self', mockAI);

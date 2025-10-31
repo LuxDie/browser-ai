@@ -80,7 +80,7 @@ describe('Background Script', () => {
       // Check that the parent menu is created
       expect(browser.contextMenus.create).toHaveBeenCalledWith({
         id: 'browserAI',
-        title: 'Browser AI',
+        title: 'browserAIMenu',
         contexts: ['selection'],
       });
 
@@ -88,7 +88,7 @@ describe('Background Script', () => {
       expect(browser.contextMenus.create).toHaveBeenCalledWith({
         parentId: 'browserAI',
         id: 'translateSelection',
-        title: 'Traducir',
+        title: 'translateMenu',
         contexts: ['selection'],
       });
 
@@ -96,7 +96,7 @@ describe('Background Script', () => {
       expect(browser.contextMenus.create).toHaveBeenCalledWith({
         parentId: 'browserAI',
         id: 'summarizeSelection',
-        title: 'Resumir',
+        title: 'summarizeMenu',
         contexts: ['selection'],
       });
     });
@@ -191,6 +191,8 @@ describe('Background Script', () => {
 
       it('should send browser notification when translation requires model download', async () => {
         mockAI.Translator.availability.mockResolvedValue('downloadable');
+        vi.spyOn(browser.notifications, 'create');
+
 
         await sendMessage('translateText', {
           text: 'Test text',
@@ -200,7 +202,7 @@ describe('Background Script', () => {
 
         expect(browser.notifications.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            message: 'El texto se ha procesado'
+            message: 'textProcessedNotification'
           })
         );
       });

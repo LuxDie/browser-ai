@@ -68,27 +68,27 @@ describe('Language Code Validation', () => {
     // Invalid source
     expect(validateLanguagePair('Auto', 'es')).toEqual({ 
       valid: false, 
-      reason: 'Invalid source language code: Auto' 
+      reason: 'invalidSourceLanguageCode' 
     });
     expect(validateLanguagePair('eng', 'es')).toEqual({ 
       valid: false, 
-      reason: 'Invalid source language code: eng' 
+      reason: 'invalidSourceLanguageCode' 
     });
 
     // Invalid target
     expect(validateLanguagePair('en', 'Auto')).toEqual({ 
       valid: false, 
-      reason: 'Invalid target language code: Auto' 
+      reason: 'invalidTargetLanguageCode' 
     });
     expect(validateLanguagePair('en', 'spa')).toEqual({ 
       valid: false, 
-      reason: 'Invalid target language code: spa' 
+      reason: 'invalidTargetLanguageCode' 
     });
 
     // Both invalid
     expect(validateLanguagePair('Auto', 'Auto')).toEqual({ 
       valid: false, 
-      reason: 'Invalid source language code: Auto' 
+      reason: 'invalidSourceLanguageCode' 
     });
   });
 

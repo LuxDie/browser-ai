@@ -113,8 +113,8 @@ export class AIService {
     if (sendNotification) {
       void browser.notifications.create({
         type: 'basic',
-        title: 'Notificación de traducción',
-        message: 'La traducción se ha completado',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
         iconUrl: 'icons/icon-128.png'
       });
     }

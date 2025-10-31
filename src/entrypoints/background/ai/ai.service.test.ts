@@ -406,7 +406,7 @@ describe('AIService', () => {
       // Verify browser notification was created
       expect(browser.notifications.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'La traducción se ha completado'
+          message: 'textProcessedNotification'
         })
       );
     });

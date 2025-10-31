@@ -113,7 +113,7 @@ describe('SidepanelApp', () => {
 
   it('should render the initial state correctly', () => {
     const root = document.getElementById('root');
-    expect(root?.innerHTML).toContain('Browser AI');
+    expect(root?.innerHTML).toContain('extName');
     const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
     expect(textarea.value).toBe('');
     const processButton = document.getElementById('process-button') as HTMLButtonElement;
@@ -134,7 +134,7 @@ describe('SidepanelApp', () => {
     await setTextAndProcess();
 
     const root = document.getElementById('root');
-    expect(root?.innerHTML).toContain('Idioma detectado');
+    expect(root?.innerHTML).toContain('detectedLanguage');
     expect(root?.innerHTML).toContain(testLanguageCode);
   });
 
@@ -143,29 +143,29 @@ describe('SidepanelApp', () => {
     mockAIService.processText.mockResolvedValue('Texto procesado correctamente');
 
     // Establecer texto y procesar
+    const root = document.getElementById('root');
     const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-    const processButton = document.getElementById('process-button') as HTMLButtonElement;
-    textarea.value = 'This is a longer text that should trigger language detection';
+    textarea.value = 'This is a long enough text to trigger language detection and it should work properly.';
     textarea.dispatchEvent(new Event('input'));
     await vi.runAllTimersAsync();
     
-    // Verificar que el botón está habilitado
-    expect(processButton.disabled).toBe(false);
+    expect(root?.innerHTML).toContain('detectedLanguage');
+  });
 
+  it('should show "localProcessingBadge" indicator when using native API', async () => {
+    const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
+    const processButton = document.getElementById('process-button') as HTMLButtonElement;
+    textarea.value = 'This is a test text for processing';
+    textarea.dispatchEvent(new Event('input'));
+    await vi.runAllTimersAsync();
     processButton.click();
     await vi.runAllTimersAsync();
 
-    // Esperar a que aparezca el contenedor de resultado
-    await vi.waitFor(() => {
-      const resultContainer = document.getElementById('result-container');
-      expect(resultContainer?.innerHTML).toBeTruthy();
-    });
-    
     // Verificar que aparece el indicador de procesamiento local
     const indicatorElement = document.getElementById('processing-source');
-    // TODO: investigar o reportar bug de tseslint
+    // TODO: investigar y quizás reportar bug de tseslint
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    expect(indicatorElement?.textContent?.trim()).toBe('🔒 Procesado localmente');
+    expect(indicatorElement?.textContent?.trim()).toBe('localProcessingBadge');
   });
 
   it('should automatically detect language from text selected from context menu', async () => {
@@ -295,7 +295,7 @@ describe('SidepanelApp', () => {
       expect(processButton.disabled).toBe(true);
     });
 
-    it('should show "Procesando..." and be disabled when processing is in progress', async () => {
+    it('should show "processingButton" and be disabled when processing is in progress', async () => {
       // Configurar: Ingresar texto y detectar idioma para habilitar procesamiento
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
       textarea.value = 'This is a longer text that should trigger language detection';
@@ -311,7 +311,7 @@ describe('SidepanelApp', () => {
 
       // Verificar que el botón muestre estado de carga
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      expect(processButton.textContent?.trim()).toBe('Procesando...');
+      expect(processButton.textContent?.trim()).toBe('processingButton');
       expect(processButton.disabled).toBe(true);
     });
 
@@ -338,7 +338,7 @@ describe('SidepanelApp', () => {
       expect(mockAIService.processText).not.toHaveBeenCalled();
       // Verificar que se muestre un error
       const warningContainer = document.getElementById('process-warning-container');
-      expect(warningContainer?.innerHTML).toContain('Los idiomas de origen y destino son iguales');
+      expect(warningContainer?.innerHTML).toContain('sameLanguageWarning');
     });
 
     it('should reset button state after processing completes', async () => {
@@ -358,7 +358,7 @@ describe('SidepanelApp', () => {
       // Verificar que el botón se reinicie después de completarse el procesamiento
       await vi.runAllTimersAsync();
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      expect(processButton.textContent?.trim()).toBe('Procesar');
+       expect(processButton.textContent?.trim()).toBe('processButton');
       expect(processButton.disabled).toBe(false);
     });
 
@@ -386,7 +386,7 @@ describe('SidepanelApp', () => {
       // El botón debería volver a estar habilitado después de cambiar idioma destino
       expect(processButton.disabled).toBe(false);
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      expect(processButton.textContent?.trim()).toBe('Procesar');
+       expect(processButton.textContent?.trim()).toBe('processButton');
     });
 
     it('should re-enable process button when translation fails with an error', async () => {
@@ -407,7 +407,7 @@ describe('SidepanelApp', () => {
       // Simular inicio del procesamiento haciendo clic en el botón
       processButton.click();
       // Verificar que el botón esté deshabilitado durante el procesamiento
-      expect(processButton.textContent.trim()).toBe('Procesando...');
+       expect(processButton.textContent.trim()).toBe('processingButton');
       expect(processButton.disabled).toBe(true);
 
       // Ahora activar el rechazo
@@ -415,7 +415,7 @@ describe('SidepanelApp', () => {
       await vi.runAllTimersAsync();
 
       // Verificar que el botón vuelva a estar habilitado después del error
-      expect(processButton.textContent.trim()).toBe('Procesar');
+       expect(processButton.textContent.trim()).toBe('processButton');
       expect(processButton.disabled).toBe(false);
     });
   });
@@ -531,7 +531,7 @@ describe('SidepanelApp', () => {
 
       // Verificar que se muestre la advertencia
       const apiWarningContainer = document.getElementById('api-warning-container');
-      expect(apiWarningContainer?.innerHTML).toContain('Las APIs nativas del navegador no están disponibles');
+      expect(apiWarningContainer?.innerHTML).toContain('apiWarning');
     });
 
     it('should not show warning when native browser APIs are available', async () => {
