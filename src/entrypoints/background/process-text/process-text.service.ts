@@ -4,6 +4,7 @@ import { sendMessage } from '@/entrypoints/background/messaging';
 import { LanguageCode } from '../available-languages';
 import { SummarizerOptions } from '../model-manager/model-manager.model';
 import { browser } from 'wxt/browser';
+import { b } from 'vitest/dist/chunks/suite.d.FvehnV49.js';
 
 interface ProcessOptions {
   sourceLanguage: LanguageCode,
@@ -68,8 +69,8 @@ export class ProcessTextService {
     if (sendNotification) {
       void browser.notifications.create({
         type: 'basic',
-        title: 'Notificación de traducción',
-        message: 'La traducción se ha completado',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
         iconUrl: 'icons/icon-128.png'
       });
     }

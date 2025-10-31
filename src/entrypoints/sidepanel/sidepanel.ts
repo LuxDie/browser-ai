@@ -9,6 +9,7 @@ import type { AIModelStatus } from '../background/model-manager/model-manager.mo
 import { getProcessTextService } from '../background/process-text/process-text.service';
 import { Component, createApp, nextTick } from 'vue';
 import ProcessControls from './components/ProcessControls.vue';
+import { browser } from 'wxt/browser';
 
 interface TranslationState {
   text: string
@@ -106,7 +107,7 @@ export class SidepanelApp {
       this.#state.translatedText = response ?? '';
       this.#state.editedTranslatedText = response ?? '';
     } catch (error) {
-      this.#state.error = error instanceof Error ? error.message : 'Error al procesar el texto';
+      this.#state.error = error instanceof Error ? error.message : browser.i18n.getMessage('processError');;
     } finally {
       this.#state.isLoading = false;
 
@@ -248,22 +249,22 @@ export class SidepanelApp {
       container.innerHTML = `
         <div class="h-full flex flex-col p-4">
           <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-800 mb-2">Browser AI</h1>
-            <p class="text-sm text-gray-600">Procesamiento de texto con IA integrada</p>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">${browser.i18n.getMessage('extName')}</h1>
+            <p class="text-sm text-gray-600">${browser.i18n.getMessage('extDescription')}</p>
             <div id="api-warning-container"></div>
           </div>
 
           <div class="mb-4">
             <div class="flex items-center justify-between mb-2">
               <label for="input-text" class="block text-sm font-medium text-gray-700">
-                Texto a procesar
+                ${browser.i18n.getMessage('inputLabel')}
               </label>
               <div id="language-info-container"></div>
             </div>
             <textarea
               id="input-text"
               class="input-field h-32 resize-none"
-              placeholder="Escribe o pega el texto aquí..."
+              placeholder="${browser.i18n.getMessage('inputPlaceholder')}"
             ></textarea>
           </div>
 
@@ -326,7 +327,7 @@ export class SidepanelApp {
       apiWarningContainer.innerHTML = !this.#state.apiAvailable ? `
         <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p class="text-yellow-800 text-xs">
-            ⚠️ Las APIs nativas del navegador no están disponibles. Asegúrate de tener la versión más reciente de tu navegador.
+            ${browser.i18n.getMessage('apiWarning')}
           </p>
         </div>
       ` : '';
@@ -349,11 +350,11 @@ export class SidepanelApp {
     if (this.#elements.targetLanguage) {
       if (this.#state.availableLanguages) {
         const optionsHTML = this.#state.availableLanguages.map(lang =>
-          `<option value="${lang.code}">${lang.name}</option>`
+          `<option value="${lang.code}">${browser.i18n.getMessage(lang.nameKey)}</option>`
         ).join('');
         this.#elements.targetLanguage.innerHTML = optionsHTML;
       } else {
-        this.#elements.targetLanguage.innerHTML = '<option value="">Idiomas no disponibles</option>';
+        this.#elements.targetLanguage.innerHTML = `<option value="">${browser.i18n.getMessage('languagesUnavailable')}</option>`;
       }
       this.#elements.targetLanguage.value = this.#state.targetLanguage;
     }
@@ -387,9 +388,9 @@ export class SidepanelApp {
       this.#elements.processButton.innerHTML = this.#state.isLoading ? `
         <div class="flex items-center justify-center">
           <div class="loading-spinner mr-2"></div>
-          Procesando...
+          ${browser.i18n.getMessage('processingButton')}
         </div>
-      ` : 'Procesar';
+      ` : browser.i18n.getMessage('processButton');
     }
   }
 
@@ -402,14 +403,14 @@ export class SidepanelApp {
             <div class="flex justify-between items-center mb-2">
               <div class="flex items-center gap-2">
                 <label class="text-sm font-medium text-gray-700">
-                  Resultado
+                  ${browser.i18n.getMessage('resultLabel')}
                 </label>
                 <span id="processing-source" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
-                  🔒 Procesado localmente
+                  ${browser.i18n.getMessage('localProcessingBadge')}
                 </span>
               </div>
               <button id="copy-button" class="btn-secondary text-xs">
-                Copiar
+                ${browser.i18n.getMessage('copyButton')}
               </button>
             </div>
             <div class="flex-1 bg-white border border-gray-300 rounded-lg p-3 overflow-auto">
@@ -457,11 +458,11 @@ export class SidepanelApp {
         if (!detectedLanguage) {
           throw new Error('Idioma detectado no está configurado');
         }
-        const languageName = detectedLanguage.name;
+        const languageName = browser.i18n.getMessage(detectedLanguage.nameKey);
         languageInfoContainer.innerHTML = `
           <div class="p-2 bg-blue-50 border border-blue-200 rounded-lg">
             <p class="text-blue-800 text-xs">
-              Idioma detectado: <span class="font-medium">${languageName}</span>
+              ${browser.i18n.getMessage('detectedLanguage', [languageName])}
             </p>
           </div>
         `;
@@ -469,7 +470,7 @@ export class SidepanelApp {
         languageInfoContainer.innerHTML = `
           <div class="p-2 bg-gray-50 border border-gray-200 rounded-lg">
             <p class="text-gray-600 text-xs">
-              No hay suficiente texto para detectar el idioma
+              ${browser.i18n.getMessage('insufficientTextForDetection')}
             </p>
           </div>
         `;
@@ -482,8 +483,8 @@ export class SidepanelApp {
   #renderModelStatus(): string {
     if (this.#state.modelStatus?.state === 'downloading') {
       const downloadingText = this.#state.summarize
-        ? '📥 Descargando resumidor por única vez...'
-        : `📥 Descargando traductor (${this.#state.sourceLanguage!} - ${this.#state.targetLanguage}) por única vez...`;
+        ? browser.i18n.getMessage('downloadingSummarizer')
+        : browser.i18n.getMessage('downloadingTranslator', [this.#state.sourceLanguage!, this.#state.targetLanguage]);
 
       return `
         <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -492,7 +493,7 @@ export class SidepanelApp {
           </div>
           <div id="download-progress-bar" class="progress-indeterminate mb-2"></div>
           <div class="text-sm text-blue-700">
-            La descarga puede tomar algunos minutos. Por favor, espere...
+            ${browser.i18n.getMessage('downloadWaitMessage')}
           </div>
         </div>
       `;
@@ -512,7 +513,7 @@ export class SidepanelApp {
         warningContainer.innerHTML = `
           <div id="warning-container" class="p-2 bg-amber-50 border border-amber-200 rounded-lg">
             <p class="text-amber-800 text-xs">
-              ⚠️ Los idiomas de origen y destino son iguales. Selecciona un idioma destino diferente o activa la opción "Resumir".
+              ${browser.i18n.getMessage('sameLanguageWarning')}
             </p>
           </div>
         `;

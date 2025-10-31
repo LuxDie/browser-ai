@@ -13,8 +13,8 @@ export default defineConfig({
     disabled: true,
   },
   manifest: {
-    name: 'Browser AI',
-    description: "AI-powered translation using Chrome's built-in APIs",
+    name: '__MSG_extName__',
+    description: '__MSG_extDescription__',
     minimum_chrome_version: '138',
     permissions: [
       'sidePanel',
@@ -32,5 +32,6 @@ export default defineConfig({
       "48": "icons/icon-48.png",
       "128": "icons/icon-128.png"
     },
+    default_locale: 'es',
   },
 });
