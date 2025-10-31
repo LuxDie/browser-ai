@@ -60,9 +60,6 @@ export default defineBackground({
   // Texto seleccionado pendiente para envío al sidepanel
   let pendingSelectedText: string | null = null;
 
-  // Estado de preparación del sidepanel
-  let isSidepanelReady = false;
-
   /**
    * Detecta el idioma principal del navegador del usuario
    * @returns Código de idioma (ej: 'es', 'en', 'fr') o null si no se puede detectar
@@ -359,10 +356,17 @@ export default defineBackground({
       const selectedText = info.selectionText;
       void (async () => {
         await browser.sidePanel.open({ windowId: tab.windowId });
-        if (isSidepanelReady) {
-          void sendMessage('selectedText', selectedText);
-        } else {
-          pendingSelectedText = selectedText;
+
+        // Intentar enviar el texto al sidepanel inmediatamente
+        try {
+          await sendMessage('selectedText', selectedText);
+        } catch (error) {
+          if (error instanceof Error && error.message === 'Could not establish connection. Receiving end does not exist.') {
+            // El panel lateral está cerrado, guardar el texto seleccionado para enviarlo cuando esté listo
+            pendingSelectedText = selectedText;
+          } else {
+            throw error;
+          }
         }
       })();
     }
@@ -434,7 +438,6 @@ export default defineBackground({
   });
 
   onMessage('sidepanelReady', () => {
-    isSidepanelReady = true;
     if (pendingSelectedText) {
       void sendMessage('selectedText', pendingSelectedText);
       pendingSelectedText = null;
