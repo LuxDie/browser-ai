@@ -50,7 +50,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['src/**/*test.ts'],
+    files: ['src/tests/**', 'src/**/*test.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',

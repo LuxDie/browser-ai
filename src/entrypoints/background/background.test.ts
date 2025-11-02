@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi, MockInstance } from 'vitest';
+import { beforeEach, describe, expect, it, vi, MockInstance } from 'vitest';
 import { detectorInstance } from '@/tests/mocks';
 import {
   sendMessage,
@@ -30,25 +30,6 @@ const registerDefaultMessageHandlers = () => {
 describe('Background Script', () => {
   let messageHandlerSpies: MessageHandlerSpies;
 
-  beforeAll(() => {
-    // Mock contextMenus.onClicked to support trigger
-    const listeners: ((info: any, tab?: any) => void)[] = [];
-    vi.mocked(browser.contextMenus.onClicked).addListener = vi.fn((listener: (info: any, tab?: any) => void) => {
-      listeners.push(listener);
-    });
-    (browser.contextMenus.onClicked as any).trigger = (info: any, tab?: any) => {
-      listeners.forEach(listener => { listener(info, tab); });
-    };
-
-    (browser.sidePanel as any) = {
-      setPanelBehavior: vi.fn().mockResolvedValue(undefined),
-      open: vi.fn().mockResolvedValue(undefined),
-    };
-
-    (browser.notifications as any) = {
-      create: vi.fn(),
-    };
-  });
   beforeEach(() => {
     fakeBrowser.reset();
     removeMessageListeners();
@@ -56,11 +37,7 @@ describe('Background Script', () => {
     background.main();
   });
   describe('onInstalled Listener', () => {
-    // Se ejecuta una vez antes de todas las pruebas en este bloque.
-    beforeAll(() => {
-      browser.contextMenus.removeAll = vi.fn().mockResolvedValue(undefined);
-      browser.contextMenus.create = vi.fn();
-    });
+
     beforeEach(async () => {
       await fakeBrowser.runtime.onInstalled.trigger();
     });

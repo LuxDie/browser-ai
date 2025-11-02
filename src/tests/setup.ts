@@ -38,6 +38,26 @@ Object.assign(browser, {
       // Return the key itself for simplicity in tests
       return key;
     }),
+  },
+  contextMenus: (() => {
+    const listeners: ((info: any, tab?: any) => void)[] = [];
+    const onClicked = {
+      addListener: vi.fn((listener: (info: any, tab?: any) => void) => {
+        listeners.push(listener);
+      }),
+      trigger: (info: any, tab?: any) => {
+        listeners.forEach(listener => { listener(info, tab); });
+      },
+    };
+    return {
+      create: vi.fn(),
+      removeAll: vi.fn().mockResolvedValue(undefined),
+      onClicked,
+    };
+  })(),
+  sidePanel: {
+    setPanelBehavior: vi.fn(),
+    open: vi.fn(),
   }
 });
 
