@@ -39,7 +39,7 @@ const registerDefaultMessageHandlers = (overrides: Record<string, any> = {}): Me
     languages: getDefaultAvailableLanguages()
   })));
   const getBrowserLanguageSpy = vi.fn(overrides.getBrowserLanguage ?? (() => 'es'));
-  const detectLanguageSpy = vi.fn(overrides.detectLanguage ?? (() => ({ language: 'en' })));
+  const detectLanguageSpy = vi.fn(overrides.detectLanguage ?? (() => ({ languageCode: 'en' })));
   const translateTextRequestSpy = vi.fn(overrides.translateTextRequest ??
     ((data: { text: string; targetLanguage: string; sourceLanguage: string }) => {
     return Promise.resolve(`${data.text} (translated)`);
@@ -47,13 +47,13 @@ const registerDefaultMessageHandlers = (overrides: Record<string, any> = {}): Me
   const cancelPendingTranslationsSpy = vi.fn(overrides.cancelPendingTranslations ?? (() => ({ cancelled: true })));
   const sidepanelReadySpy = vi.fn(overrides.sidepanelReady ?? (() => {}));
 
-  onMessage('checkAPIAvailability', checkAPIAvailabilitySpy);
-  onMessage('getAvailableLanguages', getAvailableLanguagesSpy);
-  onMessage('getBrowserLanguage', getBrowserLanguageSpy);
-  onMessage('detectLanguage', detectLanguageSpy);
-  onMessage('translateText', translateTextRequestSpy);
-  onMessage('cancelPendingTranslations', cancelPendingTranslationsSpy);
-  onMessage('sidepanelReady', sidepanelReadySpy);
+  onMessage('checkAPIAvailability', checkAPIAvailabilitySpy as any);
+  onMessage('getAvailableLanguages', getAvailableLanguagesSpy as any);
+  onMessage('getBrowserLanguage', getBrowserLanguageSpy as any);
+  onMessage('detectLanguage', detectLanguageSpy as any);
+  onMessage('translateText', translateTextRequestSpy as any);
+  onMessage('cancelPendingTranslations', cancelPendingTranslationsSpy as any);
+  onMessage('sidepanelReady', sidepanelReadySpy as any);
 
   return {
     checkAPIAvailability: checkAPIAvailabilitySpy,
