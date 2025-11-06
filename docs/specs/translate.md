@@ -1,14 +1,14 @@
 # Funcionalidad de Traducir
 
-**Versión:** v0.3.0  
-**Última modificación:** 2025-10-27
+**Versión:** v0.2.1  
+**Última modificación:** 2025-11-06
 
 ## Descripción Funcional
 La funcionalidad "Traducir" permite al usuario traducir texto seleccionado o proporcionado a un idioma destino, utilizando modelos de IA locales integrados en el navegador. Esta acción se activa desde el panel lateral mediante un botón "Procesar" y un selector desplegable para elegir el idioma objetivo al lado del botón, o desde un menú contextual en la página web activa. Se ejecuta de manera asíncrona, con soporte para descargas de modelos bajo demanda.
 
 ## Requisitos Técnicos
-- **Modelos de IA**: Utiliza modelos de traducción basados en APIs del navegador (como Chrome AI APIs), con soporte para múltiples idiomas destino.
-- **Servicio de Backend**: `TranslationService` en el `background`, manejando abstracción de proveedores y ejecución diferida.
+- **Modelos de IA**: Utiliza modelos de traducción basados en APIs del navegador, con soporte para múltiples idiomas destino.
+- **Servicio de Backend**: Un `AIService` unificado en el `background` maneja la orquestación de traducción y resumen, incluyendo la abstracción de proveedores y la ejecución diferida.
 - **Gestión de Modelos**: Integrado con `ModelManager` para detección, descarga y monitoreo de modelos de traducción por idioma.
 - **UI**: Componentes en `sidePanel` como `LanguageSelector`, `DownloadProgress`, etc.
 

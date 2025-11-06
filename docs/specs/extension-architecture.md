@@ -1,12 +1,13 @@
 # Arquitectura de la Extensión (MV3)
 
+**Versión:** v0.2.1
+**Última modificación:** 2025-11-06
+
 ## Plataforma y componentes
-- **Plataforma Principal:** Chrome Extension **Manifest V3**
+- **Plataforma Principal:** Extensión de Navegador **Manifest V3**
 - **UI:** `sidePanel` como vista principal
 - **Service Worker:** `background` para orquestación
 - **Content Scripts:** `content` para interacción con el DOM
-
-
 
 ## Responsabilidades
 - **`manifest.json`**: metadatos, permisos (`sidePanel`, `storage`, `activeTab`, `scripting`, `notifications`)
@@ -14,22 +15,28 @@
 - **`background`**: estado global y eventos del navegador
 - **`content`**: lectura/edición del DOM y puente con la página
 
-## Componentes de Gestión de Modelos
+## Componentes de Backend (Service Worker)
 
-### ModelManager (background)
-- **Detección de disponibilidad**: Verificar disponibilidad de API
-- **Gestión de descargas**: Iniciar y monitorear descargas
-- **Notificaciones**: Enviar notificaciones push cuando modelos estén listos
+### `AIService` (background)
+- **Orquestación**: Dirige las operaciones de IA (traducción, resumen) y aplica la lógica de negocio.
+- **Abstracción de proveedores**: Maneja las APIs integradas.
+- **Ejecución diferida**: Almacena operaciones pendientes durante la descarga de modelos.
 
-### TranslationService (background)
-- **Abstracción de proveedores**: Manejar APIs integradas
-- **Ejecución diferida**: Almacenar traducción pendiente durante descarga de modelo
-- **Monitoreo de progreso**: Escuchar eventos de descarga de modelos
+### `ModelManager` (background)
+- **Gestión de Modelos**: Abstrae las APIs de `Translator` y `Summarizer` del navegador.
+- **Detección de disponibilidad**: Verifica la disponibilidad de los modelos de traducción y resumen.
+- **Gestión de descargas**: Inicia y monitorea las descargas de modelos.
+- **Notificaciones**: Envía notificaciones push cuando los modelos están listos.
 
-### UI Components (sidepanel)
-- **LanguageSelector**: Selector desplegable de idioma destino
-- **DownloadProgress**: Indicador de progreso de descarga
-- **NotificationHandler**: Manejar notificaciones push del sistema
+## Componentes de UI (Sidepanel)
+
+### `ProcessControls.vue`
+- **Controles de Procesamiento**: Contiene los controles para activar el resumen, seleccionar el idioma de destino y ejecutar la operación.
+
+### Otros Componentes de UI
+- **`LanguageSelector`**: Selector desplegable de idioma destino.
+- **`DownloadProgress`**: Indicador de progreso de descarga.
+- **`NotificationHandler`**: Maneja notificaciones push del sistema.
 
 ### Implementación Técnica de UI Components
 - **Framework Frontend**: Vue 3 con Composition API y `<script setup>`

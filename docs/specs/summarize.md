@@ -1,16 +1,22 @@
 # Funcionalidad de Resumir
 
-**Versión:** v0.3.0  
-**Última modificación:** 2025-10-27
+**Versión:** v0.2.1  
+**Última modificación:** 2025-11-06
 
 ## Descripción Funcional
-La funcionalidad "Resumir" permite al usuario generar un resumen conciso del texto seleccionado o proporcionado, utilizando modelos de IA locales integrados en el navegador. Esta acción se activa desde el panel lateral mediante una pestaña "Procesar" que incluye una casilla para activar el resumen, o desde un menú contextual en la página web activa. El resumen se ejecutará como parte del procesamiento de texto, generando una versión condensada del contenido original. Posee soporte para descargas de modelos bajo demanda.
+La funcionalidad "Resumir" permite al usuario generar un resumen conciso del texto seleccionado o proporcionado, utilizando modelos de IA locales integrados en el navegador. Esta acción se activa desde el panel lateral mediante un componente de controles de procesamiento que incluye una casilla para activar el resumen, o desde un menú contextual en la página web activa. El resumen se ejecutará como parte del procesamiento de texto, generando una versión condensada del contenido original. Posee soporte para descargas de modelos bajo demanda.
+
+### Lógica de Idiomas No Soportados
+El servicio de IA implementa una estrategia de fallback para idiomas no soportados por el modelo de resumen:
+1.  Si el idioma de origen no es soportado, el texto se traduce a inglés antes de resumirlo.
+2.  Si el idioma de destino no es soportado, el resumen (generado en inglés) se traduce al idioma de destino.
+3.  Si ninguno de los dos es soportado, se realizan ambas traducciones (entrada a inglés, resumen a destino).
 
 ## Requisitos Técnicos
 - **Modelos de IA**: Utiliza modelos de resumen basados en APIs del navegador (como Chrome AI APIs).
-- **Servicio de Backend**: Crea un `SummarizationService` en el `background` para manejar abstracción de proveedores de IA y ejecución diferida de resúmenes.
-- **Gestión de Modelos**: Integrado con `ModelManager` para detección, descarga y monitoreo del modelo de resumen.
-- **UI**: Incluye una pestaña "Procesar" con una casilla para activar el resumen. Cuando está activado, el resumen se genera junto con otras operaciones de procesamiento de texto seleccionadas por el usuario.
+- **Servicio de Backend**: Un `AIService` unificado en el `background` maneja la orquestación de traducción y resumen, incluyendo la abstracción de proveedores y la ejecución diferida.
+- **Gestión de Modelos**: Integrado con `ModelManager` para detección, descarga y monitoreo de los modelos de resumen y traducción.
+- **UI**: El componente `ProcessControls.vue` en el panel lateral contiene una casilla para activar el resumen. Cuando está activado, el resumen se genera junto con otras operaciones de procesamiento de texto seleccionadas por el usuario.
 
 ## Flujos de Usuario
 

@@ -1,5 +1,8 @@
 # Arquitectura WXT
 
+**Versión:** v0.2.1
+**Última modificación:** 2025-11-06
+
 ## Introducción
 
 Este documento describe el modelo de desarrollo y la arquitectura propuesta por WXT (Web Extension Toolkit) para el desarrollo de extensiones de navegador modernas. WXT simplifica la creación de extensiones proporcionando una capa de abstracción sobre las APIs estándar del navegador, con soporte nativo para TypeScript, Vite y herramientas modernas de desarrollo.
@@ -64,24 +67,15 @@ Para todas las operaciones de comunicación entre componentes de la extensión:
 ```typescript
 // En messaging.ts - Definir el protocolo tipado
 import { defineExtensionMessaging } from '@webext-core/messaging';
+import { AvailableLanguages, LanguageCode } from '@/entrypoints/background';
+import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
 export interface ProtocolMap {
-  translateTextRequest(data: { text: string; targetLanguage: string; sourceLanguage: string }): {
-    translatedText: string;
-    sourceLanguage?: string;
-    targetLanguage?: string;
-    usingCloud: boolean;
-  };
-  detectLanguage(data: { text: string }): { language: string };
-  checkAPIAvailability(): { translator: boolean; languageDetector: boolean };
-  getModelStatus(data: { source: string; target: string }): ModelStatus;
-  downloadModel(data: { source: string; target: string }): ModelStatus;
-  cancelPendingTranslations(): { cancelled: boolean };
-  getAvailableLanguages(): { languages: { code: string; name: string }[] };
-  // Mensajes push del background al sidepanel
-  notifyTranslationProgress(data: { progress: number }): void;
-  notifyModelDownloadComplete(data: { source: string; target: string }): void;
-  notifyTranslationComplete(string): void;
+  getModelStatus(data: { source: string; target: string }): AIModelStatus;
+  translateText(data: { text: string; targetLanguage: LanguageCode; sourceLanguage: LanguageCode }): string;
+  selectedText(data: { text: string; summarize?: boolean }): void;
+  modelStatusUpdate(data: AIModelStatus): void;
+  // ... otros mensajes
 }
 
 const messaging = defineExtensionMessaging<ProtocolMap>();
@@ -89,24 +83,24 @@ export const sendMessage = messaging.sendMessage.bind(messaging);
 export const onMessage = messaging.onMessage.bind(messaging);
 
 // En background.ts - Handlers que retornan valores directamente
-onMessage('translateTextRequest', async (message) => {
+onMessage('translateText', async (message) => {
   const { text, sourceLanguage, targetLanguage } = message.data;
   // Lógica de traducción
-  return { translatedText: result, usingCloud: false };
+  return "texto traducido";
 });
 
 // En background.ts - El background puede enviar mensajes push usando sendMessage
-function notifyTranslationProgress(progress: number) {
+function notifyModelStatus(status: AIModelStatus) {
   // Envío de notificación push al sidepanel usando el mismo sistema tipado
-  sendMessage('notifyTranslationProgress', { progress }).catch(console.error);
+  sendMessage('modelStatusUpdate', status).catch(console.error);
 }
 
 // En sidepanel.ts - Llamadas síncronas con await para requests
 try {
-  const response = await sendMessage('translateTextRequest', {
-    text: inputText,
-    targetLanguage,
-    sourceLanguage
+  const response = await sendMessage('translateText', {
+    text: "hello world",
+    targetLanguage: 'es',
+    sourceLanguage: 'en'
   });
   // Manejar respuesta exitosa
 } catch (error) {
@@ -114,12 +108,8 @@ try {
 }
 
 // En sidepanel.ts - Listeners para mensajes push del background
-onMessage('notifyTranslationProgress', (message) => {
-  updateProgressUI(message.data.progress);
-});
-
-onMessage('notifyModelDownloadComplete', (message) => {
-  refreshModelStatus();
+onMessage('modelStatusUpdate', (message) => {
+  updateProgressUI(message.data);
 });
 ```
 

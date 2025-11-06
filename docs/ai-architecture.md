@@ -1,8 +1,11 @@
 # Arquitectura de IA
 
+**Versión:** v0.2.1
+**Última modificación:** 2025-11-06
+
 ## APIs integradas del navegador (Prioridad principal)
 
-Browser AI explota las nuevas APIs de IA integrada en Chrome, siendo pionero en esta tecnología emergente. Las funciones preestablecidas como "Resumir", "Traducir", "Corregir" se mapean directamente a estas APIs nativas del navegador.
+Browser AI explota las nuevas APIs de IA integrada en el navegador, siendo pionero en esta tecnología emergente. Las funciones preestablecidas como "Resumir", "Traducir", "Corregir" se mapean directamente a estas APIs nativas del navegador.
 
 ### Ventajas de las APIs integradas:
 - **Rendimiento nativo**: Optimizado por el navegador
@@ -24,34 +27,34 @@ El proyecto ofrece un enfoque híbrido donde el usuario tiene **libertad total**
 
 ## Arquitectura técnica
 
-- **Abstracción de proveedores**: Interfaz unificada que permite alternar entre APIs integradas/en la nube
-- **Mapeo directo**: Funciones preestablecidas → APIs integradas en el navegador
-- **Configuración persistente**: El usuario puede guardar sus preferencias por tipo de función
+- **Servicio de Orquestación de IA**: Un componente central que dirige las operaciones de IA (traducción, resumen, etc.) y aplica la lógica de negocio de alto nivel.
+- **Capa de Gestión de Modelos**: Una capa de abstracción sobre las APIs de IA del navegador. Se encarga de verificar la disponibilidad, descargar y ejecutar los modelos de IA.
+- **Configuración persistente**: El usuario puede guardar sus preferencias por tipo de función.
 
-## Gestión de Modelos de Traducción
+## Gestión de Modelos de IA
 
 ### Detección de Disponibilidad
-- **Detección de idioma**: Identificar automáticamente el idioma del texto seleccionado. Se requiere un mínimo de caracteres para asegurar que la detección sea precisa.
-- **Verificación previa**: Comprobar disponibilidad del modelo para el par detectado antes de intentar traducción
-- **Cache de estado**: Almacenar estado de disponibilidad para evitar verificaciones repetidas
-- **Monitoreo de cambios**: Detectar cuando un modelo se descarga mientras la app está abierta
+- **Detección de idioma**: Identificar automáticamente el idioma del texto seleccionado.
+- **Verificación previa**: Comprobar la disponibilidad del modelo (traducción, resumen, etc.) antes de intentar una operación.
+- **Cache de estado**: Almacenar el estado de disponibilidad para evitar verificaciones repetidas.
+- **Monitoreo de cambios**: Detectar cuándo un modelo se descarga mientras la aplicación está abierta.
 
 ### Gestión de Descargas
-- **Descargas en segundo plano**: Sin bloquear la interfaz de usuario
-- **Persistencia de estado**: Mantener progreso de descarga entre sesiones
+- **Descargas en segundo plano**: Sin bloquear la interfaz de usuario.
+- **Persistencia de estado**: Mantener el progreso de la descarga entre sesiones.
 - **Manejo de errores**: Gestionar fallos de conectividad, espacio insuficiente, etc.
-- **Integración con Chrome AI APIs**: Usar `LanguageModel.availability()` y `LanguageModel.create()` con monitoreo de progreso
+- **Integración con APIs de IA del navegador**: Usar las APIs nativas para la descarga y gestión de modelos.
 
 ### Ejecución Automática
-- **Preservación de contexto**: Mantener texto original y configuración durante la descarga
-- **Ejecución diferida**: Almacenar intención de traducción y ejecutarla automáticamente al completar
-- **Sin re-prompting**: El usuario no necesita volver a activar la traducción
+- **Preservación de contexto**: Mantener el texto original y la configuración durante la descarga.
+- **Ejecución diferida**: Almacenar la intención de la operación y ejecutarla automáticamente al completar la descarga.
+- **Sin re-prompting**: El usuario no necesita volver a activar la operación.
 
 ### Notificaciones No Bloqueantes
-- **Tipo**: Notificación push del sistema (Chrome notifications API)
-- **Duración**: 5 segundos máximo, con opción de cerrar manualmente
-- **Posición**: Esquina superior derecha, no superpuesta al contenido
-- **Acción**: Solo informativa, no requiere interacción del usuario
+- **Tipo**: Notificación push del sistema.
+- **Duración**: Corta y con opción de cierre manual.
+- **Posición**: No superpuesta al contenido principal.
+- **Acción**: Solo informativa, no requiere interacción del usuario.
 
 ### Casos de Error Específicos
 - **Sin conexión**: "Se requiere conexión a internet para descargar el modelo"
@@ -59,6 +62,6 @@ El proyecto ofrece un enfoque híbrido donde el usuario tiene **libertad total**
 - **Error de descarga**: "Error al descargar. [Reintentar] [Usar Nube]"
 - **Modelo corrupto**: "El modelo está dañado. [Reinstalar]"
 - **Versión incompatible**: "El modelo necesita actualización. [Actualizar]"
-- **Fallo en traducción automática**: "Error al completar la traducción. [Reintentar]"
+- **Fallo en operación automática**: "Error al completar la operación. [Reintentar]"
 
 
