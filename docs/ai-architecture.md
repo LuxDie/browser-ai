@@ -1,7 +1,7 @@
 # Arquitectura de IA
 
 **Versión:** v0.2.1
-**Última modificación:** 2025-11-06
+**Última modificación:** 2025-11-07
 
 ## APIs integradas del navegador (Prioridad principal)
 
@@ -63,5 +63,3 @@ El proyecto ofrece un enfoque híbrido donde el usuario tiene **libertad total**
 - **Modelo corrupto**: "El modelo está dañado. [Reinstalar]"
 - **Versión incompatible**: "El modelo necesita actualización. [Actualizar]"
 - **Fallo en operación automática**: "Error al completar la operación. [Reintentar]"
-
-

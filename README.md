@@ -18,6 +18,7 @@ Para una descripción completa del proyecto, incluyendo propósito y público ob
 - **Plataforma:** Extensión de Chrome (Manifest V3)
 - **Lenguaje:** TypeScript
 - **Estilos:** Tailwind CSS
+- **Frameworks:** Vue 3 + WXT
 - **Herramienta de Compilación:** Vite
 - **Interfaz:** Panel Lateral (sidePanel) + menú contextual
 - **IA:** Enfoque híbrido (APIs nativas del navegador + servicios en la nube)
@@ -41,25 +42,6 @@ Para una descripción completa del proyecto, incluyendo propósito y público ob
 ## Documentación
 
 La documentación técnica completa se encuentra en la carpeta `docs/`:
-
-- Fundamentos:
-  - [`general-description.md`](docs/general-description.md)
-  - [`roadmap.md`](docs/roadmap.md)
-  - [`ai-architecture.md`](docs/ai-architecture.md)
-- Especificaciones:
-  - [`specs/extension-architecture.md`](docs/specs/extension-architecture.md)
-  - [`specs/user-flows.md`](docs/specs/user-flows.md)
-  - [`ui.md`](docs/ui.md)
-  - [`ux.md`](docs/ux.md)
-- Guías:
-  - [`guides/typescript.md`](docs/guides/typescript.md)
-  - [`guides/tailwind.md`](docs/guides/tailwind.md)
-  - [`guides/typescript-tailwind-integration.md`](docs/guides/typescript-tailwind-integration.md)
-  - [`guides/testing.md`](docs/guides/testing.md)
-  - [`guides/ci.md`](docs/guides/ci.md)
-- Decisiones:
-  - [`adr/README.md`](docs/adr/README.md)
-  - [`adr/0001-hybrid-ai-approach.md`](docs/adr/0001-hybrid-ai-approach.md)
 
 ## Apoya el Proyecto
 
@@ -90,7 +72,6 @@ Si sintonizas con este proyecto y quieres apoyar su desarrollo, puedes hacer una
 ### Requisitos
 
 - **Chrome 138 o superior**: Requerido para las APIs de IA integradas
-- **Manifest V3**: Compatible con la última versión de extensiones Chrome
 
 #### Requisitos de Hardware
 
@@ -101,13 +82,7 @@ Si sintonizas con este proyecto y quieres apoyar su desarrollo, puedes hacer una
 - **Red**: Conexión sin límites de datos
 
 **Para APIs adicionales (Fases futuras - Summarizer, Writer, Rewriter, Proofreader):**
-- **Sistema operativo**: Windows 10/11, macOS 13+ (Ventura), o Linux
-- **Dispositivo**: Solo escritorio (no funciona en móviles)
-- **Almacenamiento**: Al menos 22 GB de espacio libre en el volumen que contiene tu perfil de Chrome
 - **GPU**: Más de 4 GB de VRAM (requisito estricto)
-- **Red**: Conexión sin límites de datos
-
-> **Nota**: Para verificar el tamaño actual del modelo Gemini Nano, visita `chrome://on-device-internals` y ve a **Model status**. Para debugging de APIs, selecciona **Event Logs**.
 
 ### Instalación para Desarrollo
 
@@ -155,7 +130,6 @@ Si sintonizas con este proyecto y quieres apoyar su desarrollo, puedes hacer una
 ```bash
 npm run dev          # Modo desarrollo con hot reload
 npm run build        # Construir para producción
-npm run preview      # Vista previa de la build
 npm run test         # Ejecutar pruebas
 npm run lint         # Linter
 npm run type-check   # Verificación de tipos TypeScript
@@ -167,6 +141,7 @@ Browser AI utiliza las siguientes APIs integradas de Chrome:
 
 - **[Translator API](https://developer.chrome.com/docs/ai/built-in-apis#translator-api)**: Para traducción de texto
 - **[Language Detector API](https://developer.chrome.com/docs/ai/built-in-apis#language-detector-api)**: Para detección automática del idioma
+- **[Summarizer API](https://developer.chrome.com/docs/ai/built-in-apis#summarizer-api)**: Para resumen de texto
 
 ## 🤝 Contribución y Colaboración
 
@@ -206,15 +181,3 @@ El proyecto incluye integración continua (CI) que verifica:
 ## Licencia
 
 Este proyecto está licenciado bajo la [MIT License](LICENSE) - ver el archivo LICENSE para más detalles.
-
-### Resumen de la Licencia MIT
-
-La licencia MIT es una licencia de software libre permisiva que permite a otros usar, modificar, distribuir y vender el software, siempre que se incluya el aviso de copyright y la licencia en todas las copias o partes sustanciales del software.
-
-**Características principales:**
-- ✅ Uso comercial permitido
-- ✅ Modificación permitida
-- ✅ Distribución permitida
-- ✅ Uso privado permitido
-- ✅ Sin garantías
-- ✅ Incluir copyright y licencia en las copias

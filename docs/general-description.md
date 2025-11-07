@@ -1,3 +1,7 @@
+# Descripción General de Browser AI
+
+**Versión:** v0.2.1
+
 Browser AI es una aplicación web que permite corregir, traducir, resumir y crear textos mediante IA integrada en el navegador o en la nube.
 
 ## Propósito
