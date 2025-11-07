@@ -1,7 +1,7 @@
 # Arquitectura de la Extensión (MV3)
 
 **Versión:** v0.2.1
-**Última modificación:** 2025-11-06
+**Última modificación:** 2025-11-07
 
 ## Plataforma y componentes
 - **Plataforma Principal:** Extensión de Navegador **Manifest V3**
@@ -21,12 +21,12 @@
 - **Orquestación**: Dirige las operaciones de IA (traducción, resumen) y aplica la lógica de negocio.
 - **Abstracción de proveedores**: Maneja las APIs integradas.
 - **Ejecución diferida**: Almacena operaciones pendientes durante la descarga de modelos.
+- **Notificaciones**: Envía notificaciones push cuando los modelos están listos.
 
 ### `ModelManager` (background)
 - **Gestión de Modelos**: Abstrae las APIs de `Translator` y `Summarizer` del navegador.
 - **Detección de disponibilidad**: Verifica la disponibilidad de los modelos de traducción y resumen.
 - **Gestión de descargas**: Inicia y monitorea las descargas de modelos.
-- **Notificaciones**: Envía notificaciones push cuando los modelos están listos.
 
 ## Componentes de UI (Sidepanel)
 
@@ -42,10 +42,19 @@
 - **Framework Frontend**: Vue 3 con Composition API y `<script setup>`
 - **Lenguaje**: TypeScript para tipado fuerte
 - **Estilos**: Tailwind CSS para diseño responsivo y consistente
-- **Gestión de Estado**: Pinia para estado global compartido entre componentes
-- **Pruebas**: Vue Test Utils con Vitest para cobertura unitaria
+- **Pruebas**: Vitest para cobertura unitaria
 - **Build Tool**: WXT con módulo Vue para integración en extensiones
 
 ## Integración con IA
 - Preferencia por APIs integradas del navegador
 - Abstracción de proveedores
+
+## Internacionalización (i18n)
+- **Soporte multilingüe**: Implementación completa de i18n usando el sistema de Chrome Extensions
+- **Idiomas soportados**: Español (es) e Inglés (en) mediante archivos `messages.json`
+- **Archivos de localización**:
+  - `public/_locales/es/messages.json`: Traducciones en castellano
+  - `public/_locales/en/messages.json`: Traducciones en inglés
+- **Aplicación automática**: Chrome detecta automáticamente el idioma del navegador
+- **UI multilingüe**: Todos los strings de la interfaz se adaptan al idioma del usuario
+- **Mensajes de error localizables**: Sistema de notificaciones y mensajes de error también se internacionalizan

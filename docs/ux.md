@@ -1,5 +1,7 @@
 # Experiencia de Usuario (UX)
 
+**Versión:** v0.2.1
+
 ## Principios de Diseño
 
 ### Filosofía General
