@@ -25,7 +25,7 @@ export default defineConfig({
     action: {
       default_title: 'Browser AI',
     },
-    // Icons not being found by WXT automatically
+    // WXT no encuentra los íconos automáticamente
     icons: {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",
