@@ -1,6 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach, vi, MockInstance } from 'vitest';
-import { fakeBrowser } from 'wxt/testing';
-
 import {
   onMessage,
   sendMessage,
@@ -50,10 +48,6 @@ const registerDefaultMessageHandlers = (overrides: Record<string, any> = {}): Me
   })));
   const getBrowserLanguageSpy = vi.fn(overrides.getBrowserLanguage ?? (() => 'es'));
   const detectLanguageSpy = vi.fn(overrides.detectLanguage ?? (() => Promise.resolve({ languageCode: 'en' })));
-  const translateTextRequestSpy = vi.fn(overrides.translateTextRequest ??
-    ((data: { text: string; targetLanguage: string; sourceLanguage: string }) => {
-    return Promise.resolve(`${data.text} (translated)`);
-  }));
   const cancelPendingTranslationsSpy = vi.fn(overrides.cancelPendingTranslations ?? (() => ({ cancelled: true })));
   const sidepanelReadySpy = vi.fn(overrides.sidepanelReady ?? (() => {}));
 
@@ -61,7 +55,6 @@ const registerDefaultMessageHandlers = (overrides: Record<string, any> = {}): Me
   onMessage('getAvailableLanguages', getAvailableLanguagesSpy as any);
   onMessage('getBrowserLanguage', getBrowserLanguageSpy as any);
   onMessage('detectLanguage', detectLanguageSpy as any);
-  onMessage('translateText', translateTextRequestSpy as any);
   onMessage('cancelPendingTranslations', cancelPendingTranslationsSpy as any);
   onMessage('sidepanelReady', sidepanelReadySpy as any);
 

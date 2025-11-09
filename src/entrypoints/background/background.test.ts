@@ -1,6 +1,4 @@
 import { beforeAll, beforeEach, describe, expect, it, vi, MockInstance } from 'vitest';
-import { fakeBrowser } from 'wxt/testing';
-import { browser } from 'wxt/browser';
 import { createAIMock, createTranslatorMock, detectorInstance } from '@/tests/mocks';
 import {
   sendMessage,

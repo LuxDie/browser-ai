@@ -3,8 +3,6 @@
  * Estas funciones encapsulan la lógica de validación utilizada en la implementación
  */
 
-import { browser } from 'wxt/browser';
-
 /**
  * Valida si un código de idioma tiene el formato correcto (ISO 639-1 - 2 letras)
  * @param code - Código de idioma a validar

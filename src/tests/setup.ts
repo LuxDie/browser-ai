@@ -52,7 +52,6 @@ Object.defineProperty(window, 'getSelection', {
 });
 
 // Extend browser with additional mocks (runtime and notifications are provided by fakeBrowser)
-import { browser } from 'wxt/browser';
 
 Object.assign(browser, {
   i18n: {

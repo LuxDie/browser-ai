@@ -1,6 +1,5 @@
 import type { AIModelStatus, SummarizerOptions } from '@/entrypoints/background/model-manager/model-manager.model';
 import type { SummarizerLanguageCode } from '@/entrypoints/background/available-languages';
-import { browser } from 'wxt/browser';
 
 export class ModelManager {
   static #instance: ModelManager | null = null;

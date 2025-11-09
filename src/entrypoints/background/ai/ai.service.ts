@@ -3,7 +3,6 @@ import { ModelManager } from '@/entrypoints/background/model-manager/model-manag
 import { sendMessage } from '@/entrypoints/background/messaging';
 import { LanguageCode, SummarizerLanguageCode, SUMMARIZER_LANGUAGE_CODES } from '../available-languages';
 import type { SummarizerOptions } from '../model-manager/model-manager.model';
-import { browser } from 'wxt/browser';
 
 interface ProcessOptions {
   summarize: boolean;

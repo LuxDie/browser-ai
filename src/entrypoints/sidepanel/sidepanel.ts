@@ -9,7 +9,6 @@ import type { AIModelStatus } from '../background/model-manager/model-manager.mo
 import { getAIService } from '../background/ai/ai.service';
 import { Component, createApp, nextTick } from 'vue';
 import ProcessControls from './components/ProcessControls.vue';
-import { browser } from 'wxt/browser';
 
 interface TranslationState {
   text: string

@@ -1,7 +1,3 @@
-<script setup lang="ts">
-import { browser } from 'wxt/browser';
-</script>
-
 <template>
   <div class="flex gap-2 items-end">
     <div class="flex-1">

@@ -4,8 +4,6 @@ import {
   onMessage,
   removeMessageListeners
 } from '@/entrypoints/background/messaging';
-import { fakeBrowser } from '@webext-core/fake-browser';
-import { browser } from 'wxt/browser';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import * as availableLanguagesModule from '@/entrypoints/background/available-languages';
 

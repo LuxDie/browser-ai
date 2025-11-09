@@ -1,9 +1,3 @@
-// TODO: eliminar cuando se corrija el problema de tipos en wxt
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../../.wxt/types/i18n.d.ts" />
-
-import { defineBackground } from 'wxt/utils/define-background';
-import { browser } from 'wxt/browser';
 import {
   type PendingTranslation
 } from '@/entrypoints/background/background.model';
