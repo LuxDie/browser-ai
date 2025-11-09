@@ -87,8 +87,6 @@ tmp/
 temp/
 
 # Editor directories and files
-.vscode/*
-!.vscode/settings.json
 .idea
 *~
 *.suo

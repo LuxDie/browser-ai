@@ -4,7 +4,20 @@
 
 **Regla fundamental:** Todo cambio o adición al proyecto, sin excepción, debe basarse estrictamente en la [especificación técnica](/docs/).
 
-- [Calidad de Código](/.agents/code-quality.md)
+### Calidad de código
+
+Siempre verificar lo siguiente antes de completar cualquier tarea de desarrollo:
+
+1. Verificar que las ediciones cumplen con los estándares de calidad delineados en las [guías de desarrollo](docs/guides)
+2. Ejecutar `npm run lint` para verificar errores de ESLint
+3. Ejecutar `npm run type-check` para verificar errores de TypeScript
+4. Ejecutar `npm run test` para verificar las pruebas.
+5. Ejecutar `npm run build` para compilar.
+6. Corregir cualquier error encontrado antes de finalizar
+7. Confirmar que todos los comandos se ejecuten sin errores
+
+Esta regla no se aplica para tareas de documentación, configuración, o cualquier operación que no involucre modificaciones del código fuente local.
+
 
 ### Reglas de Pruebas
 

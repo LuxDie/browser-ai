@@ -1,3 +1,20 @@
 {
-  "css.lint.unknownAtRules": "ignore"
+  "css.lint.unknownAtRules": "ignore",
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "All commit messages must be written in English following internationalization guidelines"
+    },
+    {
+      "text": "Use conventional commit types: feat:, fix:, docs:, style:, refactor:, test:, chore:"
+    },
+    {
+      "text": "Summary line: maximum 50 characters, write in English, be concise and clear"
+    },
+    {
+      "text": "Message body: optional, for detailed explanations if needed"
+    },
+    {
+      "text": "Follow conventional commit format with type prefix and clear description"
+    }
+  ]
 }
