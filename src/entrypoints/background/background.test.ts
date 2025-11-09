@@ -1,12 +1,14 @@
-import { beforeEach, describe, expect, it, vi, MockInstance } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { detectorInstance } from '@/tests/mocks';
 import {
   sendMessage,
   onMessage,
   removeMessageListeners,
 } from '@/entrypoints/background/messaging';
-import background, { LanguageCode } from '@/entrypoints/background';
-import { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
+import background from '@/entrypoints/background';
+import type { LanguageCode } from '@/entrypoints/background';
+import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
 // Interface for message handler spies
 interface MessageHandlerSpies {
@@ -14,6 +16,7 @@ interface MessageHandlerSpies {
   modelStatusUpdate: MockInstance;
 }
 
+// TODO: ¿es necesaria esta función?
 const registerDefaultMessageHandlers = () => {
   const selectedTextSpy = vi.fn();
   const modelStatusUpdateSpy = vi.fn();

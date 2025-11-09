@@ -4,7 +4,7 @@ import {
   onMessage,
   removeMessageListeners
 } from '@/entrypoints/background/messaging';
-import { SummarizerLanguageCode } from '../available-languages';
+import type { SummarizerLanguageCode } from '../available-languages';
 
 describe('ModelManager - Summarization Features', () => {
   let modelManager: ModelManager;

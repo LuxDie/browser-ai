@@ -1,13 +1,13 @@
 import '@/entrypoints/sidepanel/sidepanel.css';
 import {
   DEFAULT_TARGET_LANGUAGE,
-  AvailableLanguages,
-  LanguageCode,
 } from '@/entrypoints/background';
+import type { AvailableLanguages, LanguageCode, } from '@/entrypoints/background';
 import { onMessage, sendMessage, type SelectedTextData } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '../background/model-manager/model-manager.model';
 import { getAIService } from '../background/ai/ai.service';
-import { Component, createApp, nextTick } from 'vue';
+import type { Component } from 'vue';
+import { createApp, nextTick } from 'vue';
 import ProcessControls from './components/ProcessControls.vue';
 
 interface TranslationState {

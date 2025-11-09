@@ -1,5 +1,5 @@
 import { defineExtensionMessaging } from '@webext-core/messaging';
-import { AvailableLanguages, LanguageCode } from '@/entrypoints/background';
+import type { AvailableLanguages, LanguageCode } from '@/entrypoints/background';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
 export interface AvailableLanguagesResponse {

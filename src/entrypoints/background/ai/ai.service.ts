@@ -1,7 +1,8 @@
 import { defineProxyService } from '@webext-core/proxy-service';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import { sendMessage } from '@/entrypoints/background/messaging';
-import { LanguageCode, SummarizerLanguageCode, SUMMARIZER_LANGUAGE_CODES } from '../available-languages';
+import type { LanguageCode, SummarizerLanguageCode } from '../available-languages';
+import { SUMMARIZER_LANGUAGE_CODES } from '../available-languages';
 import type { SummarizerOptions } from '../model-manager/model-manager.model';
 
 interface ProcessOptions {

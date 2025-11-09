@@ -59,8 +59,10 @@ export class ModelManager {
 
         return {
           state: availability,
-          downloadProgress: availability === 'downloading' ? 0 : undefined,
-          errorMessage: availability === 'unavailable' ? browser.i18n.getMessage('modelNotSupported', [availability]) || `Modelo no soportado: ${availability}` : undefined
+          ...(availability === 'downloading' && { downloadProgress: 0 }),
+          ...(availability === 'unavailable' && {
+            errorMessage: browser.i18n.getMessage('modelNotSupported', [availability]) || `Modelo no soportado: ${availability}`
+          })
         };
 
       } catch (error: unknown) {
@@ -86,8 +88,10 @@ export class ModelManager {
         const availability = await summarizer.availability();
         return {
           state: availability,
-          downloadProgress: availability === 'downloading' ? 0 : undefined,
-          errorMessage: availability === 'unavailable' ? browser.i18n.getMessage('summarizerModelNotAvailable') || 'Modelo de resumen no disponible' : undefined
+          ...(availability === 'downloading' && { downloadProgress: 0 }),
+          ...(availability === 'unavailable' && {
+            errorMessage: browser.i18n.getMessage('summarizerModelNotAvailable') || 'Modelo de resumen no disponible'
+          })
         };
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);

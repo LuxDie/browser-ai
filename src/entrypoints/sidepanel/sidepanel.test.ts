@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi, MockInstance } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { MockInstance } from 'vitest';
 import {
   onMessage,
   sendMessage,
   removeMessageListeners
 } from '@/entrypoints/background/messaging';
-import { LanguageCode } from '@/entrypoints/background';
+import type { LanguageCode } from '@/entrypoints/background';
 import { SidepanelApp } from '@/entrypoints/sidepanel/sidepanel';
 import { getAIService } from '@/entrypoints/background/ai/ai.service';
 
@@ -42,14 +43,14 @@ const mockAIService = vi.mocked(getAIService());
 
 // TODO: mejorar tipo `any`
 const registerDefaultMessageHandlers = (overrides: Record<string, any> = {}): MessageHandlerSpies => {
-  const checkAPIAvailabilitySpy = vi.fn(overrides.checkAPIAvailability ?? (() => true));
-  const getAvailableLanguagesSpy = vi.fn(overrides.getAvailableLanguages ?? (() => ({
+  const checkAPIAvailabilitySpy = vi.fn(overrides['checkAPIAvailability'] ?? (() => true));
+  const getAvailableLanguagesSpy = vi.fn(overrides['getAvailableLanguages'] ?? (() => ({
     languages: defaultAvailableLanguages
   })));
-  const getBrowserLanguageSpy = vi.fn(overrides.getBrowserLanguage ?? (() => 'es'));
-  const detectLanguageSpy = vi.fn(overrides.detectLanguage ?? (() => Promise.resolve({ languageCode: 'en' })));
-  const cancelPendingTranslationsSpy = vi.fn(overrides.cancelPendingTranslations ?? (() => ({ cancelled: true })));
-  const sidepanelReadySpy = vi.fn(overrides.sidepanelReady ?? (() => {}));
+  const getBrowserLanguageSpy = vi.fn(overrides['getBrowserLanguage'] ?? (() => 'es'));
+  const detectLanguageSpy = vi.fn(overrides['detectLanguage'] ?? (() => Promise.resolve({ languageCode: 'en' })));
+  const cancelPendingTranslationsSpy = vi.fn(overrides['cancelPendingTranslations'] ?? (() => ({ cancelled: true })));
+  const sidepanelReadySpy = vi.fn(overrides['sidepanelReady'] ?? (() => {}));
 
   onMessage('checkAPIAvailability', checkAPIAvailabilitySpy as any);
   onMessage('getAvailableLanguages', getAvailableLanguagesSpy as any);

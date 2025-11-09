@@ -1,13 +1,25 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
+    // Opciones de verificación de tipos más estrictas
     "noUncheckedIndexedAccess": true,
-    "isolatedModules": true,
+    "exactOptionalPropertyTypes": true,
 
-    /* Linting */
-    "strict": true,
+    // Opciones de estilo
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+
+    // Opciones recomendadas
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false
   }
 }

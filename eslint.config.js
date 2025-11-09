@@ -44,6 +44,13 @@ export default defineConfig(
       // TODO: migrar a @stylistic/eslint-plugin para la regla de punto y coma
       '@/semi': ['error', 'always'],
       
+      'dot-notation': 'off',
+      "@typescript-eslint/dot-notation": [
+        "error", 
+        {
+          "allowIndexSignaturePropertyAccess": true
+        }
+      ],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'off',
