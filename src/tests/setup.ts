@@ -1,27 +1,6 @@
 import { vi } from 'vitest';
-import { createAIMock, setupAIMock } from '@/tests/mocks';
-
-// Mock de las APIs de IA integradas
-const mockAI = createAIMock();
-setupAIMock(mockAI);
-
-vi.stubGlobal('self', mockAI);
-
-
-// Mock de las APIs de IA integradas
-Object.defineProperty(globalThis, 'translator', {
-  value: {
-    translate: vi.fn()
-  },
-  writable: true
-});
-
-Object.defineProperty(globalThis, 'languageDetector', {
-  value: {
-    detect: vi.fn()
-  },
-  writable: true
-});
+import { createAIMock } from '@/tests/mocks';
+import { beforeEach } from 'vitest';
 
 // Mock de clipboard API
 Object.defineProperty(navigator, 'clipboard', {
@@ -60,4 +39,13 @@ Object.assign(browser, {
       return key;
     }),
   }
+});
+
+// Mock de las APIs de IA integradas
+const mockAI = createAIMock();
+
+beforeEach(() => {
+  vi.stubGlobal('LanguageDetector', mockAI.LanguageDetector);
+  vi.stubGlobal('Translator', mockAI.Translator);
+  vi.stubGlobal('Summarizer', mockAI.Summarizer);
 });

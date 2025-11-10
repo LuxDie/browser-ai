@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi, MockInstance } from 'vitest';
-import { createAIMock, createTranslatorMock, detectorInstance } from '@/tests/mocks';
+import { detectorInstance } from '@/tests/mocks';
 import {
   sendMessage,
   onMessage,
@@ -7,9 +7,6 @@ import {
 } from '@/entrypoints/background/messaging';
 import background, { LanguageCode } from '@/entrypoints/background';
 import { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
-
-// Mock para las APIs de Chrome AI que no están disponibles en el entorno de prueba de Vitest (Node.js)
-const mockAI = createAIMock();
 
 // Interface for message handler spies
 interface MessageHandlerSpies {
@@ -34,10 +31,6 @@ describe('Background Script', () => {
   let messageHandlerSpies: MessageHandlerSpies;
 
   beforeAll(() => {
-    vi.stubGlobal('self', {
-      LanguageDetector: mockAI.LanguageDetector,
-      Translator: mockAI.Translator,
-    });
     // Mock contextMenus.onClicked to support trigger
     const listeners: ((info: any, tab?: any) => void)[] = [];
     vi.mocked(browser.contextMenus.onClicked).addListener = vi.fn((listener: (info: any, tab?: any) => void) => {
@@ -140,28 +133,28 @@ describe('Background Script', () => {
           sourceLanguage,
           targetLanguage
         });
-        expect(mockAI.Translator.availability).toHaveBeenCalledWith({
+        expect(Translator.availability).toHaveBeenCalledWith({
           sourceLanguage,
           targetLanguage
         });
       });
 
       it('should execute translation', async () => {
-        const translatorInstance = createTranslatorMock();
-        mockAI.Translator.create.mockResolvedValue(translatorInstance);
+        const translatorInstance = { translate: vi.fn() };
+        vi.mocked(Translator.create).mockResolvedValue(translatorInstance as any);
         await sendMessage('translateText', {
           text: testText,
           sourceLanguage,
           targetLanguage
         });
-        expect(mockAI.Translator.create).toHaveBeenCalled();
+        expect(Translator.create).toHaveBeenCalled();
         expect(translatorInstance.translate).toHaveBeenCalled();
       });
 
       it('should return translation result', async () => {
         const translatedText = 'Este es un texto de prueba traducido';
-        const translatorInstance = createTranslatorMock(translatedText);
-        mockAI.Translator.create.mockResolvedValue(translatorInstance);
+        const translatorInstance = { translate: vi.fn(() => translatedText) };
+        vi.mocked(Translator.create).mockResolvedValue(translatorInstance as any);
 
         const result = await sendMessage('translateText', {
           text: testText,
@@ -173,7 +166,7 @@ describe('Background Script', () => {
       });
 
       it('should send modelStatusUpdate when model is not available', async () => {
-        mockAI.Translator.availability.mockResolvedValue('downloadable');
+        vi.mocked(Translator.availability).mockResolvedValue('downloadable');
         const testText = 'Test text';
         const sourceLanguage = 'en' as LanguageCode;
         const targetLanguage = 'es' as LanguageCode;
@@ -188,7 +181,7 @@ describe('Background Script', () => {
       });
 
       it('should send browser notification when translation requires model download', async () => {
-        mockAI.Translator.availability.mockResolvedValue('downloadable');
+        vi.mocked(Translator.availability).mockResolvedValue('downloadable');
         vi.spyOn(browser.notifications, 'create');
 
 

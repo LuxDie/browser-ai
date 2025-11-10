@@ -4,17 +4,7 @@ import {
   onMessage,
   removeMessageListeners
 } from '@/entrypoints/background/messaging';
-import {
-  createAIMock,
-  setupAIMock,
-  createSummarizerMock,
-  createSummarizerErrorMock,
-} from '@/tests/mocks';
 import { SummarizerLanguageCode } from '../available-languages';
-
-// Mock de las APIs de IA antes de importar los módulos
-const mockAI = createAIMock();
-setupAIMock(mockAI);
 
 describe('ModelManager - Summarization Features', () => {
   let modelManager: ModelManager;
@@ -34,14 +24,14 @@ describe('ModelManager - Summarization Features', () => {
 
   describe('checkModelStatus', () => {
     it('should return available status when summarizer model is available', async () => {
-      mockAI.Summarizer.availability.mockResolvedValueOnce('available');
+      vi.mocked(Summarizer.availability).mockResolvedValueOnce('available');
       const result = await modelManager.checkModelStatus({ type: 'summarization' });
 
       expect(result.state).toBe('available');
     });
 
     it('should return downloadable status when summarizer model is downloadable', async () => {
-      mockAI.Summarizer.availability.mockResolvedValueOnce('downloadable');
+      vi.mocked(Summarizer.availability).mockResolvedValueOnce('downloadable');
 
       const result = await modelManager.checkModelStatus({ type: 'summarization' });
 
@@ -49,7 +39,7 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should return downloading status when summarizer model is downloading', async () => {
-      mockAI.Summarizer.availability.mockResolvedValueOnce('downloading');
+      vi.mocked(Summarizer.availability).mockResolvedValueOnce('downloading');
 
       const result = await modelManager.checkModelStatus({ type: 'summarization' });
 
@@ -58,7 +48,7 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should return error when summarizer model is not available', async () => {
-      mockAI.Summarizer.availability.mockResolvedValueOnce('unavailable');
+      vi.mocked(Summarizer.availability).mockResolvedValueOnce('unavailable');
 
       const result = await modelManager.checkModelStatus({ type: 'summarization' });
 
@@ -67,7 +57,7 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      mockAI.Summarizer.availability.mockRejectedValueOnce(new Error('API Error'));
+      vi.mocked(Summarizer.availability).mockRejectedValueOnce(new Error('API Error'));
 
       const result = await modelManager.checkModelStatus({ type: 'summarization' });
 
@@ -76,33 +66,28 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should return error when Summarizer API is not available', async () => {
-      const mockAIWithoutSummarizer = createAIMock();
-      delete (mockAIWithoutSummarizer as any).Summarizer;
-      vi.stubGlobal('self', mockAIWithoutSummarizer);
+      vi.stubGlobal('Summarizer', undefined);
 
       modelManager = new ModelManager();
       const result = await modelManager.checkModelStatus({ type: 'summarization' });
 
       expect(result.state).toBe('unavailable');
       expect(result.errorMessage).toBe('summarizerAPINotAvailable');
-
-      // Restore the global mock
-      vi.stubGlobal('self', mockAI);
     });
   });
 
   describe('downloadModel', () => {
     it('should download summarizer model successfully', async () => {
-      mockAI.Summarizer.availability.mockResolvedValueOnce('downloadable');
+      vi.mocked(Summarizer.availability).mockResolvedValueOnce('downloadable');
       const result = await modelManager.downloadModel({ type: 'summarization' });
 
       expect(result.state).toBe('available');
-      expect(mockAI.Summarizer.create).toHaveBeenCalled();
+      expect(Summarizer.create).toHaveBeenCalled();
     });
 
     it('should handle download errors gracefully', async () => {
       // TODO: manejar rechazo con `rejects.toThrow`
-      mockAI.Summarizer.create.mockRejectedValueOnce(new Error('Download failed'));
+      vi.mocked(Summarizer.create).mockRejectedValueOnce(new Error('Download failed'));
 
       const result = await modelManager.downloadModel({ type: 'summarization' });
 
@@ -111,25 +96,20 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should return error when Summarizer API is not available', async () => {
-      const mockAIWithoutSummarizer = createAIMock();
-      delete (mockAIWithoutSummarizer as any).Summarizer;
-      vi.stubGlobal('self', mockAIWithoutSummarizer);
+      vi.stubGlobal('Summarizer', undefined);
 
       const modelManager = new ModelManager();
       const result = await modelManager.downloadModel({ type: 'summarization' });
 
       expect(result.state).toBe('unavailable');
       expect(result.errorMessage).toBe('summarizerAPINotSupported');
-
-      // Restore the global mock
-      vi.stubGlobal('self', mockAI);
     });
   });
 
   describe('summarizeText', () => {
     it('should summarize text successfully', async () => {
-      const mockSummarizer = createSummarizerMock('This is a summary.');
-      mockAI.Summarizer.create.mockResolvedValue(mockSummarizer);
+      const mockSummarizer = { summarize: vi.fn(() => Promise.resolve('This is a summary.')) } as any;
+      vi.mocked(Summarizer.create).mockResolvedValueOnce(mockSummarizer);
 
       const result = await modelManager.summarizeText('This is a long text that needs to be summarized.');
 
@@ -138,9 +118,6 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should handle custom summarizer options', async () => {
-      const mockSummarizer = createSummarizerMock('Key points summary.');
-      mockAI.Summarizer.create.mockResolvedValue(mockSummarizer);
-
       const options = {
         type: 'key-points' as const,
         length: 'short' as const,
@@ -150,14 +127,15 @@ describe('ModelManager - Summarization Features', () => {
 
       await modelManager.summarizeText('Long text here', options);
 
-      expect(mockAI.Summarizer.create).toHaveBeenCalledWith(
+      expect(Summarizer.create).toHaveBeenCalledWith(
         expect.objectContaining(options)
       );
     });
 
     it('should handle summarization errors gracefully', async () => {
-      const mockSummarizer = createSummarizerErrorMock('Summarization failed');
-      mockAI.Summarizer.create.mockResolvedValue(mockSummarizer);
+      vi.mocked(Summarizer.create).mockResolvedValueOnce({
+        summarize: vi.fn(() => Promise.reject(new Error('Summarization failed'))),
+      } as any);
 
       const result = await modelManager.summarizeText('Text to summarize');
 
@@ -165,17 +143,12 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should return error when Summarizer API is not available', async () => {
-      const mockAIWithoutSummarizer = createAIMock();
-      delete (mockAIWithoutSummarizer as any).Summarizer;
-      vi.stubGlobal('self', mockAIWithoutSummarizer);
+      vi.stubGlobal('Summarizer', undefined);
 
       const modelManager = new ModelManager();
 
       await expect(modelManager.summarizeText('Text to summarize'))
       .rejects.toThrow('summarizerAPINotSupportedError');
-
-      // Restore the global mock
-      vi.stubGlobal('self', mockAI);
     });
   });
 });

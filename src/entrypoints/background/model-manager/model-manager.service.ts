@@ -22,9 +22,9 @@ export class ModelManager {
     };
 
   constructor() {
-    this.#browserAPIs.languageDetector = (self as typeof self & { LanguageDetector?: LanguageDetector }).LanguageDetector;
-    this.#browserAPIs.translator = (self as typeof self & { Translator?: Translator }).Translator;
-    this.#browserAPIs.summarizer = (self as typeof self & { Summarizer?: Summarizer }).Summarizer;
+    this.#browserAPIs.languageDetector = 'LanguageDetector' in self ? LanguageDetector : null;
+    this.#browserAPIs.translator = 'Translator' in self ? Translator : null;
+    this.#browserAPIs.summarizer = 'Summarizer' in self ? Summarizer : null;
   }
 
   // Generar clave única para par de idiomas
@@ -106,6 +106,7 @@ export class ModelManager {
   }
 
   // Descargar modelo
+  // TODO: si el modelo no es descargable, devolver error
   async downloadModel(config:
     { type: 'translation'; source: string; target: string } |
     { type: 'summarization' }):
