@@ -44,10 +44,11 @@ export class AIService {
       // Lógica para manejar idiomas no soportados por el summarizer
       const isSourceSupported = SUMMARIZER_LANGUAGE_CODES.includes(options.sourceLanguage as SummarizerLanguageCode);
       const isTargetSupported = SUMMARIZER_LANGUAGE_CODES.includes(options.targetLanguage as SummarizerLanguageCode);
+      const summarizerDefaultLanguage = SUMMARIZER_LANGUAGE_CODES[0];
 
       let textToSummarize = text;
-      let summarizerInputLanguage: SummarizerLanguageCode = 'en';
-      let summarizerOutputLanguage: SummarizerLanguageCode = 'en';
+      let summarizerInputLanguage: SummarizerLanguageCode = summarizerDefaultLanguage;
+      let summarizerOutputLanguage: SummarizerLanguageCode = summarizerDefaultLanguage;
 
       // Caso 1: Ambos idiomas soportados - resumir directamente
       if (isSourceSupported && isTargetSupported) {
@@ -56,21 +57,17 @@ export class AIService {
       }
       // Caso 2: Source no soportado, target sí - traducir input a inglés, resumir en target
       else if (!isSourceSupported && isTargetSupported) {
-        textToSummarize = await modelManager.translate(text, options.sourceLanguage, 'en');
-        summarizerInputLanguage = 'en';
+        textToSummarize = await modelManager.translate(text, options.sourceLanguage, summarizerDefaultLanguage);
         summarizerOutputLanguage = options.targetLanguage as SummarizerLanguageCode;
       }
       // Caso 3: Source sí, target no - resumir en inglés, traducir resumen al target
       else if (isSourceSupported && !isTargetSupported) {
         summarizerInputLanguage = options.sourceLanguage as SummarizerLanguageCode;
-        summarizerOutputLanguage = 'en';
         // El resumen se traducirá después
       }
       // Caso 4: Ambos no soportados - traducir input a inglés, resumir en inglés, traducir resumen al target
       else {
-        textToSummarize = await modelManager.translate(text, options.sourceLanguage, 'en');
-        summarizerInputLanguage = 'en';
-        summarizerOutputLanguage = 'en';
+        textToSummarize = await modelManager.translate(text, options.sourceLanguage, summarizerDefaultLanguage);
         // El resumen se traducirá después
       }
 
@@ -85,7 +82,7 @@ export class AIService {
 
       // Si el target no está soportado, traducir el resumen al idioma objetivo
       if (!isTargetSupported) {
-        summary = await modelManager.translate(summary, 'en', options.targetLanguage);
+        summary = await modelManager.translate(summary, summarizerDefaultLanguage, options.targetLanguage);
       }
 
       processedText = summary;

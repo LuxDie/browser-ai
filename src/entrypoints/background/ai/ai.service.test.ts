@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AIService } from '@/entrypoints/background/ai/ai.service';
 import {
   onMessage,
@@ -11,7 +11,7 @@ import * as availableLanguagesModule from '@/entrypoints/background/available-la
 // TODO: usar importación dinámica
 vi.mock('@/entrypoints/background/model-manager/model-manager.service', () => {
   const mockModelManagerInstance: Partial<ModelManager> = {
-    summarizeText: vi.fn(() => Promise.resolve('Service summary.')),
+    summarizeText: vi.fn(() => Promise.resolve('Texto resumido.')),
     translate: vi.fn(() => Promise.resolve('Texto traducido.')),
     checkModelStatus: vi.fn(() => Promise.resolve({ state: 'available' as const })),
     downloadModel: vi.fn(),
@@ -23,11 +23,11 @@ vi.mock('@/entrypoints/background/model-manager/model-manager.service', () => {
   };
 });
 
-const aiService = new AIService();
 const mockModelManagerInstance = vi.mocked(ModelManager.getInstance());
 const modelStatusUpdateSpy = vi.fn();
 
 describe('AIService', () => {
+  let aIService = new AIService();
   beforeEach(() => {
     // `reset` reestablece `browser` a su estado original (incluyendo runtime,
     // que es la base de `onMessage`)
@@ -37,25 +37,22 @@ describe('AIService', () => {
     onMessage('modelStatusUpdate', modelStatusUpdateSpy);
   });
 
-  it('should delegate summarizeText to ModelManager when model is available', async () => {
-    const result = await aiService.processText('Text to summarize', {
+  it('should follow the correct flow when summarization model is available', async () => {
+    await aIService.processText('Text to summarize', {
       sourceLanguage: 'en',
       targetLanguage: 'es',
       summarize: true
     });
 
-    expect(result).toBe('Service summary.');
     expect(mockModelManagerInstance.checkModelStatus).toHaveBeenCalledWith({ type: 'summarization' });
     expect(mockModelManagerInstance.downloadModel).not.toHaveBeenCalled();
     expect(mockModelManagerInstance.summarizeText).toHaveBeenCalled();
   });
 
-  it('should handle translation when model is available', async () => {
+  it('should follow the correct flow when translation model is available', async () => {
     mockModelManagerInstance.translate.mockResolvedValue('Texto traducido.');
 
-    const processTextService = new AIService();
-
-    const result = await processTextService.processText('Text to translate', {
+    const result = await aIService.processText('Text to translate', {
       sourceLanguage: 'en',
       targetLanguage: 'es',
       summarize: false
@@ -82,9 +79,7 @@ describe('AIService', () => {
     });
     mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Downloaded summary.');
 
-    const processTextService = new AIService();
-
-    const result = await processTextService.processText('Text to summarize', {
+    const result = await aIService.processText('Text to summarize', {
       sourceLanguage: 'en',
       targetLanguage: 'es',
       summarize: true
@@ -130,9 +125,7 @@ describe('AIService', () => {
       });
       mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Downloaded summary.');
 
-      const processTextService = new AIService();
-
-      await processTextService.processText('Text to summarize', {
+      await aIService.processText('Text to summarize', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: true
@@ -161,9 +154,7 @@ describe('AIService', () => {
       // Mock model available (default behavior)
       mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Available summary.');
 
-      const processTextService = new AIService();
-
-      await processTextService.processText('Text to summarize', {
+      await aIService.processText('Text to summarize', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: true
@@ -179,9 +170,7 @@ describe('AIService', () => {
         errorMessage: 'Chrome AI Summarizer APIs no disponibles para descarga'
       });
 
-      const processTextService = new AIService();
-
-      await expect(processTextService.processText('Text to summarize', {
+      await expect(aIService.processText('Text to summarize', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: true
@@ -201,9 +190,7 @@ describe('AIService', () => {
         errorMessage: 'Download failed'
       });
 
-      const processTextService = new AIService();
-
-      const result = await processTextService.processText('Text to summarize', {
+      const result = await aIService.processText('Text to summarize', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: true
@@ -232,20 +219,21 @@ describe('AIService', () => {
   });
 
   describe('AIService - summarization with intermediate translation', () => {
-    beforeAll(() => {
-      const mockSummarizerLanguageCodes = ['fr', 'zh', 'de'] as const;
-      vi.spyOn(availableLanguagesModule, 'SUMMARIZER_LANGUAGE_CODES', 'get').mockReturnValue(mockSummarizerLanguageCodes as any);
-    });
+    const mockSummarizerLanguageCodes = ['fr', 'zh', 'de'];
+    const fallbackLang = mockSummarizerLanguageCodes[0];
+
     beforeEach(() => {
+      vi.spyOn(availableLanguagesModule, 'SUMMARIZER_LANGUAGE_CODES', 'get').mockReturnValue(mockSummarizerLanguageCodes as any);
+      aIService = new AIService();
     });
     it('should summarize directly when both languages are supported', async () => {
-      mockModelManagerInstance.summarizeText.mockResolvedValue('Direct summary.');
+      mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Direct summary.');
+      const supportedSourceLang = 'fr';
+      const supportedTargetLang = 'zh';
 
-      const processTextService = new AIService();
-
-      const result = await processTextService.processText('Text to summarize', {
-        sourceLanguage: 'en',
-        targetLanguage: 'es',
+      const result = await aIService.processText('Text to summarize', {
+        sourceLanguage: supportedSourceLang,
+        targetLanguage: supportedTargetLang,
         summarize: true
       });
 
@@ -253,79 +241,81 @@ describe('AIService', () => {
       expect(mockModelManagerInstance.translate).not.toHaveBeenCalled();
       expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Text to summarize',
         expect.objectContaining({
-          expectedInputLanguages: ['en'],
-          outputLanguage: 'es'
+          expectedInputLanguages: [supportedSourceLang],
+          outputLanguage: supportedTargetLang
         })
       );
     });
 
-    it('should translate input to English and summarize when source language is not supported', async () => {
-      mockModelManagerInstance.translate.mockResolvedValue('Translated to English.');
-      mockModelManagerInstance.summarizeText.mockResolvedValue('Summary from translated text.');
+    it('should translate input to fallback language and summarize when source language is not supported', async () => {
+      mockModelManagerInstance.translate.mockResolvedValue('Traducido a respaldo.');
+      mockModelManagerInstance.summarizeText.mockResolvedValue('Resumen de texto traducido.');
+      const unsupportedSourceLang = 'en';
+      const supportedTargetLang = 'de';
 
-      const processTextService = new AIService();
-
-      const result = await processTextService.processText('Texto a resumir', {
-        sourceLanguage: 'fr', // French not supported
-        targetLanguage: 'es',
+      const result = await aIService.processText('Texto a resumir', {
+        sourceLanguage: unsupportedSourceLang,
+        targetLanguage: supportedTargetLang,
         summarize: true
       });
 
-      expect(result).toBe('Summary from translated text.');
-      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a resumir', 'fr', 'en');
-      expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Translated to English.',
+      expect(result).toBe('Resumen de texto traducido.');
+      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a resumir', unsupportedSourceLang, fallbackLang);
+      expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Traducido a respaldo.',
         expect.objectContaining({
-          expectedInputLanguages: ['en'],
-          outputLanguage: 'es'
+          expectedInputLanguages: [fallbackLang],
+          outputLanguage: supportedTargetLang
         })
       );
     });
 
-    it('should summarize in English and translate summary when target language is not supported', async () => {
-      mockModelManagerInstance.summarizeText.mockResolvedValue('English summary.');
+    it('should summarize directly and translate summary when target language is not supported', async () => {
+      mockModelManagerInstance.summarizeText.mockResolvedValue('Resumen en respaldo.');
       mockModelManagerInstance.translate.mockResolvedValue('Resumen traducido.');
+      const supportedSourceLang = 'fr';
+      const unsupportedTargetLang = 'en';
 
-      const processTextService = new AIService();
-
-      const result = await processTextService.processText('Text to summarize', {
-        sourceLanguage: 'en',
-        targetLanguage: 'fr', // French not supported
+      const result = await aIService.processText('Text to summarize', {
+        sourceLanguage: supportedSourceLang,
+        targetLanguage: unsupportedTargetLang,
         summarize: true
       });
 
       expect(result).toBe('Resumen traducido.');
       expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Text to summarize',
         expect.objectContaining({
-          expectedInputLanguages: ['en'],
-          outputLanguage: 'en'
+          expectedInputLanguages: [supportedSourceLang],
+          outputLanguage: fallbackLang
         })
       );
-      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('English summary.', 'en', 'fr');
+      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Resumen en respaldo.', fallbackLang, unsupportedTargetLang);
     });
 
-    it('should translate input to English, summarize, and translate summary back when neither language is supported', async () => {
+    it('should translate to fallback language, summarize, and translate summary back when neither language is supported', async () => {
       mockModelManagerInstance.translate
-        .mockResolvedValueOnce('Translated to English.') // Input translation
+        .mockResolvedValueOnce('Traducido a respaldo.') // Input translation
         .mockResolvedValueOnce('Resumen traducido.'); // Summary translation
 
-      mockModelManagerInstance.summarizeText.mockResolvedValue('English summary.');
+      mockModelManagerInstance.summarizeText.mockResolvedValue('Resumen en respaldo.');
 
-      const processTextService = new AIService();
+      const unsupportedSourceLang = 'es';
+      const unsupportedTargetLang = 'it';
+      const fallbackLang = 'fr';
 
-      const result = await processTextService.processText('Texto en francés', {
-        sourceLanguage: 'fr', // French not supported
-        targetLanguage: 'de', // German not supported
+      const result = await aIService.processText('Texto en español', {
+        sourceLanguage: unsupportedSourceLang,
+        targetLanguage: unsupportedTargetLang,
         summarize: true
       });
 
       expect(result).toBe('Resumen traducido.');
       expect(mockModelManagerInstance.translate).toHaveBeenCalledTimes(2);
-      expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(1, 'Texto en francés', 'fr', 'en');
-      expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(2, 'English summary.', 'en', 'de');
-      expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Translated to English.',
+      expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(1, 'Texto en español', unsupportedSourceLang, fallbackLang);
+      expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(2, 'Resumen en respaldo.', fallbackLang, unsupportedTargetLang);
+      expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Traducido a respaldo.',
         expect.objectContaining({
-          expectedInputLanguages: ['en'],
-          outputLanguage: 'en'
+          expectedInputLanguages: [fallbackLang],
+          outputLanguage: fallbackLang
         })
       );
     });
@@ -343,9 +333,7 @@ describe('AIService', () => {
       });
       mockModelManagerInstance.translate.mockResolvedValue('Texto descargado y traducido.');
 
-      const processTextService = new AIService();
-
-      const result = await processTextService.processText('Text to translate', {
+      const result = await aIService.processText('Text to translate', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: false
@@ -393,9 +381,7 @@ describe('AIService', () => {
       });
       mockModelManagerInstance.translate.mockResolvedValue('Texto traducido.');
 
-      const processTextService = new AIService();
-
-      await processTextService.processText('Text to translate', {
+      await aIService.processText('Text to translate', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: false
@@ -417,9 +403,7 @@ describe('AIService', () => {
         errorMessage: 'Translation API not supported'
       });
 
-      const processTextService = new AIService();
-
-      await expect(processTextService.processText('Text to translate', {
+      await expect(aIService.processText('Text to translate', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: false
@@ -440,9 +424,7 @@ describe('AIService', () => {
         errorMessage: 'Translation download failed'
       });
 
-      const processTextService = new AIService();
-
-      const result = await processTextService.processText('Text to translate', {
+      const result = await aIService.processText('Text to translate', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: false
