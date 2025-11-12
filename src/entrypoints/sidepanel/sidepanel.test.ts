@@ -714,4 +714,86 @@ describe('SidepanelApp', () => {
       expect(optionValues).toContain('fr');
     });
   });
+
+  describe('Language Detection and Error Handling', () => {
+    it('should show error when unsupported language is detected', async () => {
+      // Configurar el mock para detectar un idioma no soportado
+      const unsupportedLang = 'xx';
+      messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: unsupportedLang });
+
+      // Establecer texto que activará la detección de idioma
+      const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
+      textarea.value = 'Este texto está en un idioma no soportado';
+      textarea.dispatchEvent(new Event('input'));
+
+      // Esperar a que se complete la detección
+      await vi.runAllTimersAsync();
+
+      // Verificar que se mostró el mensaje de error
+      const errorElement = document.getElementById('error-message');
+      expect(errorElement).not.toBeNull();
+      expect(errorElement?.textContent).toContain('detectedLanguageNotSupported');
+    });
+
+    it('should not show "insufficient text" message when unsupported language is detected', async () => {
+      // Configurar el mock para detectar un idioma no soportado
+      const unsupportedLang = 'xx';
+      messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: unsupportedLang });
+
+      // Establecer texto suficiente que activará la detección de idioma
+      const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
+      textarea.value = 'Este texto es suficientemente largo para detectar idioma pero no soportado';
+      textarea.dispatchEvent(new Event('input'));
+
+      // Esperar a que se complete la detección
+      await vi.runAllTimersAsync();
+
+      // Verificar que el contenedor de información de idioma no muestre el mensaje de texto insuficiente
+      const languageInfoContainer = document.getElementById('language-info-container');
+      expect(languageInfoContainer?.innerHTML).toBe('');
+    });
+
+    it('should hide error message when text is shorter than minDetectLength', async () => {
+      // Primero mostrar un error
+      const unsupportedLang = 'xx';
+      messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: unsupportedLang });
+      
+      // Establecer texto largo para activar detección
+      const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
+      textarea.value = 'Este texto activará un error de idioma no soportado';
+      textarea.dispatchEvent(new Event('input'));
+      await vi.runAllTimersAsync();
+      
+      // Verificar que el error está visible
+      let errorElement = document.getElementById('error-message');
+      expect(errorElement).not.toBeNull();
+      
+      // Reducir el texto por debajo del mínimo
+      textarea.value = 'Corto';
+      textarea.dispatchEvent(new Event('input'));
+      await vi.runAllTimersAsync();
+      
+      // Verificar que el error se ocultó
+      errorElement = document.getElementById('error-message');
+      expect(errorElement).toBeNull();
+    });
+
+    it('should not execute language detection for text shorter than minDetectLength', async () => {
+      // Espiar el método de detección de idioma
+      const detectLanguageSpy = messageHandlerSpies.detectLanguage;
+      
+      // Establecer texto más corto que el mínimo
+      const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
+      textarea.value = 'Corto';
+      textarea.dispatchEvent(new Event('input'));
+      await vi.runAllTimersAsync();
+      
+      // Verificar que no se llamó a detectLanguage
+      expect(detectLanguageSpy).not.toHaveBeenCalled();
+      
+      // Verificar que no hay mensaje de error
+      const errorElement = document.getElementById('error-message');
+      expect(errorElement).toBeNull();
+    });
+  });
 });

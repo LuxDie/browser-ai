@@ -40,20 +40,9 @@ export default defineBackground({
    * Detecta el idioma principal del navegador del usuario
    * @returns Código de idioma (ej: 'es', 'en', 'fr') o null si no se puede detectar
    */
-  function getBrowserLanguage(): AvailableLanguageCode | null {
-    let detectedLang: AvailableLanguageCode | null = null;
-
-    if (navigator.languages.length > 0) {
-      // Tomar el primer idioma y convertir 'es-ES' a 'es'
-      const firstLanguage = navigator.languages[0] as AvailableLanguageCode;
-      detectedLang = firstLanguage.split('-')[0] as AvailableLanguageCode;
-    } else if (navigator.language) {
-      // Fallback a navigator.language si navigator.languages no está disponible
-      detectedLang = navigator.language.split('-')[0] as AvailableLanguageCode;
-    }
-
-    console.log('Browser language detected:', detectedLang);
-    return detectedLang;
+  function getBrowserLanguage(): string {
+    // Tomar el primer idioma y convertir 'es-ES' a 'es'
+    return navigator.language.split('-')[0]!;
   }
 
 
@@ -68,7 +57,7 @@ export default defineBackground({
       return TranslationService.#instance;
     }
 
-    async detectLanguage(text: string): Promise<AvailableLanguageCode> {
+    async detectLanguage(text: string): Promise<string> {
       const languageDetectorAPI = getLanguageDetectorAPI();
       
       if (languageDetectorAPI) {
@@ -80,22 +69,14 @@ export default defineBackground({
           const detector = await languageDetectorAPI.create();
           const results = await detector.detect(text);
           // Take the most probable detected language
-          const result = results[0];
-          const detectedLanguage = result?.detectedLanguage;
-          if (!detectedLanguage) {
-            throw new Error(browser.i18n.getMessage('languageDetectionFailed'));
-          }
-          return detectedLanguage as AvailableLanguageCode;
+          const detectedLanguage = results[0]!.detectedLanguage!;
+          return detectedLanguage;
         } else if (availability === 'downloadable') {
           console.log('LanguageDetector model is downloadable, attempting to download...');
           // Intentar crear el detector para iniciar la descarga
           const detector = await languageDetectorAPI.create();
           const results = await detector.detect(text);
-          const result = results[0];
-          const detectedLanguage = result?.detectedLanguage;
-          if (!detectedLanguage) {
-            throw new Error(browser.i18n.getMessage('languageDetectionFailed'));
-          }
+          const detectedLanguage = results[0]!.detectedLanguage!;
           return detectedLanguage as AvailableLanguageCode;
         } else if (availability === 'downloading') {
           console.log('LanguageDetector model is currently downloading, waiting...');

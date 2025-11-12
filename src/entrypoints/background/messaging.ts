@@ -55,12 +55,12 @@ export interface SelectedTextData {
 
 export interface ProtocolMap {
   getModelStatus(data: { source: string; target: string }): AIModelStatus;
-  detectLanguage(data: { text: string }): { languageCode: AvailableLanguageCode };
+  detectLanguage(data: { text: string }): { languageCode: string };
   translateText(data: { text: string; targetLanguage: AvailableLanguageCode; sourceLanguage: AvailableLanguageCode }): string;
   checkAPIAvailability(): boolean;
   cancelPendingTranslations(): { cancelled: boolean };
   getAvailableLanguages(): { languages: AvailableLanguages };
-  getBrowserLanguage(): string | null;
+  getBrowserLanguage(): string;
   sidepanelReady(): void;
   selectedText(data: SelectedTextData): void;
   translationCompleted(data: TranslationCompleted): void;

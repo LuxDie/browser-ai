@@ -10,7 +10,7 @@ import type { Component } from 'vue';
 import { createApp, nextTick } from 'vue';
 import ProcessControls from './components/ProcessControls.vue';
 
-interface TranslationState {
+interface State {
   text: string
   translatedText: string
   editedTranslatedText: string
@@ -22,12 +22,12 @@ interface TranslationState {
   error: string | null
   apiAvailable: boolean
   modelStatus: AIModelStatus | null
-  availableLanguages: AvailableLanguages | null
 }
 
 export class SidepanelApp {
   #AIService = getAIService();
-  #state: TranslationState = {
+  #availableLanguages!: AvailableLanguages;
+  #state: State = {
     text: '',
     translatedText: '',
     editedTranslatedText: '',
@@ -39,7 +39,6 @@ export class SidepanelApp {
     error: null,
     apiAvailable: false,
     modelStatus: null,
-    availableLanguages: null,
   };
 
   #elements = {
@@ -59,18 +58,20 @@ export class SidepanelApp {
 
   #defaultTargetLanguage = DEFAULT_TARGET_LANGUAGE;
 
+  readonly #minDetectLength = 15;
+
   constructor() {
     void this.#init();
   }
 
   async #init(): Promise<void> {
     this.#state.apiAvailable = await this.#checkAPIAvailability();
-    this.#state.availableLanguages = (await sendMessage('getAvailableLanguages')).languages;
+    this.#availableLanguages = (await sendMessage('getAvailableLanguages')).languages;
     
     const browserLang = await sendMessage('getBrowserLanguage');
     // Verificar si el idioma del navegador está soportado
-    const isBrowserLangSupported = this.#state.availableLanguages.some(lang => lang.code === browserLang);
-    this.#state.targetLanguage = (browserLang && isBrowserLangSupported) ? browserLang as AvailableLanguageCode : this.#defaultTargetLanguage;
+    const isBrowserLangSupported = this.#availableLanguages.some(lang => lang.code === browserLang);
+    this.#state.targetLanguage = (isBrowserLangSupported) ? browserLang as AvailableLanguageCode : this.#defaultTargetLanguage;
     
     this.#render();
 
@@ -178,22 +179,26 @@ export class SidepanelApp {
   async #handleInputChange(text: string): Promise<void> {
     const previousText = this.#state.text;
     this.#state.text = text;
+    if (text.trim().length < this.#minDetectLength) {
+      this.#state.sourceLanguage = null;
+      this.#state.error = null;
+      this.#render();
+      return;
+    }
     if (previousText === this.#state.text) {
       return;
     }
 
     this.#cancelPendingTranslations();
-    this.#state.sourceLanguage = await this.#detectLanguage();
-    this.#render();
-  }
-
-  async #detectLanguage(): Promise<AvailableLanguageCode | null> {
-    if (this.#state.text.trim().length >= 15) {
-      const response = await sendMessage('detectLanguage', { text: this.#state.text });
-      return response.languageCode;
+    const { languageCode } = await sendMessage('detectLanguage', { text: this.#state.text });
+    const isSupported = this.#availableLanguages.some((language) => language.code === languageCode);
+    if (isSupported) {
+      this.#state.sourceLanguage = languageCode as AvailableLanguageCode;
     } else {
-      return null;
+      this.#state.error = browser.i18n.getMessage('detectedLanguageNotSupported', languageCode);
+      this.#state.sourceLanguage = null;
     }
+    this.#render();
   }
 
   #cancelPendingTranslations(): void {
@@ -344,14 +349,10 @@ export class SidepanelApp {
 
   #updateLanguageSelector(): void {
     if (this.#elements.targetLanguage) {
-      if (this.#state.availableLanguages) {
-        const optionsHTML = this.#state.availableLanguages.map(lang =>
-          `<option value="${lang.code}">${browser.i18n.getMessage(lang.nameKey)}</option>`
-        ).join('');
-        this.#elements.targetLanguage.innerHTML = optionsHTML;
-      } else {
-        this.#elements.targetLanguage.innerHTML = `<option value="">${browser.i18n.getMessage('languagesUnavailable')}</option>`;
-      }
+      const optionsHTML = this.#availableLanguages.map(lang =>
+        `<option value="${lang.code}">${browser.i18n.getMessage(lang.nameKey)}</option>`
+      ).join('');
+      this.#elements.targetLanguage.innerHTML = optionsHTML;
       this.#elements.targetLanguage.value = this.#state.targetLanguage;
     }
   }
@@ -436,43 +437,48 @@ export class SidepanelApp {
     const errorContainer = document.getElementById('error-container');
     if (errorContainer) {
       errorContainer.innerHTML = this.#state.error ? `
-        <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div id="error-message" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
           <p class="text-red-800 text-sm">${this.#state.error}</p>
         </div>
       ` : '';
     }
   }
 
+  /**
+   * Obtiene la clave de mensaje del idioma detectado
+   * @returns La clave de mensaje del idioma
+   */
+  // TODO: determinar mejor ubicación
+  #getLanguageKey(code: AvailableLanguageCode): AvailableLanguages[number]['nameKey'] {
+    return this.#availableLanguages.find(lang => lang.code === code)!.nameKey;
+  }
+
   #updateLanguageInfo(): void {
-    const languageInfoContainer = document.getElementById('language-info-container');
-    if (languageInfoContainer) {
-      const hasText = this.#state.text.trim().length > 0;
-      const hasEnoughText = this.#state.text.trim().length >= 15;
-      
-      if (this.#state.sourceLanguage && hasEnoughText) {
-        const detectedLanguage = this.#state.availableLanguages?.find(lang => lang.code === this.#state.sourceLanguage);
-        if (!detectedLanguage) {
-          throw new Error(browser.i18n.getMessage('languageDetectionFailed') || 'El dioma detectado no está disponible');
-        }
-        const languageName = browser.i18n.getMessage(detectedLanguage.nameKey);
-        languageInfoContainer.innerHTML = `
-          <div class="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-            <p class="text-blue-800 text-xs">
-              ${browser.i18n.getMessage('detectedLanguage', [languageName])}
-            </p>
-          </div>
-        `;
-      } else if (hasText && !hasEnoughText) {
-        languageInfoContainer.innerHTML = `
-          <div class="p-2 bg-gray-50 border border-gray-200 rounded-lg">
-            <p class="text-gray-600 text-xs">
-              ${browser.i18n.getMessage('insufficientTextForDetection')}
-            </p>
-          </div>
-        `;
-      } else {
-        languageInfoContainer.innerHTML = '';
-      }
+    const languageInfoContainer = document.getElementById('language-info-container') as HTMLDivElement;
+    const hasText = this.#state.text.trim().length > 0;
+    const notEnoughText = this.#state.text.trim().length < this.#minDetectLength;
+
+    if (this.#state.sourceLanguage) {
+      const sourceLanguageKey = this.#getLanguageKey(this.#state.sourceLanguage);
+      const languageName = browser.i18n.getMessage(sourceLanguageKey);
+      languageInfoContainer.innerHTML = `
+        <div class="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <p class="text-blue-800 text-xs">
+            ${browser.i18n.getMessage('detectedLanguage', languageName)}
+          </p>
+        </div>
+      `;
+    } else if (hasText && notEnoughText) {
+      languageInfoContainer.innerHTML = `
+        <div class="p-2 bg-gray-50 border border-gray-200 rounded-lg">
+          <p class="text-gray-600 text-xs">
+            ${browser.i18n.getMessage('insufficientTextForDetection')}
+          </p>
+        </div>
+      `;
+    } else {
+      // El idioma no está soportado o no hay texto
+      languageInfoContainer.innerHTML = '';
     }
   }
 

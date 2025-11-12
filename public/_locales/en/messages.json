@@ -32,9 +32,6 @@
   "apiWarning": {
     "message": "⚠️ Browser native APIs are not available. Make sure you have the latest version of your browser."
   },
-  "languagesUnavailable": {
-    "message": "Languages unavailable"
-  },
   "downloadingSummarizer": {
     "message": "📥 Downloading summarizer for the first time..."
   },
@@ -83,9 +80,6 @@
   },
   "browserAIMenu": {
     "message": "Browser AI"
-  },
-  "languageDetectionFailed": {
-    "message": "Could not detect the language of the provided text"
   },
   "languageDetectorDownloading": {
     "message": "The LanguageDetector model is currently downloading. Please wait and try again."
@@ -298,6 +292,14 @@
   },
   "invalidTargetLanguageCode": {
     "message": "Invalid target language code: $code$",
+    "placeholders": {
+      "code": {
+        "content": "$1"
+      }
+    }
+  },
+  "detectedLanguageNotSupported": {
+    "message": "Detected language \"$code$\" is not supported",
     "placeholders": {
       "code": {
         "content": "$1"

@@ -32,9 +32,6 @@
   "apiWarning": {
     "message": "⚠️ Las APIs nativas del navegador no están disponibles. Asegúrate de tener la versión más reciente de tu navegador."
   },
-  "languagesUnavailable": {
-    "message": "Idiomas no disponibles"
-  },
   "downloadingSummarizer": {
     "message": "📥 Descargando resumidor por única vez..."
   },
@@ -83,9 +80,6 @@
   },
   "browserAIMenu": {
     "message": "Browser AI"
-  },
-  "languageDetectionFailed": {
-    "message": "No se pudo detectar el idioma del texto proporcionado"
   },
   "languageDetectorDownloading": {
     "message": "El modelo LanguageDetector se está descargando actualmente. Por favor, espere e inténtelo de nuevo."
@@ -298,6 +292,14 @@
   },
   "invalidTargetLanguageCode": {
     "message": "Código de idioma destino inválido: $code$",
+    "placeholders": {
+      "code": {
+        "content": "$1"
+      }
+    }
+  },
+  "detectedLanguageNotSupported": {
+    "message": "El idioma detectado \"$code$\" no está soportado",
     "placeholders": {
       "code": {
         "content": "$1"
