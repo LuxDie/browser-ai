@@ -7,8 +7,6 @@ import {
   removeMessageListeners,
 } from '@/entrypoints/background/messaging';
 import background from '@/entrypoints/background';
-import type { LanguageCode } from '@/entrypoints/background';
-import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
 // Interface for message handler spies
 interface MessageHandlerSpies {
@@ -120,8 +118,8 @@ describe('Background Script', () => {
       });
 
       it('should execute translation', async () => {
-        const translatorInstance = { translate: vi.fn() };
-        vi.mocked(Translator.create).mockResolvedValue(translatorInstance as any);
+        const translatorInstance: Pick<Translator, 'translate'> = { translate: vi.fn() };
+        vi.mocked(Translator.create).mockResolvedValue(translatorInstance as Translator);
         await sendMessage('translateText', {
           text: testText,
           sourceLanguage,
@@ -133,8 +131,8 @@ describe('Background Script', () => {
 
       it('should return translation result', async () => {
         const translatedText = 'Este es un texto de prueba traducido';
-        const translatorInstance = { translate: vi.fn(() => translatedText) };
-        vi.mocked(Translator.create).mockResolvedValue(translatorInstance as any);
+        const translatorInstance: Pick<Translator, 'translate'> = { translate: vi.fn(() => Promise.resolve(translatedText)) };
+        vi.mocked(Translator.create).mockResolvedValue(translatorInstance as Translator);
 
         const result = await sendMessage('translateText', {
           text: testText,
@@ -148,14 +146,14 @@ describe('Background Script', () => {
       it('should send modelStatusUpdate when model is not available', async () => {
         vi.mocked(Translator.availability).mockResolvedValue('downloadable');
         const testText = 'Test text';
-        const sourceLanguage = 'en' as LanguageCode;
-        const targetLanguage = 'es' as LanguageCode;
+        const sourceLanguage = 'en';
+        const targetLanguage = 'es';
         await sendMessage('translateText', { text: testText, sourceLanguage, targetLanguage });
         expect(messageHandlerSpies.modelStatusUpdate).toHaveBeenCalledWith(
           expect.objectContaining({
             data: expect.objectContaining({
               state: 'downloading',
-            }) as AIModelStatus,
+            }),
           })
         );
       });
@@ -167,8 +165,8 @@ describe('Background Script', () => {
 
         await sendMessage('translateText', {
           text: 'Test text',
-          sourceLanguage: 'en' as LanguageCode,
-          targetLanguage: 'es' as LanguageCode
+          sourceLanguage: 'en',
+          targetLanguage: 'es'
         });
 
         expect(browser.notifications.create).toHaveBeenCalledWith(
@@ -185,10 +183,10 @@ describe('Background Script', () => {
   
       // Trigger context menu click
       const selectedText = 'This is some selected text to translate';
-      (browser.contextMenus.onClicked as any).trigger({
+      fakeBrowser.contextMenus.onClicked.trigger({
         menuItemId: 'translateSelection',
         selectionText: selectedText
-      }, { id: 123 });    
+      }, { id: 123 });
 
       // Verify that sidepanel was opened
       expect(browser.sidePanel.open).toHaveBeenCalled();
@@ -200,7 +198,7 @@ describe('Background Script', () => {
 
       // Trigger context menu click
       const selectedText = 'This is some selected text to translate';
-      (browser.contextMenus.onClicked as any).trigger({
+      fakeBrowser.contextMenus.onClicked.trigger({
         menuItemId: 'translateSelection',
         selectionText: selectedText
       }, { id: 123 });
@@ -218,7 +216,7 @@ describe('Background Script', () => {
 
       // Trigger context menu click
       const selectedText = 'This is some selected text to translate';
-      (browser.contextMenus.onClicked as any).trigger({
+      fakeBrowser.contextMenus.onClicked.trigger({
         menuItemId: 'translateSelection',
         selectionText: selectedText
       }, { id: 123 });

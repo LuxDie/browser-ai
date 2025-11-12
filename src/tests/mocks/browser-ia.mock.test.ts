@@ -32,7 +32,7 @@ describe('Translation Core', () => {
       const mockDetector = createLanguageDetectorMock('en', 0.95);
       setupLanguageDetectorMock(mockDetector);
 
-      const result = await mockDetector.detect('Hello world') as { language: string, confidence: number };
+      const result = await mockDetector.detect('Hello world');
       
       expect(mockDetector.detect).toHaveBeenCalledWith('Hello world');
       expect(result.language).toBe('en');

@@ -1,7 +1,7 @@
 import {
   type PendingTranslation
 } from '@/entrypoints/background/background.model';
-import { AVAILABLE_LANGUAGES, type LanguageCode } from '@/entrypoints/background/available-languages';
+import { AVAILABLE_LANGUAGES, type AvailableLanguageCode } from '@/entrypoints/background/available-languages';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import { registerAIService } from '@/entrypoints/background/ai/ai.service';
@@ -9,10 +9,10 @@ import { registerAIService } from '@/entrypoints/background/ai/ai.service';
 // Registrar servicios proxy
 registerAIService();
 
-export type { LanguageCode } from '@/entrypoints/background/available-languages';
+export type { AvailableLanguageCode } from '@/entrypoints/background/available-languages';
 export type AvailableLanguages = typeof AVAILABLE_LANGUAGES;
 export type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
-export const DEFAULT_TARGET_LANGUAGE: LanguageCode = 'es';
+export const DEFAULT_TARGET_LANGUAGE: AvailableLanguageCode = 'es';
 
 export default defineBackground({
   type: 'module',
@@ -40,16 +40,16 @@ export default defineBackground({
    * Detecta el idioma principal del navegador del usuario
    * @returns Código de idioma (ej: 'es', 'en', 'fr') o null si no se puede detectar
    */
-  function getBrowserLanguage(): LanguageCode | null {
-    let detectedLang: LanguageCode | null = null;
+  function getBrowserLanguage(): AvailableLanguageCode | null {
+    let detectedLang: AvailableLanguageCode | null = null;
 
     if (navigator.languages.length > 0) {
       // Tomar el primer idioma y convertir 'es-ES' a 'es'
-      const firstLanguage = navigator.languages[0] as LanguageCode;
-      detectedLang = firstLanguage.split('-')[0] as LanguageCode;
+      const firstLanguage = navigator.languages[0] as AvailableLanguageCode;
+      detectedLang = firstLanguage.split('-')[0] as AvailableLanguageCode;
     } else if (navigator.language) {
       // Fallback a navigator.language si navigator.languages no está disponible
-      detectedLang = navigator.language.split('-')[0] as LanguageCode;
+      detectedLang = navigator.language.split('-')[0] as AvailableLanguageCode;
     }
 
     console.log('Browser language detected:', detectedLang);
@@ -68,7 +68,7 @@ export default defineBackground({
       return TranslationService.#instance;
     }
 
-    async detectLanguage(text: string): Promise<LanguageCode> {
+    async detectLanguage(text: string): Promise<AvailableLanguageCode> {
       const languageDetectorAPI = getLanguageDetectorAPI();
       
       if (languageDetectorAPI) {
@@ -85,7 +85,7 @@ export default defineBackground({
           if (!detectedLanguage) {
             throw new Error(browser.i18n.getMessage('languageDetectionFailed'));
           }
-          return detectedLanguage as LanguageCode;
+          return detectedLanguage as AvailableLanguageCode;
         } else if (availability === 'downloadable') {
           console.log('LanguageDetector model is downloadable, attempting to download...');
           // Intentar crear el detector para iniciar la descarga
@@ -96,7 +96,7 @@ export default defineBackground({
           if (!detectedLanguage) {
             throw new Error(browser.i18n.getMessage('languageDetectionFailed'));
           }
-          return detectedLanguage as LanguageCode;
+          return detectedLanguage as AvailableLanguageCode;
         } else if (availability === 'downloading') {
           console.log('LanguageDetector model is currently downloading, waiting...');
           throw new Error(browser.i18n.getMessage('languageDetectorDownloading'));
@@ -220,12 +220,12 @@ export default defineBackground({
 
   // Manejadores de mensajes usando @webext-core/messaging
   onMessage('getModelStatus', async (message) => {
-    const { source, target } = message.data as { source: string; target: string };
+    const { source, target } = message.data;
     return await modelManager.checkModelStatus({ type: 'translation', source, target });
   });
 
   onMessage('detectLanguage', async (message) => {
-    const { text } = message.data as { text: string };
+    const { text } = message.data;
     const language = await translationService.detectLanguage(text);
     console.log(`🔍 Language detected: ${language}`);
     return { languageCode: language };

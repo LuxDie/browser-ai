@@ -1,6 +1,8 @@
 /* Esta lista fue tomada de chrome://on-device-translation-internals/.
  * Se excluyó 'zh_Hant' porque no funciona correctamente.
  */
+
+// TODO: derivar nameKey en la implementación y quitar
 export const AVAILABLE_LANGUAGES = [
   { code: 'ar', nameKey: 'lang_ar' },
   { code: 'bg', nameKey: 'lang_bg' },
@@ -42,7 +44,7 @@ export const AVAILABLE_LANGUAGES = [
   { code: 'zh', nameKey: 'lang_zh' }
 ] as const;
 
-export type LanguageCode = typeof AVAILABLE_LANGUAGES[number]['code'];
+export type AvailableLanguageCode = typeof AVAILABLE_LANGUAGES[number]['code'];
 
 export const SUMMARIZER_LANGUAGE_CODES = ['en', 'es', 'ja'] as const;
 

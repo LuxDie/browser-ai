@@ -1,5 +1,5 @@
 import { defineExtensionMessaging } from '@webext-core/messaging';
-import type { AvailableLanguages, LanguageCode } from '@/entrypoints/background';
+import type { AvailableLanguages, AvailableLanguageCode } from '@/entrypoints/background';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
 export interface AvailableLanguagesResponse {
@@ -43,6 +43,7 @@ export interface LanguageDetected {
   language: string;
 }
 
+// TODO quitar interfaces sin usar
 export interface LanguageDetectionError {
   error: string;
 }
@@ -54,12 +55,12 @@ export interface SelectedTextData {
 
 export interface ProtocolMap {
   getModelStatus(data: { source: string; target: string }): AIModelStatus;
-  detectLanguage(data: { text: string }): { languageCode: LanguageCode };
-  translateText(data: { text: string; targetLanguage: LanguageCode; sourceLanguage: LanguageCode }): string;
+  detectLanguage(data: { text: string }): { languageCode: AvailableLanguageCode };
+  translateText(data: { text: string; targetLanguage: AvailableLanguageCode; sourceLanguage: AvailableLanguageCode }): string;
   checkAPIAvailability(): boolean;
   cancelPendingTranslations(): { cancelled: boolean };
   getAvailableLanguages(): { languages: AvailableLanguages };
-  getBrowserLanguage(): LanguageCode | null;
+  getBrowserLanguage(): string | null;
   sidepanelReady(): void;
   selectedText(data: SelectedTextData): void;
   translationCompleted(data: TranslationCompleted): void;

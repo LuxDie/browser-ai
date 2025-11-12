@@ -13,7 +13,7 @@ vi.mock('@/entrypoints/background/model-manager/model-manager.service', () => {
   const mockModelManagerInstance: Partial<ModelManager> = {
     summarizeText: vi.fn(() => Promise.resolve('Service summary.')),
     translate: vi.fn(() => Promise.resolve('Texto traducido.')),
-    checkModelStatus: vi.fn(() => Promise.resolve({ state: 'available' as Availability })),
+    checkModelStatus: vi.fn(() => Promise.resolve({ state: 'available' as const })),
     downloadModel: vi.fn(),
   };
   return {

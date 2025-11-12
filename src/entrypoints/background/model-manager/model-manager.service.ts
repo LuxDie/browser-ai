@@ -1,5 +1,4 @@
 import type { AIModelStatus, SummarizerOptions } from '@/entrypoints/background/model-manager/model-manager.model';
-import type { SummarizerLanguageCode } from '@/entrypoints/background/available-languages';
 
 export class ModelManager {
   static #instance: ModelManager | null = null;
@@ -241,8 +240,8 @@ export class ModelManager {
         type: 'tldr',
         length: 'medium',
         format: 'plain-text',
-        expectedInputLanguages: ['en', 'es', 'ja'] as SummarizerLanguageCode[],
-        outputLanguage: 'es' as SummarizerLanguageCode,
+        expectedInputLanguages: ['en', 'es', 'ja'],
+        outputLanguage: 'es',
         ...inputOptions
       };
 

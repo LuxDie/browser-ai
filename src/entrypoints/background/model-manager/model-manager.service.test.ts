@@ -1,14 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
-import {
-  onMessage,
-  removeMessageListeners
-} from '@/entrypoints/background/messaging';
-import type { SummarizerLanguageCode } from '../available-languages';
 
 describe('ModelManager - Summarization Features', () => {
   let modelManager: ModelManager;
-  let modelStatusUpdateSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -16,10 +10,6 @@ describe('ModelManager - Summarization Features', () => {
     modelManager = new ModelManager();
     vi.spyOn(ModelManager, 'getInstance').mockReturnValue(modelManager);
 
-    // Clean up previous message listeners and register new spy
-    removeMessageListeners();
-    modelStatusUpdateSpy = vi.fn();
-    onMessage('modelStatusUpdate', modelStatusUpdateSpy);
   });
 
   describe('checkModelStatus', () => {
@@ -108,8 +98,10 @@ describe('ModelManager - Summarization Features', () => {
 
   describe('summarizeText', () => {
     it('should summarize text successfully', async () => {
-      const mockSummarizer = { summarize: vi.fn(() => Promise.resolve('This is a summary.')) } as any;
-      vi.mocked(Summarizer.create).mockResolvedValueOnce(mockSummarizer);
+      const mockSummarizer: Pick<Summarizer, 'summarize'> = {
+        summarize: vi.fn(() => Promise.resolve('This is a summary.'))
+      };
+      vi.mocked(Summarizer.create).mockResolvedValueOnce(mockSummarizer as Summarizer);
 
       const result = await modelManager.summarizeText('This is a long text that needs to be summarized.');
 
@@ -121,8 +113,8 @@ describe('ModelManager - Summarization Features', () => {
       const options = {
         type: 'key-points' as const,
         length: 'short' as const,
-        expectedInputLanguages: ['en'] as SummarizerLanguageCode[],
-        outputLanguage: 'es' as SummarizerLanguageCode
+        expectedInputLanguages: ['en' as const],
+        outputLanguage: 'es' as const
       };
 
       await modelManager.summarizeText('Long text here', options);
@@ -133,9 +125,10 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should handle summarization errors gracefully', async () => {
-      vi.mocked(Summarizer.create).mockResolvedValueOnce({
+      const mockSummarizer: Pick<Summarizer, 'summarize'> = {
         summarize: vi.fn(() => Promise.reject(new Error('Summarization failed'))),
-      } as any);
+      };
+      vi.mocked(Summarizer.create).mockResolvedValueOnce(mockSummarizer as Summarizer);
 
       const result = await modelManager.summarizeText('Text to summarize');
 

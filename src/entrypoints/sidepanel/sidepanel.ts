@@ -2,7 +2,7 @@ import '@/entrypoints/sidepanel/sidepanel.css';
 import {
   DEFAULT_TARGET_LANGUAGE,
 } from '@/entrypoints/background';
-import type { AvailableLanguages, LanguageCode, } from '@/entrypoints/background';
+import type { AvailableLanguages, AvailableLanguageCode } from '@/entrypoints/background';
 import { onMessage, sendMessage, type SelectedTextData } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '../background/model-manager/model-manager.model';
 import { getAIService } from '../background/ai/ai.service';
@@ -15,8 +15,8 @@ interface TranslationState {
   translatedText: string
   editedTranslatedText: string
   summaryText: string
-  sourceLanguage: LanguageCode | null
-  targetLanguage: LanguageCode
+  sourceLanguage: AvailableLanguageCode | null
+  targetLanguage: AvailableLanguageCode
   summarize: boolean
   isLoading: boolean
   error: string | null
@@ -70,7 +70,7 @@ export class SidepanelApp {
     const browserLang = await sendMessage('getBrowserLanguage');
     // Verificar si el idioma del navegador está soportado
     const isBrowserLangSupported = this.#state.availableLanguages.some(lang => lang.code === browserLang);
-    this.#state.targetLanguage = (browserLang && isBrowserLangSupported) ? browserLang : this.#defaultTargetLanguage;
+    this.#state.targetLanguage = (browserLang && isBrowserLangSupported) ? browserLang as AvailableLanguageCode : this.#defaultTargetLanguage;
     
     this.#render();
 
@@ -159,7 +159,7 @@ export class SidepanelApp {
     // Listener de selector de idioma destino
     this.#elements.targetLanguage?.addEventListener('change', (e) => {
       const previousTargetLanguage = this.#state.targetLanguage;
-      this.#state.targetLanguage = (e.target as HTMLSelectElement).value as LanguageCode;
+      this.#state.targetLanguage = (e.target as HTMLSelectElement).value as AvailableLanguageCode;
 
       // Cancelar traducciones pendientes cuando cambia el idioma destino
       if (previousTargetLanguage !== this.#state.targetLanguage) {
@@ -187,7 +187,7 @@ export class SidepanelApp {
     this.#render();
   }
 
-  async #detectLanguage(): Promise<LanguageCode | null> {
+  async #detectLanguage(): Promise<AvailableLanguageCode | null> {
     if (this.#state.text.trim().length >= 15) {
       const response = await sendMessage('detectLanguage', { text: this.#state.text });
       return response.languageCode;

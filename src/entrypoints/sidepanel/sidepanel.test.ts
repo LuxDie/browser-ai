@@ -3,11 +3,13 @@ import type { MockInstance } from 'vitest';
 import {
   onMessage,
   sendMessage,
-  removeMessageListeners
+  removeMessageListeners,
+  type ProtocolMap
 } from '@/entrypoints/background/messaging';
-import type { LanguageCode } from '@/entrypoints/background';
+import type { AvailableLanguageCode } from '@/entrypoints/background';
 import { SidepanelApp } from '@/entrypoints/sidepanel/sidepanel';
 import { getAIService } from '@/entrypoints/background/ai/ai.service';
+import { AVAILABLE_LANGUAGES } from '../background/available-languages';
 
 interface MessageHandlerSpies {
   checkAPIAvailability: MockInstance
@@ -22,7 +24,7 @@ vi.mock(import('@/entrypoints/background/ai/ai.service'), () => {
   const mockAIService = { processText: vi.fn(() => Promise.resolve('Texto procesado')) };
   return {
     getAIService() { return mockAIService; },
-    registerAIService(): any {}
+    registerAIService: vi.fn(),
   };
 });
 
@@ -30,34 +32,36 @@ function resetDOM() {
   document.body.innerHTML = '<div id="root"></div>';
 }
 
-const defaultAvailableLanguages = [
-  { code: 'es', name: 'Español' },
-  { code: 'en', name: 'English' },
-  { code: 'fr', name: 'Français' },
-  { code: 'de', name: 'Deutsch' },
-  { code: 'it', name: 'Italiano' },
-  { code: 'pt', name: 'Português' }
-];
-
 const mockAIService = vi.mocked(getAIService());
 
-// TODO: mejorar tipo `any`
-const registerDefaultMessageHandlers = (overrides: Record<string, any> = {}): MessageHandlerSpies => {
-  const checkAPIAvailabilitySpy = vi.fn(overrides['checkAPIAvailability'] ?? (() => true));
-  const getAvailableLanguagesSpy = vi.fn(overrides['getAvailableLanguages'] ?? (() => ({
-    languages: defaultAvailableLanguages
-  })));
-  const getBrowserLanguageSpy = vi.fn(overrides['getBrowserLanguage'] ?? (() => 'es'));
-  const detectLanguageSpy = vi.fn(overrides['detectLanguage'] ?? (() => Promise.resolve({ languageCode: 'en' })));
-  const cancelPendingTranslationsSpy = vi.fn(overrides['cancelPendingTranslations'] ?? (() => ({ cancelled: true })));
-  const sidepanelReadySpy = vi.fn(overrides['sidepanelReady'] ?? (() => {}));
+interface MessageHandlerOverrides {
+  checkAPIAvailability?: ProtocolMap['checkAPIAvailability'];
+  getAvailableLanguages?: ProtocolMap['getAvailableLanguages'];
+  getBrowserLanguage?: ProtocolMap['getBrowserLanguage'];
+  detectLanguage?: () => ReturnType<ProtocolMap['detectLanguage']>;
+  cancelPendingTranslations?: ProtocolMap['cancelPendingTranslations'];
+  sidepanelReady?: ProtocolMap['sidepanelReady'];
+};
 
-  onMessage('checkAPIAvailability', checkAPIAvailabilitySpy as any);
-  onMessage('getAvailableLanguages', getAvailableLanguagesSpy as any);
-  onMessage('getBrowserLanguage', getBrowserLanguageSpy as any);
-  onMessage('detectLanguage', detectLanguageSpy as any);
-  onMessage('cancelPendingTranslations', cancelPendingTranslationsSpy as any);
-  onMessage('sidepanelReady', sidepanelReadySpy as any);
+const DEFAULT_SOURCE_LANGUAGE: AvailableLanguageCode = 'es';
+const DEFAULT_TARGET_LANGUAGE: AvailableLanguageCode = 'en';
+
+const registerDefaultMessageHandlers = (overrides: Partial<MessageHandlerOverrides> = {}): MessageHandlerSpies => {
+  const checkAPIAvailabilitySpy = vi.fn(overrides.checkAPIAvailability ?? (() => true));
+  const getAvailableLanguagesSpy = vi.fn(overrides.getAvailableLanguages ?? (() => ({
+    languages: AVAILABLE_LANGUAGES
+  })));
+  const getBrowserLanguageSpy = vi.fn(overrides.getBrowserLanguage ?? (() => DEFAULT_SOURCE_LANGUAGE));
+  const detectLanguageSpy = vi.fn(overrides.detectLanguage ?? (() => Promise.resolve({ languageCode: DEFAULT_TARGET_LANGUAGE })));
+  const cancelPendingTranslationsSpy = vi.fn(overrides.cancelPendingTranslations ?? (() => ({ cancelled: true })));
+  const sidepanelReadySpy = vi.fn(overrides.sidepanelReady ?? (() => {}));
+
+  onMessage('checkAPIAvailability', checkAPIAvailabilitySpy);
+  onMessage('getAvailableLanguages', getAvailableLanguagesSpy);
+  onMessage('getBrowserLanguage', getBrowserLanguageSpy);
+  onMessage('detectLanguage', detectLanguageSpy);
+  onMessage('cancelPendingTranslations', cancelPendingTranslationsSpy);
+  onMessage('sidepanelReady', sidepanelReadySpy);
 
   return {
     checkAPIAvailability: checkAPIAvailabilitySpy,
@@ -80,7 +84,7 @@ async function setTextAndProcess(): Promise<void> {
     await vi.runAllTimersAsync();
 }
 
-async function initSidepanelApp(overrides: Record<string, any> = {}): Promise<MessageHandlerSpies> {
+async function initSidepanelApp(overrides: Partial<MessageHandlerOverrides> = {}): Promise<MessageHandlerSpies> {
   resetDOM();
   removeMessageListeners();
   const messageHandlerSpies = registerDefaultMessageHandlers(overrides);
@@ -123,7 +127,7 @@ describe('SidepanelApp', () => {
   });
 
   it('should show detected language after text input', async () => {
-    const testLanguageCode: LanguageCode = 'fr';
+    const testLanguageCode: AvailableLanguageCode = 'fr';
     messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: testLanguageCode });
     await setTextAndProcess();
 
@@ -681,7 +685,7 @@ describe('SidepanelApp', () => {
     });
 
     it('should use default language (es) when browser language is not supported', async () => {
-      const browserLanguage = 'ja';
+      const browserLanguage = 'xx';
       const fallbackLanguage = 'es';
       // Crear instancia con reemplazo para idioma del navegador no soportado
       await initSidepanelApp({

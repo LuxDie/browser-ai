@@ -32,6 +32,8 @@ Object.defineProperty(window, 'getSelection', {
 
 // Extend browser with additional mocks (runtime and notifications are provided by fakeBrowser)
 
+type Listener = Parameters<typeof Browser.contextMenus.onClicked.addListener>[0]
+
 Object.assign(browser, {
   i18n: {
     getMessage: vi.fn((key: string) => {
@@ -40,12 +42,12 @@ Object.assign(browser, {
     }),
   },
   contextMenus: (() => {
-    const listeners: ((info: any, tab?: any) => void)[] = [];
+    const listeners: Listener[] = [];
     const onClicked = {
-      addListener: vi.fn((listener: (info: any, tab?: any) => void) => {
+      addListener: vi.fn((listener: Listener) => {
         listeners.push(listener);
       }),
-      trigger: (info: any, tab?: any) => {
+      trigger: (info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab) => {
         listeners.forEach(listener => { listener(info, tab); });
       },
     };
