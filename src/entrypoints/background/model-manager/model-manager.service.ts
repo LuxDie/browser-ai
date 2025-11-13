@@ -35,8 +35,11 @@ export class ModelManager {
     return !!(this.#browserAPIs.languageDetector ?? this.#browserAPIs.translator ?? this.#browserAPIs.summarizer);
   }
 
-  // Verificar disponibilidad de modelo (unificada para traducción y resumen)
-  async checkModelStatus(config: { type: 'translation'; source: string; target: string } | { type: 'summarization' }): Promise<AIModelStatus> {
+  async checkModelStatus(config:
+    { type: 'language-detection' } |
+    { type: 'translation'; source: string; target: string } |
+    { type: 'summarization' }
+  ): Promise<AIModelStatus> {
     if (config.type === 'translation') {
       const { source, target } = config;
       const translator = this.#browserAPIs.translator;
@@ -72,8 +75,7 @@ export class ModelManager {
           errorMessage: browser.i18n.getMessage('errorCheckingModelAvailability', [errorMessage]) || `Error al verificar la disponibilidad del modelo: ${errorMessage}`
         };
       }
-    } else {
-      // config.type === 'summarization'
+    } else if(config.type === 'summarization') {
       const summarizer = this.#browserAPIs.summarizer;
 
       if (!summarizer) {
@@ -100,6 +102,34 @@ export class ModelManager {
           errorMessage: (browser.i18n.getMessage('errorCheckingModelAvailability') || `Error al verificar la disponibilidad del summarizer: ${errorMessage}`)
         };
       }
+    } else {
+      // config.type === 'language-detection'
+      const languageDetector = this.#browserAPIs.languageDetector;
+
+      if (!languageDetector) {
+        return {
+          state: 'unavailable',
+          errorMessage: browser.i18n.getMessage('languageDetectorNotSupported') || 'LanguageDetector API no disponible'
+        };
+      }
+
+      try {
+        const availability = await languageDetector.availability();
+        return {
+          state: availability,
+          ...(availability === 'downloading' && { downloadProgress: 0 }),
+          ...(availability === 'unavailable' && {
+            errorMessage: browser.i18n.getMessage('languageDetectorUnavailable') || 'Modelo de detección de idioma no disponible'
+          })
+        };
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('❌ Error al verificar la disponibilidad del language detector:', error);
+        return {
+          state: 'unavailable',
+          errorMessage: (browser.i18n.getMessage('errorCheckingModelAvailability') || `Error al verificar la disponibilidad del language detector: ${errorMessage}`)
+        };
+      }
     }
   }
 
@@ -112,7 +142,8 @@ export class ModelManager {
   // TODO: si el modelo no es descargable, devolver error
   async downloadModel(config:
     { type: 'translation'; source: string; target: string } |
-    { type: 'summarization' }):
+    { type: 'summarization' } |
+    { type: 'language-detection' }):
     Promise<AIModelStatus> {
     if (config.type === 'translation') {
       const { source, target } = config;
@@ -156,7 +187,7 @@ export class ModelManager {
         modelStatusCache.set(key, status);
         return status;
       }
-    } else {
+    } else if (config.type === 'summarization') {
       // config.type === 'summarization'
       const summarizer = this.#browserAPIs.summarizer;
 
@@ -192,6 +223,45 @@ export class ModelManager {
         const status: AIModelStatus = {
           state: 'unavailable',
           errorMessage: browser.i18n.getMessage('errorDownloadingSummarizerModel', [errorMessage]) || `Error al descargar el modelo de resumen: ${errorMessage}`
+        };
+        modelStatusCache.set(key, status);
+        return status;
+      }
+    } else {
+      // config.type === 'language-detection'
+      const languageDetector = this.#browserAPIs.languageDetector;
+
+      if (!languageDetector) {
+        const status: AIModelStatus = {
+          state: 'unavailable',
+          errorMessage: browser.i18n.getMessage('languageDetectorNotSupported') || 'LanguageDetector API no soportada'
+        };
+        return status;
+      }
+
+      const key = 'language-detector';
+
+      modelStatusCache.set(key, {
+        state: 'downloading',
+        downloadProgress: 0
+      });
+
+      try {
+        console.log(`⏳ Downloading language detector model...`);
+        // Crear el detector (esto descarga el modelo si es necesario)
+        await languageDetector.create();
+
+        console.log(`✅ Language detector model downloaded successfully.`);
+        modelStatusCache.delete(key);
+        return {
+          state: 'available'
+        };
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('❌ Error al descargar el modelo de detección de idioma:', error);
+        const status: AIModelStatus = {
+          state: 'unavailable',
+          errorMessage: browser.i18n.getMessage('errorDownloadingModel', [errorMessage]) || `Error al descargar el modelo: ${errorMessage}`
         };
         modelStatusCache.set(key, status);
         return status;
@@ -254,6 +324,20 @@ export class ModelManager {
       console.error('❌ Error al generar resumen:', error);
       return browser.i18n.getMessage('errorGeneratingSummary', [error instanceof Error ? error.message : String(error)]) || `Error al generar resumen: ${error instanceof Error ? error.message : String(error)}`;
     }
+  }
+
+  async detectLanguage(text: string): Promise<string> {
+    const languageDetector = this.#browserAPIs.languageDetector;
+
+    if (!languageDetector) {
+      throw new Error(browser.i18n.getMessage('languageDetectorNotSupported'));
+    }
+
+    const detector = await languageDetector.create();
+    const results = await detector.detect(text);
+    // Tomar el idioma más probable detectado
+    const detectedLanguage = results[0]!.detectedLanguage!;
+    return detectedLanguage;
   }
 }
 

@@ -1,12 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
-import { detectorInstance } from '@/tests/mocks';
 import {
   sendMessage,
   onMessage,
   removeMessageListeners,
 } from '@/entrypoints/background/messaging';
 import background from '@/entrypoints/background';
+import { getAIService } from './ai/ai.service';
+
+// TODO: usar importación dinámica
+vi.mock('@/entrypoints/background/ai/ai.service', () => {
+  const mockAIService = {
+    detectLanguage: vi.fn(() => Promise.resolve('es'))
+  };
+  return {
+    getAIService() { return mockAIService; },
+    registerAIService: vi.fn(),
+  };
+});
+
+const aIService = vi.mocked(getAIService());
 
 // Interface for message handler spies
 interface MessageHandlerSpies {
@@ -83,18 +96,13 @@ describe('Background Script', () => {
       it('should call the language detection API with the correct text', async () => {
         const testText = 'This is a test';
         await sendMessage('detectLanguage', { text: testText });
-        expect(detectorInstance.detect).toHaveBeenCalledOnce();
-        expect(detectorInstance.detect).toHaveBeenCalledWith(testText);
+        expect(aIService.detectLanguage).toHaveBeenCalledOnce();
+        expect(aIService.detectLanguage).toHaveBeenCalledWith(testText);
       });
 
       it('should return the detected language', async () => {
         const detectedLanguage = 'en';
-        detectorInstance.detect.mockResolvedValue([
-          {
-            confidence: 1,
-            detectedLanguage,
-          },
-        ]);
+        aIService.detectLanguage.mockResolvedValue(detectedLanguage);
         const result = await sendMessage('detectLanguage', { text: 'test' });
         expect(result).toEqual({ languageCode: detectedLanguage });
       });
