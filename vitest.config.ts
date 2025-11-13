@@ -10,6 +10,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/tests/setup.ts'],
     mockReset: true,
+    silent: true,
   },
   resolve: {
     alias: {
