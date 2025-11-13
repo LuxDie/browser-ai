@@ -20,8 +20,12 @@ interface MessageHandlerSpies {
   sidepanelReady: MockInstance
 }
 
-vi.mock(import('@/entrypoints/background/ai/ai.service'), () => {
-  const mockAIService = { processText: vi.fn(() => Promise.resolve('Texto procesado')) };
+// TODO: usar importación dinámica
+vi.mock('@/entrypoints/background/ai/ai.service', () => {
+  const mockAIService = {
+    processText: vi.fn(() => Promise.resolve('Texto procesado')),
+    detectLanguage: vi.fn(() => Promise.resolve('es'))
+  };
   return {
     getAIService() { return mockAIService; },
     registerAIService: vi.fn(),

@@ -12,16 +12,17 @@ interface ProcessOptions {
 }
 
 export class AIService {
+  #modelManager = ModelManager.getInstance();
+
   // TODO: lanzar un error en vez de devolver `undefined`
   async processText(text: string, options: ProcessOptions): Promise<string | undefined> {
-    const modelManager = ModelManager.getInstance();
     let sendNotification = false;
     let processedText: string | undefined;
 
     if (options.summarize) {
 
       // Verificar disponibilidad del modelo
-      let modelStatus = await modelManager.checkModelStatus({ type: 'summarization' });
+      let modelStatus = await this.#modelManager.checkModelStatus({ type: 'summarization' });
 
       // Si hay un error (API no disponible), lanzar error
       if (modelStatus.errorMessage) {
@@ -33,7 +34,7 @@ export class AIService {
         modelStatus.state = 'downloading';
         sendNotification = true;
         void sendMessage('modelStatusUpdate', modelStatus);
-        modelStatus = await modelManager.downloadModel({ type: 'summarization' });
+        modelStatus = await this.#modelManager.downloadModel({ type: 'summarization' });
         void sendMessage('modelStatusUpdate', modelStatus);
         if (modelStatus.state !== 'available') {
           console.error(modelStatus.errorMessage);
@@ -57,7 +58,7 @@ export class AIService {
       }
       // Caso 2: Source no soportado, target sí - traducir input a inglés, resumir en target
       else if (!isSourceSupported && isTargetSupported) {
-        textToSummarize = await modelManager.translate(text, options.sourceLanguage, summarizerDefaultLanguage);
+        textToSummarize = await this.#modelManager.translate(text, options.sourceLanguage, summarizerDefaultLanguage);
         summarizerOutputLanguage = options.targetLanguage as SummarizerLanguageCode;
       }
       // Caso 3: Source sí, target no - resumir en inglés, traducir resumen al target
@@ -67,7 +68,7 @@ export class AIService {
       }
       // Caso 4: Ambos no soportados - traducir input a inglés, resumir en inglés, traducir resumen al target
       else {
-        textToSummarize = await modelManager.translate(text, options.sourceLanguage, summarizerDefaultLanguage);
+        textToSummarize = await this.#modelManager.translate(text, options.sourceLanguage, summarizerDefaultLanguage);
         // El resumen se traducirá después
       }
 
@@ -78,16 +79,16 @@ export class AIService {
         expectedInputLanguages: [summarizerInputLanguage],
         outputLanguage: summarizerOutputLanguage
       };
-      let summary = await modelManager.summarizeText(textToSummarize, summarizerOptions);
+      let summary = await this.#modelManager.summarizeText(textToSummarize, summarizerOptions);
 
       // Si el target no está soportado, traducir el resumen al idioma objetivo
       if (!isTargetSupported) {
-        summary = await modelManager.translate(summary, summarizerDefaultLanguage, options.targetLanguage);
+        summary = await this.#modelManager.translate(summary, summarizerDefaultLanguage, options.targetLanguage);
       }
 
       processedText = summary;
     } else {
-      let model = await modelManager.checkModelStatus({ type: 'translation', source: options.sourceLanguage, target: options.targetLanguage });
+      let model = await this.#modelManager.checkModelStatus({ type: 'translation', source: options.sourceLanguage, target: options.targetLanguage });
       // Si hay un error (API no disponible), lanzar error
       if (model.errorMessage) {
         throw new Error(model.errorMessage);
@@ -97,7 +98,7 @@ export class AIService {
         sendNotification = true;
         model.state = 'downloading';
         void sendMessage('modelStatusUpdate', model);
-        model = await modelManager.downloadModel({ type: 'translation', source: options.sourceLanguage, target: options.targetLanguage });
+        model = await this.#modelManager.downloadModel({ type: 'translation', source: options.sourceLanguage, target: options.targetLanguage });
         void sendMessage('modelStatusUpdate', model);
         if (model.state !== 'available') {
           console.error(model.errorMessage);
@@ -105,7 +106,7 @@ export class AIService {
         }
       }
 
-      processedText = await modelManager.translate(text, options.sourceLanguage, options.targetLanguage);
+      processedText = await this.#modelManager.translate(text, options.sourceLanguage, options.targetLanguage);
     }
     if (sendNotification) {
       void browser.notifications.create({
@@ -117,6 +118,20 @@ export class AIService {
     }
     
     return processedText;
+  }
+
+  async detectLanguage(text: string): Promise<string> {
+    // Verificar disponibilidad del modelo de detección de idioma
+    let modelStatus = await this.#modelManager.checkModelStatus({ type: 'language-detection' });
+
+    if (modelStatus.state === 'downloadable') {
+      // Si el modelo es descargable, descargarlo primero
+      modelStatus.state = 'downloading';
+      void sendMessage('modelStatusUpdate', modelStatus);
+      modelStatus = await this.#modelManager.downloadModel({ type: 'language-detection' });
+      void sendMessage('modelStatusUpdate', modelStatus);
+    }
+    return await this.#modelManager.detectLanguage(text);
   }
 }
 
