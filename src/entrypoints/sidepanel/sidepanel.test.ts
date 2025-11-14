@@ -6,10 +6,10 @@ import {
   removeMessageListeners,
   type ProtocolMap
 } from '@/entrypoints/background/messaging';
-import type { AvailableLanguageCode } from '@/entrypoints/background';
+import type { SupportedLanguageCode } from '@/entrypoints/background';
 import { SidepanelApp } from '@/entrypoints/sidepanel/sidepanel';
 import { getAIService } from '@/entrypoints/background/ai/ai.service';
-import { AVAILABLE_LANGUAGES } from '../background/available-languages';
+import { SUPPORTED_LANGUAGES } from '../background/available-languages';
 
 interface MessageHandlerSpies {
   checkAPIAvailability: MockInstance
@@ -47,13 +47,13 @@ interface MessageHandlerOverrides {
   sidepanelReady?: ProtocolMap['sidepanelReady'];
 };
 
-const DEFAULT_SOURCE_LANGUAGE: AvailableLanguageCode = 'es';
-const DEFAULT_TARGET_LANGUAGE: AvailableLanguageCode = 'en';
+const DEFAULT_SOURCE_LANGUAGE: SupportedLanguageCode = 'es';
+const DEFAULT_TARGET_LANGUAGE: SupportedLanguageCode = 'en';
 
 const registerDefaultMessageHandlers = (overrides: Partial<MessageHandlerOverrides> = {}): MessageHandlerSpies => {
   const checkAPIAvailabilitySpy = vi.fn(overrides.checkAPIAvailability ?? (() => true));
   const getAvailableLanguagesSpy = vi.fn(overrides.getAvailableLanguages ?? (() => ({
-    languages: AVAILABLE_LANGUAGES
+    languages: SUPPORTED_LANGUAGES
   })));
   const getBrowserLanguageSpy = vi.fn(overrides.getBrowserLanguage ?? (() => DEFAULT_SOURCE_LANGUAGE));
   const detectLanguageSpy = vi.fn(overrides.detectLanguage ?? (() => Promise.resolve({ languageCode: DEFAULT_TARGET_LANGUAGE })));
@@ -131,7 +131,7 @@ describe('SidepanelApp', () => {
   });
 
   it('should show detected language after text input', async () => {
-    const testLanguageCode: AvailableLanguageCode = 'fr';
+    const testLanguageCode: SupportedLanguageCode = 'fr';
     messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: testLanguageCode });
     await setTextAndProcess();
 

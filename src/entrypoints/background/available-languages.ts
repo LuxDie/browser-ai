@@ -2,50 +2,38 @@
  * Se excluyó 'zh_Hant' porque no funciona correctamente.
  */
 
-// TODO: derivar nameKey en la implementación y quitar
-export const AVAILABLE_LANGUAGES = [
-  { code: 'ar', nameKey: 'lang_ar' },
-  { code: 'bg', nameKey: 'lang_bg' },
-  { code: 'bn', nameKey: 'lang_bn' },
-  { code: 'cs', nameKey: 'lang_cs' },
-  { code: 'da', nameKey: 'lang_da' },
-  { code: 'de', nameKey: 'lang_de' },
-  { code: 'el', nameKey: 'lang_el' },
-  { code: 'en', nameKey: 'lang_en' },
-  { code: 'es', nameKey: 'lang_es' },
-  { code: 'fi', nameKey: 'lang_fi' },
-  { code: 'fr', nameKey: 'lang_fr' },
-  { code: 'hi', nameKey: 'lang_hi' },
-  { code: 'hr', nameKey: 'lang_hr' },
-  { code: 'hu', nameKey: 'lang_hu' },
-  { code: 'id', nameKey: 'lang_id' },
-  { code: 'it', nameKey: 'lang_it' },
-  { code: 'iw', nameKey: 'lang_iw' },
-  { code: 'ja', nameKey: 'lang_ja' },
-  { code: 'kn', nameKey: 'lang_kn' },
-  { code: 'ko', nameKey: 'lang_ko' },
-  { code: 'lt', nameKey: 'lang_lt' },
-  { code: 'mr', nameKey: 'lang_mr' },
-  { code: 'nl', nameKey: 'lang_nl' },
-  { code: 'no', nameKey: 'lang_no' },
-  { code: 'pl', nameKey: 'lang_pl' },
-  { code: 'pt', nameKey: 'lang_pt' },
-  { code: 'ro', nameKey: 'lang_ro' },
-  { code: 'ru', nameKey: 'lang_ru' },
-  { code: 'sk', nameKey: 'lang_sk' },
-  { code: 'sl', nameKey: 'lang_sl' },
-  { code: 'sv', nameKey: 'lang_sv' },
-  { code: 'ta', nameKey: 'lang_ta' },
-  { code: 'te', nameKey: 'lang_te' },
-  { code: 'th', nameKey: 'lang_th' },
-  { code: 'tr', nameKey: 'lang_tr' },
-  { code: 'uk', nameKey: 'lang_uk' },
-  { code: 'vi', nameKey: 'lang_vi' },
-  { code: 'zh', nameKey: 'lang_zh' }
+export const SUPPORTED_LANGUAGES = [
+  'ar', 'bg', 'bn', 'cs', 'da', 'de', 'el', 'en', 'es', 'fi',
+  'fr', 'hi', 'hr', 'hu', 'id', 'it', 'iw', 'ja', 'kn', 'ko',
+  'lt', 'mr', 'nl', 'no', 'pl', 'pt', 'ro', 'ru', 'sk', 'sl',
+  'sv', 'ta', 'te', 'th', 'tr', 'uk', 'vi', 'zh'
 ] as const;
 
-export type AvailableLanguageCode = typeof AVAILABLE_LANGUAGES[number]['code'];
+export type SupportedLanguageCode = typeof SUPPORTED_LANGUAGES[number];
 
 export const SUMMARIZER_LANGUAGE_CODES = ['en', 'es', 'ja'] as const;
 
 export type SummarizerLanguageCode = typeof SUMMARIZER_LANGUAGE_CODES[number];
+
+/**
+ * Claves válidas de internacionalización para idiomas soportados
+ */
+export type SupportedLanguageKey = `lang_${SupportedLanguageCode}`;
+
+/**
+ * Obtiene la clave de mensaje de internacionalización para un idioma soportado
+ * @param code Código del idioma
+ * @returns La clave de mensaje garantizada válida para i18n
+ */
+export function getLanguageKey(code: SupportedLanguageCode): SupportedLanguageKey {
+  return `lang_${code}` as const;
+}
+
+/**
+ * Determina si un idioma está soportado
+ * @param languageCode Código del idioma a verificar
+ * @returns true si el idioma está soportado
+ */
+export function isLanguageSupported(languageCode: string): languageCode is SupportedLanguageCode {
+  return SUPPORTED_LANGUAGES.includes(languageCode as SupportedLanguageCode);
+}

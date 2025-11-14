@@ -1,9 +1,9 @@
 import { defineExtensionMessaging } from '@webext-core/messaging';
-import type { AvailableLanguages, AvailableLanguageCode } from '@/entrypoints/background';
+import type { AvailableLanguages, SupportedLanguageCode } from '@/entrypoints/background';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
 export interface AvailableLanguagesResponse {
-  languages: { code: string; name: string }[];
+  languages: string[];
 }
 
 export interface ModelAvailabilityResponse {
@@ -56,7 +56,7 @@ export interface SelectedTextData {
 export interface ProtocolMap {
   getModelStatus(data: { source: string; target: string }): AIModelStatus;
   detectLanguage(data: { text: string }): { languageCode: string };
-  translateText(data: { text: string; targetLanguage: AvailableLanguageCode; sourceLanguage: AvailableLanguageCode }): string;
+  translateText(data: { text: string; targetLanguage: SupportedLanguageCode; sourceLanguage: SupportedLanguageCode }): string;
   checkAPIAvailability(): boolean;
   cancelPendingTranslations(): { cancelled: boolean };
   getAvailableLanguages(): { languages: AvailableLanguages };

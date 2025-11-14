@@ -2,7 +2,8 @@ import '@/entrypoints/sidepanel/sidepanel.css';
 import {
   DEFAULT_TARGET_LANGUAGE,
 } from '@/entrypoints/background';
-import type { AvailableLanguages, AvailableLanguageCode } from '@/entrypoints/background';
+import type { AvailableLanguages, SupportedLanguageCode } from '@/entrypoints/background';
+import { getLanguageKey, isLanguageSupported } from '@/entrypoints/background/available-languages';
 import { onMessage, sendMessage, type SelectedTextData } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '../background/model-manager/model-manager.model';
 import { getAIService } from '../background/ai/ai.service';
@@ -15,8 +16,8 @@ interface State {
   translatedText: string
   editedTranslatedText: string
   summaryText: string
-  sourceLanguage: AvailableLanguageCode | null
-  targetLanguage: AvailableLanguageCode
+  sourceLanguage: SupportedLanguageCode | null
+  targetLanguage: SupportedLanguageCode
   summarize: boolean
   isLoading: boolean
   error: string | null
@@ -60,6 +61,7 @@ export class SidepanelApp {
 
   readonly #minDetectLength = 15;
 
+
   constructor() {
     void this.#init();
   }
@@ -70,8 +72,10 @@ export class SidepanelApp {
     
     const browserLang = await sendMessage('getBrowserLanguage');
     // Verificar si el idioma del navegador está soportado
-    const isBrowserLangSupported = this.#availableLanguages.some(lang => lang.code === browserLang);
-    this.#state.targetLanguage = (isBrowserLangSupported) ? browserLang as AvailableLanguageCode : this.#defaultTargetLanguage;
+    this.#state.targetLanguage =
+      isLanguageSupported(browserLang)
+      ? browserLang
+      : this.#defaultTargetLanguage;
     
     this.#render();
 
@@ -160,7 +164,7 @@ export class SidepanelApp {
     // Listener de selector de idioma destino
     this.#elements.targetLanguage?.addEventListener('change', (e) => {
       const previousTargetLanguage = this.#state.targetLanguage;
-      this.#state.targetLanguage = (e.target as HTMLSelectElement).value as AvailableLanguageCode;
+      this.#state.targetLanguage = (e.target as HTMLSelectElement).value as SupportedLanguageCode;
 
       // Cancelar traducciones pendientes cuando cambia el idioma destino
       if (previousTargetLanguage !== this.#state.targetLanguage) {
@@ -191,9 +195,8 @@ export class SidepanelApp {
 
     this.#cancelPendingTranslations();
     const { languageCode } = await sendMessage('detectLanguage', { text: this.#state.text });
-    const isSupported = this.#availableLanguages.some((language) => language.code === languageCode);
-    if (isSupported) {
-      this.#state.sourceLanguage = languageCode as AvailableLanguageCode;
+    if (isLanguageSupported(languageCode)) {
+      this.#state.sourceLanguage = languageCode;
     } else {
       this.#state.error = browser.i18n.getMessage('detectedLanguageNotSupported', languageCode);
       this.#state.sourceLanguage = null;
@@ -350,7 +353,7 @@ export class SidepanelApp {
   #updateLanguageSelector(): void {
     if (this.#elements.targetLanguage) {
       const optionsHTML = this.#availableLanguages.map(lang =>
-        `<option value="${lang.code}">${browser.i18n.getMessage(lang.nameKey)}</option>`
+        `<option value="${lang}">${browser.i18n.getMessage(getLanguageKey(lang))}</option>`
       ).join('');
       this.#elements.targetLanguage.innerHTML = optionsHTML;
       this.#elements.targetLanguage.value = this.#state.targetLanguage;
@@ -444,14 +447,6 @@ export class SidepanelApp {
     }
   }
 
-  /**
-   * Obtiene la clave de mensaje del idioma detectado
-   * @returns La clave de mensaje del idioma
-   */
-  // TODO: determinar mejor ubicación
-  #getLanguageKey(code: AvailableLanguageCode): AvailableLanguages[number]['nameKey'] {
-    return this.#availableLanguages.find(lang => lang.code === code)!.nameKey;
-  }
 
   #updateLanguageInfo(): void {
     const languageInfoContainer = document.getElementById('language-info-container') as HTMLDivElement;
@@ -459,7 +454,7 @@ export class SidepanelApp {
     const notEnoughText = this.#state.text.trim().length < this.#minDetectLength;
 
     if (this.#state.sourceLanguage) {
-      const sourceLanguageKey = this.#getLanguageKey(this.#state.sourceLanguage);
+      const sourceLanguageKey = getLanguageKey(this.#state.sourceLanguage);
       const languageName = browser.i18n.getMessage(sourceLanguageKey);
       languageInfoContainer.innerHTML = `
         <div class="p-2 bg-blue-50 border border-blue-200 rounded-lg">

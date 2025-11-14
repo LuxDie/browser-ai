@@ -1,7 +1,7 @@
 import {
   type PendingTranslation
 } from '@/entrypoints/background/background.model';
-import { AVAILABLE_LANGUAGES, type AvailableLanguageCode } from '@/entrypoints/background/available-languages';
+import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@/entrypoints/background/available-languages';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import { registerAIService, getAIService } from '@/entrypoints/background/ai/ai.service';
@@ -9,10 +9,10 @@ import { registerAIService, getAIService } from '@/entrypoints/background/ai/ai.
 // Registrar servicios proxy
 registerAIService();
 
-export type { AvailableLanguageCode } from '@/entrypoints/background/available-languages';
-export type AvailableLanguages = typeof AVAILABLE_LANGUAGES;
+export type { SupportedLanguageCode } from '@/entrypoints/background/available-languages';
+export type AvailableLanguages = typeof SUPPORTED_LANGUAGES;
 export type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
-export const DEFAULT_TARGET_LANGUAGE: AvailableLanguageCode = 'es';
+export const DEFAULT_TARGET_LANGUAGE: SupportedLanguageCode = 'es';
 
 export default defineBackground({
   type: 'module',
@@ -153,7 +153,7 @@ export default defineBackground({
     });
 
     onMessage('getAvailableLanguages', () => {
-      return { languages: AVAILABLE_LANGUAGES };
+      return { languages: SUPPORTED_LANGUAGES };
     });
 
     onMessage('getBrowserLanguage', () => {
