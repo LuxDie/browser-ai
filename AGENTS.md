@@ -9,10 +9,11 @@
 Siempre verificar lo siguiente antes de completar cualquier tarea de desarrollo:
 
 1. Verificar que las ediciones cumplen con los estándares de calidad delineados en las [guías de desarrollo](docs/guides)
-2. Ejecutar `npm run lint` para verificar errores de ESLint
-3. Ejecutar `npm run type-check` para verificar errores de TypeScript
-4. Ejecutar `npm run test` para verificar las pruebas.
-5. Ejecutar `npm run build` para compilar.
+2. Ejecutar en paralelo:
+  - `npm run lint` para verificar errores de ESLint
+  - `npm run type-check` para verificar errores de TypeScript
+  - `npm run test` para verificar las pruebas
+  - `npm run build` para compilar
 6. Corregir cualquier error encontrado antes de finalizar
 7. Confirmar que todos los comandos se ejecuten sin errores
 
@@ -25,9 +26,15 @@ Esta regla no se aplica para tareas de documentación, configuración, o cualqui
 - **Actualización ante cambios:** Si se modifica comportamiento existente, actualizar las pruebas afectadas o agregar nuevas según corresponda.
 
 ### Código y estructura generado:
+
 - Todo nombre técnico (funciones, clases, archivos, carpetas, APIs, variables, constantes, descripciones de tests, etc.) debe estar en inglés.
 - Strings de UI y mensajes de error deben estar en castellano.
 
 ### Comentarios y documentación interna generada por agentes:
+
 - Los comentarios explicativos de lógica de negocio y diseño en el código generado deben estar en **castellano** (excepto casos en los que la especificación o el equipo indique lo contrario).
 - La documentación técnica generada (ej. archivos en `docs/`), debe estar en castellano.
+
+### Uso de herramientas
+
+- Siempre prefiere utilizar herramientas antes que comandos de consola.
