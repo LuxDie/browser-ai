@@ -1,2 +1,2 @@
 export * from './test-utils';
-export * from './browser-api-mocks';
+export * from '../mocks/browser-api.mock';
