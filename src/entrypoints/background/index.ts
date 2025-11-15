@@ -103,11 +103,11 @@ export default defineBackground({
     });
 
     onMessage('detectLanguage', async (message) => {
-      const { text } = message.data;
+      const text = message.data;
       const aiService = getAIService();
       const language = await aiService.detectLanguage(text);
       console.log(`🔍 Language detected: ${language}`);
-      return { languageCode: language };
+      return language;
     });
 
     onMessage('translateText', async (message) => {
@@ -147,13 +147,11 @@ export default defineBackground({
       if (pendingTranslation) {
         console.log('Cancelling pending translation:', pendingTranslation);
         pendingTranslation = null;
-        return { cancelled: true };
       }
-      return { cancelled: false };
     });
 
     onMessage('getAvailableLanguages', () => {
-      return { languages: SUPPORTED_LANGUAGES };
+      return SUPPORTED_LANGUAGES;
     });
 
     onMessage('getBrowserLanguage', () => {

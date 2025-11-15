@@ -95,7 +95,7 @@ describe('Background Script', () => {
     describe('when receiving a detectLanguage message', () => {
       it('should call the language detection API with the correct text', async () => {
         const testText = 'This is a test';
-        await sendMessage('detectLanguage', { text: testText });
+        await sendMessage('detectLanguage', testText);
         expect(aIService.detectLanguage).toHaveBeenCalledOnce();
         expect(aIService.detectLanguage).toHaveBeenCalledWith(testText);
       });
@@ -103,8 +103,8 @@ describe('Background Script', () => {
       it('should return the detected language', async () => {
         const detectedLanguage = 'en';
         aIService.detectLanguage.mockResolvedValue(detectedLanguage);
-        const result = await sendMessage('detectLanguage', { text: 'test' });
-        expect(result).toEqual({ languageCode: detectedLanguage });
+        const result = await sendMessage('detectLanguage', 'test');
+        expect(result).toEqual(detectedLanguage);
       });
     });
 
