@@ -2,7 +2,7 @@
 
 ## Idioma: INGLÉS
 
-**Regla fundamental:** Todos los mensajes de commit deben escribirse en inglés, siguiendo las directrices de internacionalización establecidas en `AGENTS.md`.
+**Regla fundamental:** Todos los mensajes de commit deben escribirse en inglés, siguiendo las directrices de internacionalización establecidas en [AGENTS.md](/AGENTS.md).
 
 ## Formato Requerido
 
