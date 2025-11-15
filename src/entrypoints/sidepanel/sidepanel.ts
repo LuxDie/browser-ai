@@ -4,7 +4,7 @@ import {
 } from '@/entrypoints/background';
 import type { AvailableLanguages, SupportedLanguageCode } from '@/entrypoints/background';
 import { getLanguageKey, isLanguageSupported } from '@/entrypoints/background/languages';
-import { onMessage, sendMessage, type SelectedTextData } from '@/entrypoints/background/messaging';
+import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '../background/model-manager/model-manager.model';
 import { getAIService } from '../background/ai/ai.service';
 import type { Component } from 'vue';
@@ -68,7 +68,7 @@ export class SidepanelApp {
 
   async #init(): Promise<void> {
     this.#state.apiAvailable = await this.#checkAPIAvailability();
-    this.#availableLanguages = (await sendMessage('getAvailableLanguages')).languages;
+    this.#availableLanguages = await sendMessage('getAvailableLanguages');
     
     const browserLang = await sendMessage('getBrowserLanguage');
     // Verificar si el idioma del navegador está soportado
@@ -194,7 +194,7 @@ export class SidepanelApp {
     }
 
     this.#cancelPendingTranslations();
-    const { languageCode } = await sendMessage('detectLanguage', { text: this.#state.text });
+    const languageCode = await sendMessage('detectLanguage', this.#state.text);
     if (isLanguageSupported(languageCode)) {
       this.#state.sourceLanguage = languageCode;
     } else {
@@ -224,7 +224,7 @@ export class SidepanelApp {
     this.#render();
   }
 
-  async #handleSelectedText(data: SelectedTextData): Promise<void> {
+  async #handleSelectedText(data: { text: string; summarize?: boolean }): Promise<void> {
     await this.#handleInputChange(data.text);
 
     // Si viene de menú de resumen, activar resumen; si viene de menú de traducción, desactivar resumen

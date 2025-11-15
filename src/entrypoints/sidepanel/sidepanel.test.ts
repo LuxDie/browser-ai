@@ -52,12 +52,10 @@ const DEFAULT_TARGET_LANGUAGE: SupportedLanguageCode = 'en';
 
 const registerDefaultMessageHandlers = (overrides: Partial<MessageHandlerOverrides> = {}): MessageHandlerSpies => {
   const checkAPIAvailabilitySpy = vi.fn(overrides.checkAPIAvailability ?? (() => true));
-  const getAvailableLanguagesSpy = vi.fn(overrides.getAvailableLanguages ?? (() => ({
-    languages: SUPPORTED_LANGUAGES
-  })));
+  const getAvailableLanguagesSpy = vi.fn(overrides.getAvailableLanguages ?? (() => SUPPORTED_LANGUAGES));
   const getBrowserLanguageSpy = vi.fn(overrides.getBrowserLanguage ?? (() => DEFAULT_SOURCE_LANGUAGE));
-  const detectLanguageSpy = vi.fn(overrides.detectLanguage ?? (() => Promise.resolve({ languageCode: DEFAULT_TARGET_LANGUAGE })));
-  const cancelPendingTranslationsSpy = vi.fn(overrides.cancelPendingTranslations ?? (() => ({ cancelled: true })));
+  const detectLanguageSpy = vi.fn(overrides.detectLanguage ?? (() => Promise.resolve(DEFAULT_TARGET_LANGUAGE)));
+  const cancelPendingTranslationsSpy = vi.fn(overrides.cancelPendingTranslations ?? (() => {}));
   const sidepanelReadySpy = vi.fn(overrides.sidepanelReady ?? (() => {}));
 
   onMessage('checkAPIAvailability', checkAPIAvailabilitySpy);
@@ -132,7 +130,7 @@ describe('SidepanelApp', () => {
 
   it('should show detected language after text input', async () => {
     const testLanguageCode: SupportedLanguageCode = 'fr';
-    messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: testLanguageCode });
+    messageHandlerSpies.detectLanguage.mockResolvedValue(testLanguageCode);
     await setTextAndProcess();
 
     const root = document.getElementById('root');
@@ -258,7 +256,7 @@ describe('SidepanelApp', () => {
       textarea.value = 'This is a test sentence for translation.';
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
-      messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: sourceLanguage });
+      messageHandlerSpies.detectLanguage.mockResolvedValue(sourceLanguage);
 
       // Cambiar idioma destino para habilitar procesamiento
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
@@ -274,7 +272,7 @@ describe('SidepanelApp', () => {
     it('should disable button when source language is detected to be the same as target language', async () => {
       const sameLanguage = 'it';
 
-      messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: sameLanguage });
+      messageHandlerSpies.detectLanguage.mockResolvedValue(sameLanguage);
 
       // Agregar texto al textarea primero
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
@@ -320,7 +318,7 @@ describe('SidepanelApp', () => {
     it('should not process when source and target languages are the same and summarize is false, even from context menu', async () => {
       // Configurar: establecer idioma origen igual al destino
       const sameLanguage = 'en';
-      messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: sameLanguage });
+      messageHandlerSpies.detectLanguage.mockResolvedValue(sameLanguage);
       // Establecer idioma destino igual al origen
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       expect(targetSelect).toBeTruthy();
@@ -614,7 +612,7 @@ describe('SidepanelApp', () => {
       const sameLanguage = 'en';
 
       // Detectar idioma igual al destino
-      messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: sameLanguage });
+      messageHandlerSpies.detectLanguage.mockResolvedValue(sameLanguage);
 
       // Ingresar texto
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
@@ -723,7 +721,7 @@ describe('SidepanelApp', () => {
     it('should show error when unsupported language is detected', async () => {
       // Configurar el mock para detectar un idioma no soportado
       const unsupportedLang = 'xx';
-      messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: unsupportedLang });
+      messageHandlerSpies.detectLanguage.mockResolvedValue(unsupportedLang);
 
       // Establecer texto que activará la detección de idioma
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
@@ -742,7 +740,7 @@ describe('SidepanelApp', () => {
     it('should not show "insufficient text" message when unsupported language is detected', async () => {
       // Configurar el mock para detectar un idioma no soportado
       const unsupportedLang = 'xx';
-      messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: unsupportedLang });
+      messageHandlerSpies.detectLanguage.mockResolvedValue(unsupportedLang);
 
       // Establecer texto suficiente que activará la detección de idioma
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
