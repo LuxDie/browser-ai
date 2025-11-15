@@ -9,7 +9,7 @@
 Siempre verificar lo siguiente antes de completar cualquier tarea de desarrollo:
 
 1. Verificar que las ediciones cumplen con los estándares de calidad delineados en las [guías de desarrollo](docs/guides)
-2. Ejecutar en paralelo:
+2. Ejecutar en paralelo (usando `comando & comando ... & wait`):
   - `npm run lint` para verificar errores de ESLint
   - `npm run type-check` para verificar errores de TypeScript
   - `npm run test` para verificar las pruebas
