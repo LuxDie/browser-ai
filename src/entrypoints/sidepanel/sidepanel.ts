@@ -3,7 +3,7 @@ import {
   DEFAULT_TARGET_LANGUAGE,
 } from '@/entrypoints/background';
 import type { AvailableLanguages, SupportedLanguageCode } from '@/entrypoints/background';
-import { getLanguageKey, isLanguageSupported } from '@/entrypoints/background/available-languages';
+import { getLanguageKey, isLanguageSupported } from '@/entrypoints/background/languages';
 import { onMessage, sendMessage, type SelectedTextData } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '../background/model-manager/model-manager.model';
 import { getAIService } from '../background/ai/ai.service';

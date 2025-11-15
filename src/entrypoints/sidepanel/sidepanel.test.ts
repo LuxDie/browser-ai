@@ -9,7 +9,7 @@ import {
 import type { SupportedLanguageCode } from '@/entrypoints/background';
 import { SidepanelApp } from '@/entrypoints/sidepanel/sidepanel';
 import { getAIService } from '@/entrypoints/background/ai/ai.service';
-import { SUPPORTED_LANGUAGES } from '../background/available-languages';
+import { SUPPORTED_LANGUAGES } from '../background/languages';
 
 interface MessageHandlerSpies {
   checkAPIAvailability: MockInstance

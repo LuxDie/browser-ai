@@ -5,7 +5,7 @@ import {
   removeMessageListeners
 } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
-import * as availableLanguagesModule from '@/entrypoints/background/available-languages';
+import * as availableLanguagesModule from '@/entrypoints/background/languages';
 
 // Mock ModelManager module
 // TODO: usar importación dinámica

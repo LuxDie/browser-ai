@@ -1,7 +1,7 @@
 import {
   type PendingTranslation
 } from '@/entrypoints/background/background.model';
-import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@/entrypoints/background/available-languages';
+import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@/entrypoints/background/languages';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import { registerAIService, getAIService } from '@/entrypoints/background/ai/ai.service';
@@ -9,7 +9,7 @@ import { registerAIService, getAIService } from '@/entrypoints/background/ai/ai.
 // Registrar servicios proxy
 registerAIService();
 
-export type { SupportedLanguageCode } from '@/entrypoints/background/available-languages';
+export type { SupportedLanguageCode } from '@/entrypoints/background/languages';
 export type AvailableLanguages = typeof SUPPORTED_LANGUAGES;
 export type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 export const DEFAULT_TARGET_LANGUAGE: SupportedLanguageCode = 'es';
