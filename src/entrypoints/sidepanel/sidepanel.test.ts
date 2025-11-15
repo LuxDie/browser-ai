@@ -1,24 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import type { MockInstance } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { flushPromises, resetDOM } from '@/tests/utils';
 import {
   onMessage,
   sendMessage,
-  removeMessageListeners,
-  type ProtocolMap
+  removeMessageListeners
 } from '@/entrypoints/background/messaging';
 import type { SupportedLanguageCode } from '@/entrypoints/background';
 import { SidepanelApp } from '@/entrypoints/sidepanel/sidepanel';
 import { getAIService } from '@/entrypoints/background/ai/ai.service';
 import { SUPPORTED_LANGUAGES } from '../background/languages';
-
-interface MessageHandlerSpies {
-  checkAPIAvailability: MockInstance
-  getAvailableLanguages: MockInstance
-  getBrowserLanguage: MockInstance
-  detectLanguage: MockInstance
-  cancelPendingTranslations: MockInstance
-  sidepanelReady: MockInstance
-}
 
 // TODO: usar importación dinámica
 vi.mock('@/entrypoints/background/ai/ai.service', () => {
@@ -32,83 +22,50 @@ vi.mock('@/entrypoints/background/ai/ai.service', () => {
   };
 });
 
-function resetDOM() {
-  document.body.innerHTML = '<div id="root"></div>';
-}
-
 const mockAIService = vi.mocked(getAIService());
 
-interface MessageHandlerOverrides {
-  checkAPIAvailability?: ProtocolMap['checkAPIAvailability'];
-  getAvailableLanguages?: ProtocolMap['getAvailableLanguages'];
-  getBrowserLanguage?: ProtocolMap['getBrowserLanguage'];
-  detectLanguage?: () => ReturnType<ProtocolMap['detectLanguage']>;
-  cancelPendingTranslations?: ProtocolMap['cancelPendingTranslations'];
-  sidepanelReady?: ProtocolMap['sidepanelReady'];
+const DEFAULT_BROWSER_LANGUAGE = 'es';
+const DEFAULT_DETECTED_LANGUAGE = 'en';
+
+const messageHandlerSpies = {
+  checkAPIAvailability: vi.fn(() => true),
+  getAvailableLanguages: vi.fn(() => SUPPORTED_LANGUAGES),
+  getBrowserLanguage: vi.fn(() => DEFAULT_BROWSER_LANGUAGE),
+  detectLanguage: vi.fn(() => Promise.resolve(DEFAULT_DETECTED_LANGUAGE)),
+  cancelPendingTranslations: vi.fn(() => {}),
+  sidepanelReady: vi.fn(() => {})
 };
 
-const DEFAULT_SOURCE_LANGUAGE: SupportedLanguageCode = 'es';
-const DEFAULT_TARGET_LANGUAGE: SupportedLanguageCode = 'en';
-
-const registerDefaultMessageHandlers = (overrides: Partial<MessageHandlerOverrides> = {}): MessageHandlerSpies => {
-  const checkAPIAvailabilitySpy = vi.fn(overrides.checkAPIAvailability ?? (() => true));
-  const getAvailableLanguagesSpy = vi.fn(overrides.getAvailableLanguages ?? (() => SUPPORTED_LANGUAGES));
-  const getBrowserLanguageSpy = vi.fn(overrides.getBrowserLanguage ?? (() => DEFAULT_SOURCE_LANGUAGE));
-  const detectLanguageSpy = vi.fn(overrides.detectLanguage ?? (() => Promise.resolve(DEFAULT_TARGET_LANGUAGE)));
-  const cancelPendingTranslationsSpy = vi.fn(overrides.cancelPendingTranslations ?? (() => {}));
-  const sidepanelReadySpy = vi.fn(overrides.sidepanelReady ?? (() => {}));
-
-  onMessage('checkAPIAvailability', checkAPIAvailabilitySpy);
-  onMessage('getAvailableLanguages', getAvailableLanguagesSpy);
-  onMessage('getBrowserLanguage', getBrowserLanguageSpy);
-  onMessage('detectLanguage', detectLanguageSpy);
-  onMessage('cancelPendingTranslations', cancelPendingTranslationsSpy);
-  onMessage('sidepanelReady', sidepanelReadySpy);
-
-  return {
-    checkAPIAvailability: checkAPIAvailabilitySpy,
-    getAvailableLanguages: getAvailableLanguagesSpy,
-    getBrowserLanguage: getBrowserLanguageSpy,
-    detectLanguage: detectLanguageSpy,
-    cancelPendingTranslations: cancelPendingTranslationsSpy,
-    sidepanelReady: sidepanelReadySpy
-  };
-};
-
+// TODO: aplicar donde sea necesario
 async function setTextAndProcess(): Promise<void> {
-      // Establecer texto y procesar
-    const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-    const processButton = document.getElementById('process-button') as HTMLButtonElement;
-    textarea.value = 'This is a longer text that should trigger language detection';
-    textarea.dispatchEvent(new Event('input'));
-    await vi.runAllTimersAsync();
-    processButton.click();
-    await vi.runAllTimersAsync();
+    // Establecer texto y procesar
+  const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
+  const processButton = document.getElementById('process-button') as HTMLButtonElement;
+  textarea.value = 'This is a longer text that should trigger language detection';
+  textarea.dispatchEvent(new Event('input'));
+  await flushPromises();
+  processButton.click();
+  await flushPromises();
 }
 
-async function initSidepanelApp(overrides: Partial<MessageHandlerOverrides> = {}): Promise<MessageHandlerSpies> {
+async function initSidepanelApp() {
   resetDOM();
   removeMessageListeners();
-  const messageHandlerSpies = registerDefaultMessageHandlers(overrides);
+  onMessage('checkAPIAvailability', messageHandlerSpies.checkAPIAvailability);
+  onMessage('getAvailableLanguages', messageHandlerSpies.getAvailableLanguages);
+  onMessage('getBrowserLanguage', messageHandlerSpies.getBrowserLanguage);
+  onMessage('detectLanguage', messageHandlerSpies.detectLanguage);
+  onMessage('cancelPendingTranslations', messageHandlerSpies.cancelPendingTranslations);
+  onMessage('sidepanelReady', messageHandlerSpies.sidepanelReady);
   new SidepanelApp();
-  await vi.runAllTimersAsync();
-  return messageHandlerSpies;
+  await flushPromises();
 }
 
 describe('SidepanelApp', () => {
-  let messageHandlerSpies: MessageHandlerSpies;
 
   beforeEach(async () => {
     fakeBrowser.reset();
-    vi.useFakeTimers();
-
-    messageHandlerSpies = await initSidepanelApp();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    document.body.innerHTML = '';
-    removeMessageListeners();
+    await initSidepanelApp();
   });
 
   it('should render the initial state correctly', () => {
@@ -147,8 +104,8 @@ describe('SidepanelApp', () => {
     const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
     textarea.value = 'This is a long enough text to trigger language detection and it should work properly.';
     textarea.dispatchEvent(new Event('input'));
-    await vi.runAllTimersAsync();
-    
+    await flushPromises();
+
     expect(root?.innerHTML).toContain('detectedLanguage');
   });
 
@@ -157,9 +114,10 @@ describe('SidepanelApp', () => {
     const processButton = document.getElementById('process-button') as HTMLButtonElement;
     textarea.value = 'This is a test text for processing';
     textarea.dispatchEvent(new Event('input'));
-    await vi.runAllTimersAsync();
+    // await flushPromises();
+    await flushPromises();
     processButton.click();
-    await vi.runAllTimersAsync();
+    await flushPromises();
 
     // Verificar que aparece el indicador de procesamiento local
     const indicatorElement = document.getElementById('processing-source');
@@ -172,7 +130,7 @@ describe('SidepanelApp', () => {
     // Simular recepción de texto desde menú contextual
     await sendMessage('selectedText', { text: 'This is a test sentence for automatic translation.', summarize: false });
     // Esperar a que se active la traducción automática
-    await vi.runAllTimersAsync();
+    await flushPromises();
 
     // Verificar que se solicitó la traducción con los datos correctos
     expect(messageHandlerSpies.detectLanguage).toHaveBeenCalled();
@@ -182,7 +140,7 @@ describe('SidepanelApp', () => {
     // Simular recepción de texto desde menú contextual
     await sendMessage('selectedText', { text: 'This is a test sentence for automatic translation.', summarize: false });
     // Esperar a que se active el procesamiento automático
-    await vi.runAllTimersAsync();
+    await flushPromises();
     expect(mockAIService.processText).toHaveBeenCalledWith(
       'This is a test sentence for automatic translation.',
       {
@@ -198,7 +156,7 @@ describe('SidepanelApp', () => {
     const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
     targetSelect.value = 'fr';
     targetSelect.dispatchEvent(new Event('change'));
-    await vi.runAllTimersAsync();
+    await flushPromises();
 
     // Verificar que la traducción fue cancelada
     expect(messageHandlerSpies.cancelPendingTranslations).toHaveBeenCalled();
@@ -209,7 +167,7 @@ describe('SidepanelApp', () => {
     const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
     textarea.value = 'This is a test sentence for translation.';
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
-    await vi.runAllTimersAsync();
+    await flushPromises();
 
     // Verificar que se envió el mensaje de cancelación
     expect(messageHandlerSpies.cancelPendingTranslations).toHaveBeenCalled();
@@ -226,7 +184,7 @@ describe('SidepanelApp', () => {
       textarea.value = 'Hello';
       textarea.dispatchEvent(new Event('input'));
 
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
       expect(processButton.disabled).toBe(true);
@@ -241,7 +199,7 @@ describe('SidepanelApp', () => {
       textarea.dispatchEvent(new Event('input'));
 
       // Esperar un tiempo muy corto para que se actualice la UI
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
       expect(processButton.disabled).toBe(true);
@@ -262,7 +220,7 @@ describe('SidepanelApp', () => {
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       targetSelect.value = targetLanguage;
       targetSelect.dispatchEvent(new Event('change'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
       // El botón debería estar habilitado porque los idiomas origen ('fr') y destino ('de') son diferentes
@@ -288,7 +246,7 @@ describe('SidepanelApp', () => {
       summarizeCheckbox.dispatchEvent(new Event('change'));
 
 
-      await vi.runAllTimersAsync(); // Esperar a que se complete el cambio de idioma destino
+      await flushPromises(); // Esperar a que se complete el cambio de idioma destino
 
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
       // El botón debería estar deshabilitado porque los idiomas origen y destino son iguales y resumir es falso
@@ -300,7 +258,7 @@ describe('SidepanelApp', () => {
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
       textarea.value = 'This is a longer text that should trigger language detection';
       textarea.dispatchEvent(new Event('input'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
       // Verificar que el botón esté habilitado inicialmente
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
       expect(processButton).toBeTruthy();
@@ -328,11 +286,11 @@ describe('SidepanelApp', () => {
       expect(summarizeCheckbox).toBeTruthy();
       summarizeCheckbox.checked = false;
       summarizeCheckbox.dispatchEvent(new Event('change'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Simular recepción de texto desde menú contextual (debería activar procesamiento automático)
       await sendMessage('selectedText', { text: 'This is a test sentence for automatic translation.', summarize: false });
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que NO se solicitó procesamiento porque los idiomas son iguales y resumir está en false
       expect(mockAIService.processText).not.toHaveBeenCalled();
@@ -346,7 +304,7 @@ describe('SidepanelApp', () => {
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
       textarea.value = 'This is a longer text that should trigger language detection';
       textarea.dispatchEvent(new Event('input'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
       // Verificar que el botón esté habilitado inicialmente
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
       expect(processButton).toBeTruthy();
@@ -356,7 +314,7 @@ describe('SidepanelApp', () => {
       processButton.click();
 
       // Verificar que el botón se reinicie después de completarse el procesamiento
-      await vi.runAllTimersAsync();
+      await flushPromises();
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
        expect(processButton.textContent?.trim()).toBe('processButton');
       expect(processButton.disabled).toBe(false);
@@ -367,21 +325,21 @@ describe('SidepanelApp', () => {
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
       textarea.value = 'This is a longer text that should trigger language detection';
       textarea.dispatchEvent(new Event('input'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Bloquear processText para que nunca se resuelva y podamos probar el estado durante el procesamiento
       mockAIService.processText.mockReturnValue(new Promise(() => {}));
 
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
       processButton.click();
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Cambiar idioma destino
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       expect(targetSelect).toBeTruthy();
       targetSelect.value = 'fr';
       targetSelect.dispatchEvent(new Event('change'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // El botón debería volver a estar habilitado después de cambiar idioma destino
       expect(processButton.disabled).toBe(false);
@@ -400,7 +358,7 @@ describe('SidepanelApp', () => {
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
       textarea.value = 'This is a longer text that should trigger language detection';
       textarea.dispatchEvent(new Event('input'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
       expect(processButton).toBeTruthy();
       expect(processButton.disabled).toBe(false);
@@ -412,7 +370,7 @@ describe('SidepanelApp', () => {
 
       // Ahora activar el rechazo
       rejectPromise!(new Error('Error al procesar el texto'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que el botón vuelva a estar habilitado después del error
        expect(processButton.textContent.trim()).toBe('processButton');
@@ -426,7 +384,7 @@ describe('SidepanelApp', () => {
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       targetSelect.value = 'fr';
       targetSelect.dispatchEvent(new Event('change'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que se envió el mensaje de cancelación
       expect(messageHandlerSpies.cancelPendingTranslations).toHaveBeenCalled();
@@ -437,7 +395,7 @@ describe('SidepanelApp', () => {
     it('should show model download message when downloading starts', async () => {
       // Activar el mensaje modelStatusUpdate hacia el sidepanel
       await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que se muestre el mensaje de descarga del modelo
       const modelStatusContainer = document.getElementById('model-status-container');
@@ -459,7 +417,7 @@ describe('SidepanelApp', () => {
     it('should hide model download message when source language changes', async () => {
       // Activar el mensaje modelStatusUpdate hacia el sidepanel
       await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
-      await vi.runAllTimersAsync();
+      await flushPromises();
       // Verificar que se muestre el mensaje de descarga del modelo
       const modelStatusContainer = document.getElementById('model-status-container');
       expect(modelStatusContainer?.innerHTML).toBeTruthy();
@@ -468,7 +426,7 @@ describe('SidepanelApp', () => {
       const inputText = document.getElementById('input-text') as HTMLTextAreaElement;
       inputText.value = 'This is a longer text that should trigger language detection';
       inputText.dispatchEvent(new Event('input'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que el mensaje de descarga del modelo esté oculto
       expect(modelStatusContainer?.innerHTML).toBeFalsy();
@@ -477,7 +435,7 @@ describe('SidepanelApp', () => {
     it('should hide model download message when target language changes', async () => {
       // Activar el mensaje modelStatusUpdate hacia el sidepanel
       await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que se muestre el mensaje de descarga del modelo
       const modelStatusContainer = document.getElementById('model-status-container');
@@ -487,7 +445,7 @@ describe('SidepanelApp', () => {
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       targetSelect.value = 'fr';
       targetSelect.dispatchEvent(new Event('change'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que el mensaje de descarga del modelo esté oculto
       expect(modelStatusContainer?.innerHTML).toBeFalsy();
@@ -502,7 +460,7 @@ describe('SidepanelApp', () => {
       textarea.dispatchEvent(new Event('input'));
       
       // Esperar a que se complete la detección de idioma
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Simular fallo en el procesamiento
       mockAIService.processText.mockRejectedValue(new Error('Error al procesar el texto'));
@@ -514,7 +472,7 @@ describe('SidepanelApp', () => {
       processButton.click();
       
       // Esperar a que se complete el procesamiento con error
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que el error aparece
       const errorContainer = document.getElementById('error-container');
@@ -525,9 +483,8 @@ describe('SidepanelApp', () => {
   describe('API Availability Warning', () => {
     it('should show warning when native browser APIs are not available', async () => {
       // Inicializar app con API de traducción no disponible
-      await initSidepanelApp({
-        checkAPIAvailability: () => (false)
-      });
+      messageHandlerSpies.checkAPIAvailability.mockReturnValue(false);
+      await initSidepanelApp();
 
       // Verificar que se muestre la advertencia
       const apiWarningContainer = document.getElementById('api-warning-container');
@@ -536,9 +493,8 @@ describe('SidepanelApp', () => {
 
     it('should not show warning when native browser APIs are available', async () => {
       // Inicializar app con API de traducción disponible (comportamiento por defecto)
-      await initSidepanelApp({
-        checkAPIAvailability: () => (true)
-      });
+      messageHandlerSpies.checkAPIAvailability.mockReturnValue(true);
+      await initSidepanelApp();
 
       // Verificar que no se muestre ninguna advertencia
       const apiWarningContainer = document.getElementById('api-warning-container');
@@ -554,7 +510,7 @@ describe('SidepanelApp', () => {
       textarea.dispatchEvent(new Event('input'));
       
       // Esperar a que se complete la detección de idioma
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Marcar la casilla de resumir
       const summarizeCheckbox = document.getElementById('summarize-checkbox') as HTMLInputElement;
@@ -563,12 +519,12 @@ describe('SidepanelApp', () => {
       summarizeCheckbox.dispatchEvent(new Event('change'));
       
       // Esperar a que se actualice el estado del botón
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Hacer clic en el botón procesar
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
       processButton.click();
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       expect(mockAIService.processText).toHaveBeenCalledWith(
         'This is a longer text that should trigger language detection',
@@ -587,7 +543,7 @@ describe('SidepanelApp', () => {
       textarea.dispatchEvent(new Event('input'));
       
       // Esperar a que se complete la detección de idioma
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Asegurar que la casilla esté desmarcada (por defecto)
       const summarizeCheckbox = document.getElementById('summarize-checkbox') as HTMLInputElement;
@@ -596,7 +552,7 @@ describe('SidepanelApp', () => {
       // Hacer clic en el botón procesar
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
       processButton.click();
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       expect(mockAIService.processText).toHaveBeenCalledWith(
         'This is a longer text that should trigger language detection',
@@ -618,13 +574,13 @@ describe('SidepanelApp', () => {
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
       textarea.value = 'This is a test sentence for translation.';
       textarea.dispatchEvent(new Event('input'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Establecer idioma destino igual al detectado
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       targetSelect.value = sameLanguage;
       targetSelect.dispatchEvent(new Event('change'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Inicialmente el botón debería estar deshabilitado porque los idiomas son iguales
       let processButton = document.getElementById('process-button') as HTMLButtonElement;
@@ -634,7 +590,7 @@ describe('SidepanelApp', () => {
       const summarizeCheckbox = document.getElementById('summarize-checkbox') as HTMLInputElement;
       summarizeCheckbox.checked = true;
       summarizeCheckbox.dispatchEvent(new Event('change'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // El botón debería estar habilitado ahora porque resumir está marcado
       processButton = document.getElementById('process-button') as HTMLButtonElement;
@@ -646,7 +602,7 @@ describe('SidepanelApp', () => {
       await sendMessage('selectedText', { text: 'This is a test sentence for summarization.', summarize: true });
 
       // Esperar a que se procese el mensaje y se actualice la UI
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que la casilla de resumen esté marcada
       const summarizeCheckbox = document.getElementById('summarize-checkbox') as HTMLInputElement;
@@ -665,7 +621,7 @@ describe('SidepanelApp', () => {
       await sendMessage('selectedText', { text: 'This is a test sentence for translation.', summarize: false });
 
       // Esperar a que se procese el mensaje y se actualice la UI
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que la casilla de resumen se desmarca cuando viene del menú "Traducir"
       expect(summarizeCheckbox.checked).toBe(false);
@@ -677,9 +633,8 @@ describe('SidepanelApp', () => {
       const browserLanguage = 'fr';
 
       // Crear instancia con reemplazo para idioma del navegador
-      await initSidepanelApp({
-        getBrowserLanguage: () => browserLanguage
-      });
+      messageHandlerSpies.getBrowserLanguage.mockReturnValue(browserLanguage);
+      await initSidepanelApp();
 
       // Verificar que el valor seleccionado es el idioma del navegador
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
@@ -690,9 +645,8 @@ describe('SidepanelApp', () => {
       const browserLanguage = 'xx';
       const fallbackLanguage = 'es';
       // Crear instancia con reemplazo para idioma del navegador no soportado
-      await initSidepanelApp({
-        getBrowserLanguage: () => browserLanguage
-      });
+      messageHandlerSpies.getBrowserLanguage.mockReturnValue(browserLanguage);
+      await initSidepanelApp();
 
       // Verificar que el valor seleccionado es el idioma de respaldo por defecto 'es'
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
@@ -729,7 +683,7 @@ describe('SidepanelApp', () => {
       textarea.dispatchEvent(new Event('input'));
 
       // Esperar a que se complete la detección
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que se mostró el mensaje de error
       const errorElement = document.getElementById('error-message');
@@ -748,7 +702,7 @@ describe('SidepanelApp', () => {
       textarea.dispatchEvent(new Event('input'));
 
       // Esperar a que se complete la detección
-      await vi.runAllTimersAsync();
+      await flushPromises();
 
       // Verificar que el contenedor de información de idioma no muestre el mensaje de texto insuficiente
       const languageInfoContainer = document.getElementById('language-info-container');
@@ -758,13 +712,13 @@ describe('SidepanelApp', () => {
     it('should hide error message when text is shorter than minDetectLength', async () => {
       // Primero mostrar un error
       const unsupportedLang = 'xx';
-      messageHandlerSpies.detectLanguage.mockResolvedValue({ languageCode: unsupportedLang });
+      messageHandlerSpies.detectLanguage.mockResolvedValue(unsupportedLang);
       
       // Establecer texto largo para activar detección
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
       textarea.value = 'Este texto activará un error de idioma no soportado';
       textarea.dispatchEvent(new Event('input'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
       
       // Verificar que el error está visible
       let errorElement = document.getElementById('error-message');
@@ -773,7 +727,7 @@ describe('SidepanelApp', () => {
       // Reducir el texto por debajo del mínimo
       textarea.value = 'Corto';
       textarea.dispatchEvent(new Event('input'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
       
       // Verificar que el error se ocultó
       errorElement = document.getElementById('error-message');
@@ -788,7 +742,7 @@ describe('SidepanelApp', () => {
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
       textarea.value = 'Corto';
       textarea.dispatchEvent(new Event('input'));
-      await vi.runAllTimersAsync();
+      await flushPromises();
       
       // Verificar que no se llamó a detectLanguage
       expect(detectLanguageSpy).not.toHaveBeenCalled();

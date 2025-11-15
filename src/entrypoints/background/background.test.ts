@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MockInstance } from 'vitest';
 import {
   sendMessage,
   onMessage,
-  removeMessageListeners,
+  removeMessageListeners
 } from '@/entrypoints/background/messaging';
 import background from '@/entrypoints/background';
 import { getAIService } from './ai/ai.service';
@@ -20,34 +19,18 @@ vi.mock('@/entrypoints/background/ai/ai.service', () => {
 });
 
 const aIService = vi.mocked(getAIService());
-
-// Interface for message handler spies
-interface MessageHandlerSpies {
-  selectedText: MockInstance
-  modelStatusUpdate: MockInstance;
-}
-
-// TODO: ¿es necesaria esta función?
-const registerDefaultMessageHandlers = () => {
-  const selectedTextSpy = vi.fn();
-  const modelStatusUpdateSpy = vi.fn();
-
-  onMessage('selectedText', selectedTextSpy);
-  onMessage('modelStatusUpdate', modelStatusUpdateSpy);
-
-  return {
-    selectedText: selectedTextSpy,
-    modelStatusUpdate: modelStatusUpdateSpy
-  };
-};
+const selectedTextMock = vi.fn();
+const modelStatusUpdateMock = vi.fn();
 
 describe('Background Script', () => {
-  let messageHandlerSpies: MessageHandlerSpies;
-
   beforeEach(() => {
     fakeBrowser.reset();
+    // Se debe re-inicializar aquí ya que los simulacros de API de
+    // navegador se reinician en cada `beforeEach` en el archivo de configuración
+    // Además, una prueba podría reinicializar `main` con otros parámetros
     removeMessageListeners();
-    messageHandlerSpies = registerDefaultMessageHandlers();
+    onMessage('selectedText', selectedTextMock);
+    onMessage('modelStatusUpdate', modelStatusUpdateMock);
     background.main();
   });
   describe('onInstalled Listener', () => {
@@ -157,7 +140,7 @@ describe('Background Script', () => {
         const sourceLanguage = 'en';
         const targetLanguage = 'es';
         await sendMessage('translateText', { text: testText, sourceLanguage, targetLanguage });
-        expect(messageHandlerSpies.modelStatusUpdate).toHaveBeenCalledWith(
+        expect(modelStatusUpdateMock).toHaveBeenCalledWith(
           expect.objectContaining({
             data: expect.objectContaining({
               state: 'downloading',
@@ -213,7 +196,7 @@ describe('Background Script', () => {
 
       // Verify that selectedText message was received
       await vi.waitFor(() => {
-        expect(messageHandlerSpies.selectedText).toHaveBeenCalledWith(
+        expect(selectedTextMock).toHaveBeenCalledWith(
           expect.objectContaining({ data: { text: selectedText, summarize: false } })
         );
       });
@@ -232,7 +215,7 @@ describe('Background Script', () => {
       await sendMessage('sidepanelReady');
       
       // Verify that selectedText message was received
-      expect(messageHandlerSpies.selectedText).toHaveBeenCalledWith(
+      expect(selectedTextMock).toHaveBeenCalledWith(
         expect.objectContaining({ data: { text: selectedText, summarize: false } })
       );
     });

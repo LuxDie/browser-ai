@@ -7,8 +7,6 @@ import { getLanguageKey, isLanguageSupported } from '@/entrypoints/background/la
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '../background/model-manager/model-manager.model';
 import { getAIService } from '../background/ai/ai.service';
-import type { Component } from 'vue';
-import { createApp, nextTick } from 'vue';
 import ProcessControls from './components/ProcessControls.vue';
 
 interface State {
@@ -69,15 +67,18 @@ export class SidepanelApp {
   async #init(): Promise<void> {
     this.#state.apiAvailable = await this.#checkAPIAvailability();
     this.#availableLanguages = await sendMessage('getAvailableLanguages');
-    
+
     const browserLang = await sendMessage('getBrowserLanguage');
     // Verificar si el idioma del navegador está soportado
     this.#state.targetLanguage =
       isLanguageSupported(browserLang)
       ? browserLang
       : this.#defaultTargetLanguage;
-    
+
     this.#render();
+
+    // Esperar a que Vue termine de montar los componentes
+    await nextTick();
 
     // Notificar al background que el sidepanel está listo
     void sendMessage('sidepanelReady');
