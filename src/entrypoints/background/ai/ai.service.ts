@@ -17,7 +17,7 @@ export class AIService {
   // TODO: lanzar un error en vez de devolver `undefined`
   async processText(text: string, options: ProcessOptions): Promise<string | undefined> {
     let sendNotification = false;
-    let processedText: string | undefined;
+    let processedText = text;
 
     if (options.summarize) {
 
@@ -47,29 +47,22 @@ export class AIService {
       const isTargetSupported = SUMMARIZER_LANGUAGE_CODES.includes(options.targetLanguage as SummarizerLanguageCode);
       const summarizerDefaultLanguage = SUMMARIZER_LANGUAGE_CODES[0];
 
-      let textToSummarize = text;
+      processedText = text;
       let summarizerInputLanguage: SummarizerLanguageCode = summarizerDefaultLanguage;
       let summarizerOutputLanguage: SummarizerLanguageCode = summarizerDefaultLanguage;
 
-      // Caso 1: Ambos idiomas soportados - resumir directamente
-      if (isSourceSupported && isTargetSupported) {
+      // Preparar el texto y idiomas para el summarizer
+      if (isSourceSupported) {
         summarizerInputLanguage = options.sourceLanguage as SummarizerLanguageCode;
+      } else {
+        summarizerInputLanguage = summarizerDefaultLanguage;
+        processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, summarizerDefaultLanguage);
+      }
+
+      if (isTargetSupported) {
         summarizerOutputLanguage = options.targetLanguage as SummarizerLanguageCode;
-      }
-      // Caso 2: Source no soportado, target sí - traducir input a inglés, resumir en target
-      else if (!isSourceSupported && isTargetSupported) {
-        textToSummarize = await this.#modelManager.translate(text, options.sourceLanguage, summarizerDefaultLanguage);
-        summarizerOutputLanguage = options.targetLanguage as SummarizerLanguageCode;
-      }
-      // Caso 3: Source sí, target no - resumir en inglés, traducir resumen al target
-      else if (isSourceSupported && !isTargetSupported) {
-        summarizerInputLanguage = options.sourceLanguage as SummarizerLanguageCode;
-        // El resumen se traducirá después
-      }
-      // Caso 4: Ambos no soportados - traducir input a inglés, resumir en inglés, traducir resumen al target
-      else {
-        textToSummarize = await this.#modelManager.translate(text, options.sourceLanguage, summarizerDefaultLanguage);
-        // El resumen se traducirá después
+      } else {
+        summarizerOutputLanguage = summarizerDefaultLanguage;
       }
 
       const summarizerOptions: SummarizerOptions = {
@@ -79,14 +72,12 @@ export class AIService {
         expectedInputLanguages: [summarizerInputLanguage],
         outputLanguage: summarizerOutputLanguage
       };
-      let summary = await this.#modelManager.summarizeText(textToSummarize, summarizerOptions);
+      processedText = await this.#modelManager.summarizeText(processedText, summarizerOptions);
 
-      // Si el target no está soportado, traducir el resumen al idioma objetivo
-      if (!isTargetSupported) {
-        summary = await this.#modelManager.translate(summary, summarizerDefaultLanguage, options.targetLanguage);
+      if (summarizerOutputLanguage !== options.targetLanguage) {
+        processedText = await this.#modelManager.translate(processedText, summarizerDefaultLanguage, options.targetLanguage);
       }
 
-      processedText = summary;
     } else {
       let model = await this.#modelManager.checkModelStatus({ type: 'translation', source: options.sourceLanguage, target: options.targetLanguage });
       // Si hay un error (API no disponible), lanzar error
@@ -106,7 +97,7 @@ export class AIService {
         }
       }
 
-      processedText = await this.#modelManager.translate(text, options.sourceLanguage, options.targetLanguage);
+      processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, options.targetLanguage);
     }
     if (sendNotification) {
       void browser.notifications.create({
