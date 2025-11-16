@@ -5,8 +5,8 @@
   "extDescription": {
     "message": "Procesamiento de texto con IA integrada"
   },
-  "processError": {
-    "message": "Error al procesar el texto"
+  "processingError": {
+    "message": "Hubo un error al procesar la solicitud"
   },
   "inputLabel": {
     "message": "Texto a procesar"

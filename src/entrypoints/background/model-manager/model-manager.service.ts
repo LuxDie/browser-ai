@@ -279,51 +279,42 @@ export class ModelManager {
     const translator = this.#browserAPIs.translator;
 
     if (!translator) {
-      return browser.i18n.getMessage('chromeAINotAvailableForTranslation') || 'Error: Chrome AI APIs no disponibles para traducción';
+      throw new Error(browser.i18n.getMessage('chromeAINotAvailableForTranslation') ||
+        'Error: Chrome AI APIs no disponibles para traducción');
     }
 
-    try {
-      console.log(`Translating "${text}" from ${source} to ${target}`);
-      const translatorInstance = await translator.create({
-        sourceLanguage: source,
-        targetLanguage: target
-      });
-      const translatedText = await translatorInstance.translate(text);
-      console.log(`Translated: "${translatedText}"`);
-      return translatedText;
-    } catch (error: unknown) {
-      console.error('❌ Error al traducir texto:', error);
-      return browser.i18n.getMessage('errorTranslating', [error instanceof Error ? error.message : String(error)]) || `Error al traducir: ${error instanceof Error ? error.message : String(error)}`;
-    }
+    console.log(`Translating "${text}" from ${source} to ${target}`);
+    const translatorInstance = await translator.create({
+      sourceLanguage: source,
+      targetLanguage: target
+    });
+    const translatedText = await translatorInstance.translate(text);
+    console.log(`Translated: "${translatedText}"`);
+    return translatedText;
   }
 
   // Resumir texto
-  async summarizeText(text: string, inputOptions?: SummarizerOptions): Promise<string> {
+  async summarize(text: string, inputOptions?: SummarizerOptions): Promise<string> {
     const summarizer = this.#browserAPIs.summarizer;
 
     if (!summarizer) {
       throw new Error(browser.i18n.getMessage('summarizerAPINotSupportedError') || 'Summarizer API no soportada');
     }
 
-    try {
-      const summarizerOptions: SummarizerOptions = {
-        type: 'tldr',
-        length: 'medium',
-        format: 'plain-text',
-        expectedInputLanguages: ['en', 'es', 'ja'],
-        outputLanguage: 'es',
-        ...inputOptions
-      };
+    const summarizerOptions: SummarizerOptions = {
+      type: 'tldr',
+      length: 'medium',
+      format: 'plain-text',
+      expectedInputLanguages: ['en', 'es', 'ja'],
+      outputLanguage: 'es',
+      ...inputOptions
+    };
 
-      console.log(`Summarizing text with options:`, summarizerOptions);
-      const summarizerInstance = await summarizer.create(summarizerOptions);
-      const summary = await summarizerInstance.summarize(text);
-      console.log(`Summary generated: "${summary}"`);
-      return summary;
-    } catch (error: unknown) {
-      console.error('❌ Error al generar resumen:', error);
-      return browser.i18n.getMessage('errorGeneratingSummary', [error instanceof Error ? error.message : String(error)]) || `Error al generar resumen: ${error instanceof Error ? error.message : String(error)}`;
-    }
+    console.log(`Summarizing text with options:`, summarizerOptions);
+    const summarizerInstance = await summarizer.create(summarizerOptions);
+    const summary = await summarizerInstance.summarize(text);
+    console.log(`Summary generated: "${summary}"`);
+    return summary;
   }
 
   async detectLanguage(text: string): Promise<string> {
@@ -341,5 +332,5 @@ export class ModelManager {
   }
 }
 
-// Cache de estado de modelos (mover aquí también)
+// TODO: activar el uso del caché de modelos
 const modelStatusCache = new Map<string, AIModelStatus>();

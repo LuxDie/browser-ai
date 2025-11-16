@@ -12,6 +12,7 @@ import ProcessControls from './components/ProcessControls.vue';
 interface State {
   text: string
   translatedText: string
+  // TODO: es necesaria esta propiedad?
   editedTranslatedText: string
   summaryText: string
   sourceLanguage: SupportedLanguageCode | null
@@ -108,11 +109,11 @@ export class SidepanelApp {
       });
 
       // Manejar respuesta exitosa
-      // TODO: tipar mejor response
-      this.#state.translatedText = response ?? '';
-      this.#state.editedTranslatedText = response ?? '';
+      this.#state.translatedText = response;
+      this.#state.editedTranslatedText = response;
     } catch (error) {
-      this.#state.error = error instanceof Error ? error.message : browser.i18n.getMessage('processError');;
+      const errorMessage = error instanceof Error ? error.message : browser.i18n.getMessage('processingError');
+      this.#state.error = `${browser.i18n.getMessage('processingError')}\n${errorMessage}`;
     } finally {
       this.#state.isLoading = false;
 

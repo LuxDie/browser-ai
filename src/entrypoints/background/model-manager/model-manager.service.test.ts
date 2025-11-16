@@ -96,14 +96,14 @@ describe('ModelManager - Summarization Features', () => {
     });
   });
 
-  describe('summarizeText', () => {
+  describe('summarize', () => {
     it('should summarize text successfully', async () => {
       const mockSummarizer: Pick<Summarizer, 'summarize'> = {
         summarize: vi.fn(() => Promise.resolve('Este es un resumen.'))
       };
       vi.mocked(Summarizer.create).mockResolvedValueOnce(mockSummarizer as Summarizer);
 
-      const result = await modelManager.summarizeText('Este es un texto largo que necesita ser resumido.');
+      const result = await modelManager.summarize('Este es un texto largo que necesita ser resumido.');
 
       expect(result).toBe('Este es un resumen.');
       expect(mockSummarizer.summarize).toHaveBeenCalledWith('Este es un texto largo que necesita ser resumido.');
@@ -117,7 +117,7 @@ describe('ModelManager - Summarization Features', () => {
         outputLanguage: 'es' as const
       };
 
-      await modelManager.summarizeText('Texto largo aquí', options);
+      await modelManager.summarize('Texto largo aquí', options);
 
       expect(Summarizer.create).toHaveBeenCalledWith(
         expect.objectContaining(options)
@@ -125,14 +125,13 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should handle summarization errors gracefully', async () => {
+      const summarizationError = 'Resumen fallido';
       const mockSummarizer: Pick<Summarizer, 'summarize'> = {
-        summarize: vi.fn(() => Promise.reject(new Error('Resumen fallido'))),
+        summarize: vi.fn(() => Promise.reject(new Error(summarizationError))),
       };
       vi.mocked(Summarizer.create).mockResolvedValueOnce(mockSummarizer as Summarizer);
 
-      const result = await modelManager.summarizeText('Texto a resumir');
-
-      expect(result).toBe('errorGeneratingSummary');
+      await expect(modelManager.summarize('Texto a resumir')).rejects.toThrow(summarizationError);
     });
 
     it('should return error when Summarizer API is not available', async () => {
@@ -140,7 +139,7 @@ describe('ModelManager - Summarization Features', () => {
 
       const modelManager = new ModelManager();
 
-      await expect(modelManager.summarizeText('Texto a resumir'))
+      await expect(modelManager.summarize('Texto a resumir'))
       .rejects.toThrow('summarizerAPINotSupportedError');
     });
   });

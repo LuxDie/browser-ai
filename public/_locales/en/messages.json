@@ -5,8 +5,8 @@
   "extDescription": {
     "message": "AI-powered translation using Chrome's built-in APIs"
   },
-  "processError": {
-    "message": "Error processing text"
+  "processingError": {
+    "message": "There was an error processing the request"
   },
   "inputLabel": {
     "message": "Text to process"

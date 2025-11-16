@@ -47,8 +47,7 @@ export class AIService {
     }
   }
 
-  // TODO: lanzar un error en vez de devolver `undefined`
-  async processText(text: string, options: ProcessOptions): Promise<string | undefined> {
+  async processText(text: string, options: ProcessOptions): Promise<string> {
     let processedText = text;
 
     if (options.summarize) {
@@ -91,7 +90,7 @@ export class AIService {
         expectedInputLanguages: [summarizerInputLanguage],
         outputLanguage: summarizerOutputLanguage
       };
-      processedText = await this.#modelManager.summarizeText(processedText, summarizerOptions);
+      processedText = await this.#modelManager.summarize(processedText, summarizerOptions);
 
       if (summarizerOutputLanguage !== options.targetLanguage) {
         await this.#setupModel({
