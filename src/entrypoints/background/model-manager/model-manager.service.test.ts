@@ -47,12 +47,10 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-      vi.mocked(Summarizer.availability).mockRejectedValueOnce(new Error('API Error'));
+      const apiError = 'API Error';
+      vi.mocked(Summarizer.availability).mockRejectedValueOnce(new Error(apiError));
 
-      const result = await modelManager.checkModelStatus({ type: 'summarization' });
-
-      expect(result.state).toBe('unavailable');
-      expect(result.errorMessage).toBe('errorCheckingModelAvailability');
+      await expect(modelManager.checkModelStatus({ type: 'summarization' })).rejects.toThrow(apiError);
     });
 
     it('should return error when Summarizer API is not available', async () => {
@@ -76,23 +74,18 @@ describe('ModelManager - Summarization Features', () => {
     });
 
     it('should handle download errors gracefully', async () => {
-      // TODO: manejar rechazo con `rejects.toThrow`
-      vi.mocked(Summarizer.create).mockRejectedValueOnce(new Error('Descarga fallida'));
+      const downloadError = 'Descarga fallida';
+      vi.mocked(Summarizer.create).mockRejectedValueOnce(new Error(downloadError));
 
-      const result = await modelManager.downloadModel({ type: 'summarization' });
-
-      expect(result.state).toBe('unavailable');
-      expect(result.errorMessage).toBe('errorDownloadingSummarizerModel');
+      await expect(modelManager.downloadModel({ type: 'summarization' })).rejects.toThrow(downloadError);
     });
 
-    it('should return error when Summarizer API is not available', async () => {
+    it('should throw error when Summarizer API is not available', async () => {
       vi.stubGlobal('Summarizer', undefined);
 
       const modelManager = new ModelManager();
-      const result = await modelManager.downloadModel({ type: 'summarization' });
 
-      expect(result.state).toBe('unavailable');
-      expect(result.errorMessage).toBe('summarizerAPINotSupported');
+      await expect(modelManager.downloadModel({ type: 'summarization' })).rejects.toThrow('summarizerAPINotSupported');
     });
   });
 
@@ -140,7 +133,7 @@ describe('ModelManager - Summarization Features', () => {
       const modelManager = new ModelManager();
 
       await expect(modelManager.summarize('Texto a resumir'))
-      .rejects.toThrow('summarizerAPINotSupportedError');
+      .rejects.toThrow('summarizerAPINotSupported');
     });
   });
 });

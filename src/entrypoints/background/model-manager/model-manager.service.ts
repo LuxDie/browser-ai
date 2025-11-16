@@ -1,4 +1,5 @@
 import type { AIModelStatus, SummarizerOptions } from '@/entrypoints/background/model-manager/model-manager.model';
+import type { SupportedLanguageCode } from '../languages';
 
 export class ModelManager {
   static #instance: ModelManager | null = null;
@@ -26,18 +27,13 @@ export class ModelManager {
     this.#browserAPIs.summarizer = 'Summarizer' in self ? Summarizer : null;
   }
 
-  // Generar clave única para par de idiomas
-  #getLanguagePairKey(source: string, target: string): string {
-    return `${source}-${target}`;
-  }
-  
   checkAPIAvailability(): boolean {
     return !!(this.#browserAPIs.languageDetector ?? this.#browserAPIs.translator ?? this.#browserAPIs.summarizer);
   }
 
   async checkModelStatus(config:
     { type: 'language-detection' } |
-    { type: 'translation'; source: string; target: string } |
+    { type: 'translation'; source: SupportedLanguageCode; target: SupportedLanguageCode } |
     { type: 'summarization' }
   ): Promise<AIModelStatus> {
     if (config.type === 'translation') {
@@ -51,57 +47,41 @@ export class ModelManager {
         };
       }
 
-      try {
-        const availability = await translator.availability({
-          sourceLanguage: source,
-          targetLanguage: target
-        });
+      const availability = await translator.availability({
+        sourceLanguage: source,
+        targetLanguage: target
+      });
 
-        console.log(`🔍 Checking translation model availability for ${source}→${target}:`, availability);
+      console.log(`🔍 Checking translation model availability for ${source}→${target}:`, availability);
 
-        return {
-          state: availability,
-          ...(availability === 'downloading' && { downloadProgress: 0 }),
-          ...(availability === 'unavailable' && {
-            errorMessage: browser.i18n.getMessage('modelNotSupported', [availability]) || `Modelo no soportado: ${availability}`
-          })
-        };
-
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`❌ Error al verificar la disponibilidad del modelo de traducción para ${source}→${target}:`, error);
-        return {
-          state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('errorCheckingModelAvailability', [errorMessage]) || `Error al verificar la disponibilidad del modelo: ${errorMessage}`
-        };
-      }
+      return {
+        state: availability,
+        ...(availability === 'downloading' && { downloadProgress: 0 }),
+        ...(availability === 'unavailable' && {
+          errorMessage: browser.i18n.getMessage('modelNotSupported', [availability]) ||
+            `Modelo no soportado: ${availability}`
+        })
+      };
     } else if(config.type === 'summarization') {
       const summarizer = this.#browserAPIs.summarizer;
 
       if (!summarizer) {
         return {
           state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('summarizerAPINotAvailable') || 'Summarizer API no disponible'
+          errorMessage: browser.i18n.getMessage('summarizerAPINotAvailable') ||
+            'Summarizer API no disponible'
         };
       }
 
-      try {
-        const availability = await summarizer.availability();
-        return {
-          state: availability,
-          ...(availability === 'downloading' && { downloadProgress: 0 }),
-          ...(availability === 'unavailable' && {
-            errorMessage: browser.i18n.getMessage('summarizerModelNotAvailable') || 'Modelo de resumen no disponible'
-          })
-        };
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error('❌ Error al verificar la disponibilidad del summarizer:', error);
-        return {
-          state: 'unavailable',
-          errorMessage: (browser.i18n.getMessage('errorCheckingModelAvailability') || `Error al verificar la disponibilidad del summarizer: ${errorMessage}`)
-        };
-      }
+      const availability = await summarizer.availability();
+      return {
+        state: availability,
+        ...(availability === 'downloading' && { downloadProgress: 0 }),
+        ...(availability === 'unavailable' && {
+          errorMessage: browser.i18n.getMessage('summarizerModelNotAvailable') ||
+            'Modelo de resumen no disponible'
+        })
+      };
     } else {
       // config.type === 'language-detection'
       const languageDetector = this.#browserAPIs.languageDetector;
@@ -109,169 +89,70 @@ export class ModelManager {
       if (!languageDetector) {
         return {
           state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('languageDetectorNotSupported') || 'LanguageDetector API no disponible'
+          errorMessage: browser.i18n.getMessage('languageDetectorAPINotSupported') ||
+            'LanguageDetector API no disponible'
         };
       }
 
-      try {
-        const availability = await languageDetector.availability();
-        return {
-          state: availability,
-          ...(availability === 'downloading' && { downloadProgress: 0 }),
-          ...(availability === 'unavailable' && {
-            errorMessage: browser.i18n.getMessage('languageDetectorUnavailable') || 'Modelo de detección de idioma no disponible'
-          })
-        };
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error('❌ Error al verificar la disponibilidad del language detector:', error);
-        return {
-          state: 'unavailable',
-          errorMessage: (browser.i18n.getMessage('errorCheckingModelAvailability') || `Error al verificar la disponibilidad del language detector: ${errorMessage}`)
-        };
-      }
+      const availability = await languageDetector.availability();
+      return {
+        state: availability,
+        ...(availability === 'downloading' && { downloadProgress: 0 }),
+        ...(availability === 'unavailable' && {
+          errorMessage: browser.i18n.getMessage('languageDetectorUnavailable') ||
+            'Modelo de detección de idioma no disponible'
+        })
+      };
     }
-  }
-
-  // Alias para compatibilidad hacia atrás
-  async checkTranslationModelAvailability(source: string, target: string): Promise<AIModelStatus> {
-    return this.checkModelStatus({ type: 'translation', source, target });
   }
 
   // Descargar modelo
-  // TODO: si el modelo no es descargable, devolver error
   async downloadModel(config:
-    { type: 'translation'; source: string; target: string } |
+    { type: 'translation'; source: SupportedLanguageCode; target: SupportedLanguageCode } |
     { type: 'summarization' } |
     { type: 'language-detection' }):
     Promise<AIModelStatus> {
+    // Marcar como descargando en el caché
+    const cacheKey = (config.type === 'translation' ?
+      `${config.source}-${config.target}` :
+      config.type);
+    modelStatusCache.set(cacheKey, {
+      state: 'downloading',
+      downloadProgress: 0
+    });
+
+    // Crear la instancia del modelo según el tipo
     if (config.type === 'translation') {
-      const { source, target } = config;
-      const key = this.#getLanguagePairKey(source, target);
-      const translator = this.#browserAPIs.translator;
-
-      if (!translator) {
-        const status: AIModelStatus = {
-          state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('translatorAPINotSupported') || 'Translator API no soportada'
-        };
-        modelStatusCache.set(key, status);
-        return status;
+      const api = this.#browserAPIs.translator;
+      if (!api) {
+        throw new Error(browser.i18n.getMessage('translatorAPINotSupported') ||
+          'Translator API no soportada');
       }
-
-      modelStatusCache.set(key, {
-        state: 'downloading',
-        downloadProgress: 0
-      });
-
-      try {
-        console.log(`⏳ Downloading translation model for ${source}→${target}...`);
-        // Crear el traductor (esto descarga el modelo si es necesario)
-        await translator.create({
-          sourceLanguage: source,
-          targetLanguage: target
-        });
-
-        console.log(`✅ Translation model for ${source}→${target} downloaded successfully.`);
-        modelStatusCache.delete(key);
-        return {
-          state: 'available'
-        };
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`❌ Error al descargar el modelo de traducción para ${source}→${target}:`, error);
-        const status: AIModelStatus = {
-          state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('errorDownloadingModel', [errorMessage]) || `Error al descargar el modelo: ${errorMessage}`
-        };
-        modelStatusCache.set(key, status);
-        return status;
-      }
+      await api.create({ sourceLanguage: config.source, targetLanguage: config.target });
     } else if (config.type === 'summarization') {
-      // config.type === 'summarization'
-      const summarizer = this.#browserAPIs.summarizer;
-
-      if (!summarizer) {
-        const status: AIModelStatus = {
-          state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('summarizerAPINotSupported') || 'Summarizer API no soportada'
-        };
-        return status;
+      const api = this.#browserAPIs.summarizer;
+      if (!api) {
+        throw new Error(browser.i18n.getMessage('summarizerAPINotSupported') ||
+          'Summarizer API no soportada');
       }
-
-      // El modelo utilizado para todo menos traducción y detección de idioma es Gemini Nano
-      const key = 'gemini-nano';
-
-      modelStatusCache.set(key, {
-        state: 'downloading',
-        downloadProgress: 0
-      });
-
-      try {
-        console.log(`⏳ Downloading summarizer model...`);
-        // Crear el summarizer (esto descarga el modelo si es necesario)
-        await summarizer.create();
-
-        console.log(`✅ Summarizer model downloaded successfully.`);
-        modelStatusCache.delete(key);
-        return {
-          state: 'available'
-        };
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error('❌ Error al descargar el modelo de resumen:', error);
-        const status: AIModelStatus = {
-          state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('errorDownloadingSummarizerModel', [errorMessage]) || `Error al descargar el modelo de resumen: ${errorMessage}`
-        };
-        modelStatusCache.set(key, status);
-        return status;
-      }
+      await api.create();
     } else {
-      // config.type === 'language-detection'
-      const languageDetector = this.#browserAPIs.languageDetector;
-
-      if (!languageDetector) {
-        const status: AIModelStatus = {
-          state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('languageDetectorNotSupported') || 'LanguageDetector API no soportada'
-        };
-        return status;
+      const api = this.#browserAPIs.languageDetector;
+      if (!api) {
+        throw new Error(browser.i18n.getMessage('languageDetectorAPINotSupported') ||
+          'LanguageDetector API no soportada');
       }
-
-      const key = 'language-detector';
-
-      modelStatusCache.set(key, {
-        state: 'downloading',
-        downloadProgress: 0
-      });
-
-      try {
-        console.log(`⏳ Downloading language detector model...`);
-        // Crear el detector (esto descarga el modelo si es necesario)
-        await languageDetector.create();
-
-        console.log(`✅ Language detector model downloaded successfully.`);
-        modelStatusCache.delete(key);
-        return {
-          state: 'available'
-        };
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error('❌ Error al descargar el modelo de detección de idioma:', error);
-        const status: AIModelStatus = {
-          state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('errorDownloadingModel', [errorMessage]) || `Error al descargar el modelo: ${errorMessage}`
-        };
-        modelStatusCache.set(key, status);
-        return status;
-      }
+      await api.create();
     }
+
+    // Limpiar el caché y retornar disponible
+    modelStatusCache.delete(config.type);
+    return { state: 'available' };
   }
 
   // Alias para compatibilidad hacia atrás
   async downloadTranslationModel(source: string, target: string): Promise<AIModelStatus> {
-    return this.downloadModel({ type: 'translation', source, target });
+    return this.downloadModel({ type: 'translation', source: source as SupportedLanguageCode, target: target as SupportedLanguageCode });
   }
 
   // Traducir texto
@@ -298,7 +179,7 @@ export class ModelManager {
     const summarizer = this.#browserAPIs.summarizer;
 
     if (!summarizer) {
-      throw new Error(browser.i18n.getMessage('summarizerAPINotSupportedError') || 'Summarizer API no soportada');
+      throw new Error(browser.i18n.getMessage('summarizerAPINotSupported') || 'Summarizer API no soportada');
     }
 
     const summarizerOptions: SummarizerOptions = {
@@ -321,7 +202,7 @@ export class ModelManager {
     const languageDetector = this.#browserAPIs.languageDetector;
 
     if (!languageDetector) {
-      throw new Error(browser.i18n.getMessage('languageDetectorNotSupported'));
+      throw new Error('LanguageDetector API no soportada');
     }
 
     const detector = await languageDetector.create();

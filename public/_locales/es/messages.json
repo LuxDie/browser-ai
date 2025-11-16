@@ -87,7 +87,7 @@
   "languageDetectorUnavailable": {
     "message": "La API LanguageDetector no está disponible"
   },
-  "languageDetectorNotSupported": {
+  "languageDetectorAPINotSupported": {
     "message": "La API LanguageDetector no es compatible con este navegador"
   },
   "textProcessedNotification": {
@@ -270,9 +270,6 @@
         "content": "$1"
       }
     }
-  },
-  "summarizerAPINotSupportedError": {
-    "message": "Summarizer API no soportada"
   },
   "errorGeneratingSummary": {
     "message": "Error al generar resumen: $error$",

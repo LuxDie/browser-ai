@@ -186,11 +186,8 @@ describe('AIService', () => {
       mockModelManagerInstance.checkModelStatus.mockResolvedValueOnce({
         state: 'downloadable'
       });
-      // Mock failed download - model still not available
-      mockModelManagerInstance.downloadModel.mockResolvedValueOnce({
-        state: 'unavailable',
-        errorMessage: downloadFailedMessage
-      });
+      // Mock failed download - throws error
+      mockModelManagerInstance.downloadModel.mockRejectedValueOnce(new Error(downloadFailedMessage));
 
       await expect(aIService.processText('Texto a resumir', {
         sourceLanguage: 'en',
@@ -442,11 +439,8 @@ describe('AIService', () => {
       mockModelManagerInstance.checkModelStatus.mockResolvedValue({
         state: 'downloadable'
       });
-      // Mock failed download - model still not available
-      mockModelManagerInstance.downloadModel.mockResolvedValue({
-        state: 'unavailable',
-        errorMessage: translationDownloadFailedMessage
-      });
+      // Mock failed download - throws error
+      mockModelManagerInstance.downloadModel.mockRejectedValue(new Error(translationDownloadFailedMessage));
 
       await expect(aIService.processText('Texto a traducir', {
         sourceLanguage: 'en',

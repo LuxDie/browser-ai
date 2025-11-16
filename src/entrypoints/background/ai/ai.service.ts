@@ -33,10 +33,6 @@ export class AIService {
 
       void sendMessage('modelStatusUpdate', { state: 'downloading' });
       modelStatus = await this.#modelManager.downloadModel(modelParams);
-      // TODO: modelStatus debe arrojar el error
-      if (modelStatus.errorMessage) {
-        throw new Error(modelStatus.errorMessage);
-      }
       void sendMessage('modelStatusUpdate', modelStatus);
     } else if (modelStatus.state === 'downloading') {
 
