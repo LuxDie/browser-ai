@@ -11,8 +11,7 @@ export const SUPPORTED_LANGUAGES = [
 
 export type SupportedLanguageCode = typeof SUPPORTED_LANGUAGES[number];
 
-export const SUMMARIZER_LANGUAGE_CODES = ['en', 'es', 'ja'] as const;
-
+export const SUMMARIZER_LANGUAGE_CODES = ['en', 'es', 'ja'] as const satisfies readonly SupportedLanguageCode[];
 export type SummarizerLanguageCode = typeof SUMMARIZER_LANGUAGE_CODES[number];
 
 /**

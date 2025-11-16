@@ -13,102 +13,105 @@ interface ProcessOptions {
 
 export class AIService {
   #modelManager = ModelManager.getInstance();
+  #isNotificationPending = false;
+  async #setupModel(
+    this: AIService,
+    modelParams: Parameters<ModelManager['checkModelStatus']>[0]
+  ) {
+    // Verificar disponibilidad del modelo
+    let modelStatus = await this.#modelManager.checkModelStatus(modelParams);
 
-  // TODO: lanzar un error en vez de devolver `undefined`
-  async processText(text: string, options: ProcessOptions): Promise<string | undefined> {
-    let sendNotification = false;
-    let processedText: string | undefined;
+    // Si hay un error (API no disponible), lanzar error
+    if (modelStatus.errorMessage) {
+      throw new Error(modelStatus.errorMessage);
+    }
 
-    if (options.summarize) {
+    if (modelStatus.state === 'downloadable') {
 
-      // Verificar disponibilidad del modelo
-      let modelStatus = await this.#modelManager.checkModelStatus({ type: 'summarization' });
+      // Si la traducción requiere descargar un modelo, mostraremos una notificación al finalizar
+      this.#isNotificationPending = true;
 
-      // Si hay un error (API no disponible), lanzar error
+      void sendMessage('modelStatusUpdate', { state: 'downloading' });
+      modelStatus = await this.#modelManager.downloadModel(modelParams);
+      // TODO: modelStatus debe arrojar el error
       if (modelStatus.errorMessage) {
         throw new Error(modelStatus.errorMessage);
       }
+      void sendMessage('modelStatusUpdate', modelStatus);
+    } else if (modelStatus.state === 'downloading') {
 
-      if (modelStatus.state === 'downloadable') {
-        // Si el resumen requiere descargar un modelo, mostrar estado de descarga
-        modelStatus.state = 'downloading';
-        sendNotification = true;
-        void sendMessage('modelStatusUpdate', modelStatus);
-        modelStatus = await this.#modelManager.downloadModel({ type: 'summarization' });
-        void sendMessage('modelStatusUpdate', modelStatus);
-        if (modelStatus.state !== 'available') {
-          console.error(modelStatus.errorMessage);
-          return;
-        }
-      }
+      // Si el modelo ya está descargándose, mostraremos una notificación al finalizar
+      this.#isNotificationPending = true;
+
+      void sendMessage('modelStatusUpdate', modelStatus);
+    }
+  }
+
+  // TODO: lanzar un error en vez de devolver `undefined`
+  async processText(text: string, options: ProcessOptions): Promise<string | undefined> {
+    let processedText = text;
+
+    if (options.summarize) {
+
+      await this.#setupModel({ type: 'summarization' });
 
       // Lógica para manejar idiomas no soportados por el summarizer
       const isSourceSupported = SUMMARIZER_LANGUAGE_CODES.includes(options.sourceLanguage as SummarizerLanguageCode);
       const isTargetSupported = SUMMARIZER_LANGUAGE_CODES.includes(options.targetLanguage as SummarizerLanguageCode);
       const summarizerDefaultLanguage = SUMMARIZER_LANGUAGE_CODES[0];
 
-      let textToSummarize = text;
+      processedText = text;
       let summarizerInputLanguage: SummarizerLanguageCode = summarizerDefaultLanguage;
       let summarizerOutputLanguage: SummarizerLanguageCode = summarizerDefaultLanguage;
 
-      // Caso 1: Ambos idiomas soportados - resumir directamente
-      if (isSourceSupported && isTargetSupported) {
+      // Preparar el texto y idiomas para el summarizer
+      if (isSourceSupported) {
         summarizerInputLanguage = options.sourceLanguage as SummarizerLanguageCode;
+      } else {
+        summarizerInputLanguage = summarizerDefaultLanguage;
+        await this.#setupModel({
+          type: 'translation',
+          source: options.sourceLanguage,
+          target: summarizerDefaultLanguage
+        });
+        processedText = await this.#modelManager.translate(
+          processedText,
+          options.sourceLanguage,
+          summarizerDefaultLanguage
+        );
+      }
+
+      if (isTargetSupported) {
         summarizerOutputLanguage = options.targetLanguage as SummarizerLanguageCode;
-      }
-      // Caso 2: Source no soportado, target sí - traducir input a inglés, resumir en target
-      else if (!isSourceSupported && isTargetSupported) {
-        textToSummarize = await this.#modelManager.translate(text, options.sourceLanguage, summarizerDefaultLanguage);
-        summarizerOutputLanguage = options.targetLanguage as SummarizerLanguageCode;
-      }
-      // Caso 3: Source sí, target no - resumir en inglés, traducir resumen al target
-      else if (isSourceSupported && !isTargetSupported) {
-        summarizerInputLanguage = options.sourceLanguage as SummarizerLanguageCode;
-        // El resumen se traducirá después
-      }
-      // Caso 4: Ambos no soportados - traducir input a inglés, resumir en inglés, traducir resumen al target
-      else {
-        textToSummarize = await this.#modelManager.translate(text, options.sourceLanguage, summarizerDefaultLanguage);
-        // El resumen se traducirá después
+      } else {
+        summarizerOutputLanguage = summarizerDefaultLanguage;
       }
 
       const summarizerOptions: SummarizerOptions = {
-        type: 'tldr',
-        length: 'medium',
-        format: 'plain-text',
         expectedInputLanguages: [summarizerInputLanguage],
         outputLanguage: summarizerOutputLanguage
       };
-      let summary = await this.#modelManager.summarizeText(textToSummarize, summarizerOptions);
+      processedText = await this.#modelManager.summarizeText(processedText, summarizerOptions);
 
-      // Si el target no está soportado, traducir el resumen al idioma objetivo
-      if (!isTargetSupported) {
-        summary = await this.#modelManager.translate(summary, summarizerDefaultLanguage, options.targetLanguage);
+      if (summarizerOutputLanguage !== options.targetLanguage) {
+        await this.#setupModel({
+          type: 'translation',
+          source: summarizerDefaultLanguage,
+          target: options.targetLanguage
+        });
+        processedText = await this.#modelManager.translate(processedText, summarizerDefaultLanguage, options.targetLanguage);
       }
+    } else { // summarize === false
+      await this.#setupModel({
+        type: 'translation',
+        source: options.sourceLanguage,
+        target: options.targetLanguage
+      });
 
-      processedText = summary;
-    } else {
-      let model = await this.#modelManager.checkModelStatus({ type: 'translation', source: options.sourceLanguage, target: options.targetLanguage });
-      // Si hay un error (API no disponible), lanzar error
-      if (model.errorMessage) {
-        throw new Error(model.errorMessage);
-      }
-      if (model.state === 'downloadable') {
-        // Si la traducción requiere descargar un modelo, mostraremos una notificación al finalizar
-        sendNotification = true;
-        model.state = 'downloading';
-        void sendMessage('modelStatusUpdate', model);
-        model = await this.#modelManager.downloadModel({ type: 'translation', source: options.sourceLanguage, target: options.targetLanguage });
-        void sendMessage('modelStatusUpdate', model);
-        if (model.state !== 'available') {
-          console.error(model.errorMessage);
-          return;
-        }
-      }
-
-      processedText = await this.#modelManager.translate(text, options.sourceLanguage, options.targetLanguage);
+      processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, options.targetLanguage);
     }
-    if (sendNotification) {
+    
+    if (this.#isNotificationPending) {
       void browser.notifications.create({
         type: 'basic',
         title: browser.i18n.getMessage('extName'),
@@ -121,18 +124,10 @@ export class AIService {
   }
 
   async detectLanguage(text: string): Promise<string> {
-    // Verificar disponibilidad del modelo de detección de idioma
-    let modelStatus = await this.#modelManager.checkModelStatus({ type: 'language-detection' });
-
-    if (modelStatus.state === 'downloadable') {
-      // Si el modelo es descargable, descargarlo primero
-      modelStatus.state = 'downloading';
-      void sendMessage('modelStatusUpdate', modelStatus);
-      modelStatus = await this.#modelManager.downloadModel({ type: 'language-detection' });
-      void sendMessage('modelStatusUpdate', modelStatus);
-    }
+    await this.#setupModel({ type: 'language-detection' });
     return await this.#modelManager.detectLanguage(text);
   }
 }
 
-export const [registerAIService, getAIService] = defineProxyService('AIService', () => new AIService());
+export const [registerAIService, getAIService] =
+  defineProxyService('AIService', () => new AIService());

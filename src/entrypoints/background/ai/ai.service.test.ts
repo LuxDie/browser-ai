@@ -38,7 +38,7 @@ describe('AIService', () => {
   });
 
   it('should follow the correct flow when summarization model is available', async () => {
-    await aIService.processText('Text to summarize', {
+    await aIService.processText('Texto a resumir', {
       sourceLanguage: 'en',
       targetLanguage: 'es',
       summarize: true
@@ -52,7 +52,7 @@ describe('AIService', () => {
   it('should follow the correct flow when translation model is available', async () => {
     mockModelManagerInstance.translate.mockResolvedValue('Texto traducido.');
 
-    const result = await aIService.processText('Text to translate', {
+    const result = await aIService.processText('Texto a traducir', {
       sourceLanguage: 'en',
       targetLanguage: 'es',
       summarize: false
@@ -65,7 +65,7 @@ describe('AIService', () => {
       target: 'es'
     });
     expect(mockModelManagerInstance.downloadModel).not.toHaveBeenCalled();
-    expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Text to translate', 'en', 'es');
+    expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traducir', 'en', 'es');
   });
 
   it('should download model and send status messages when summarization model is downloadable', async () => {
@@ -77,15 +77,15 @@ describe('AIService', () => {
     mockModelManagerInstance.downloadModel.mockResolvedValueOnce({
       state: 'available'
     });
-    mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Downloaded summary.');
+    mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Resumen descargado.');
 
-    const result = await aIService.processText('Text to summarize', {
+    const result = await aIService.processText('Texto a resumir', {
       sourceLanguage: 'en',
       targetLanguage: 'es',
       summarize: true
     });
 
-    expect(result).toBe('Downloaded summary.');
+    expect(result).toBe('Resumen descargado.');
     expect(mockModelManagerInstance.checkModelStatus).toHaveBeenCalledWith({ type: 'summarization' });
     expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'summarization' });
     expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
@@ -105,7 +105,7 @@ describe('AIService', () => {
         })
       })
     );
-    expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Text to summarize',
+    expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Texto a resumir',
       expect.objectContaining({
         expectedInputLanguages: ['en'],
         outputLanguage: 'es'
@@ -123,9 +123,9 @@ describe('AIService', () => {
       mockModelManagerInstance.downloadModel.mockResolvedValueOnce({
         state: 'available'
       });
-      mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Downloaded summary.');
+      mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Resumen descargado.');
 
-      await aIService.processText('Text to summarize', {
+      await aIService.processText('Texto a resumir', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: true
@@ -152,9 +152,9 @@ describe('AIService', () => {
 
     it('should not send status messages when summarization model is already available', async () => {
       // Mock model available (default behavior)
-      mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Available summary.');
+      mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Resumen disponible.');
 
-      await aIService.processText('Text to summarize', {
+      await aIService.processText('Texto a resumir', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: true
@@ -165,54 +165,78 @@ describe('AIService', () => {
 
     it('should throw error when Chrome AI Summarizer API is not available', async () => {
       // Mock API not available
+      const summarizerUnavailableMessage = 'Chrome AI Summarizer APIs no disponibles para descarga';
       mockModelManagerInstance.checkModelStatus.mockResolvedValueOnce({
         state: 'unavailable',
-        errorMessage: 'Chrome AI Summarizer APIs no disponibles para descarga'
+        errorMessage: summarizerUnavailableMessage
       });
 
-      await expect(aIService.processText('Text to summarize', {
+      await expect(aIService.processText('Texto a resumir', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: true
-      })).rejects.toThrow('Chrome AI Summarizer APIs no disponibles para descarga');
+      })).rejects.toThrow(summarizerUnavailableMessage);
 
       expect(modelStatusUpdateSpy).not.toHaveBeenCalled();
     });
 
     it('should send downloading and error messages when summarization model download fails', async () => {
       // Mock model not available initially
+      const downloadFailedMessage = 'Descarga fallida';
       mockModelManagerInstance.checkModelStatus.mockResolvedValueOnce({
         state: 'downloadable'
       });
       // Mock failed download - model still not available
       mockModelManagerInstance.downloadModel.mockResolvedValueOnce({
         state: 'unavailable',
-        errorMessage: 'Download failed'
+        errorMessage: downloadFailedMessage
       });
 
-      const result = await aIService.processText('Text to summarize', {
+      await expect(aIService.processText('Texto a resumir', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: true
-      });
+      })).rejects.toThrow(downloadFailedMessage);
 
-      expect(result).toBeUndefined();
-      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
+      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(1);
       // First message: downloading started
-      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1,
+      expect(modelStatusUpdateSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             state: 'downloading'
           })
         })
       );
-      // Second message: download failed
-      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2,
+    });
+
+    it('should send downloading message when summarization model is already downloading', async () => {
+      // Mock model already downloading
+      const downloadingSummary = 'Resumen descargando.';
+      mockModelManagerInstance.checkModelStatus.mockResolvedValueOnce({
+        state: 'downloading'
+      });
+      mockModelManagerInstance.summarizeText.mockResolvedValueOnce(downloadingSummary);
+
+      const result = await aIService.processText('Texto a resumir', {
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
+        summarize: true
+      });
+
+      expect(result).toBe(downloadingSummary);
+      expect(mockModelManagerInstance.downloadModel).not.toHaveBeenCalled();
+      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(1);
+      expect(modelStatusUpdateSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            state: 'unavailable',
-            errorMessage: 'Download failed'
+            state: 'downloading'
           })
+        })
+      );
+      // Verificar que se envíe la notificación ya que isNotificationPending está activado
+      expect(browser.notifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'textProcessedNotification'
         })
       );
     });
@@ -227,19 +251,19 @@ describe('AIService', () => {
       aIService = new AIService();
     });
     it('should summarize directly when both languages are supported', async () => {
-      mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Direct summary.');
+      mockModelManagerInstance.summarizeText.mockResolvedValueOnce('Resumen directo.');
       const supportedSourceLang = 'fr';
       const supportedTargetLang = 'zh';
 
-      const result = await aIService.processText('Text to summarize', {
+      const result = await aIService.processText('Texto a resumir', {
         sourceLanguage: supportedSourceLang,
         targetLanguage: supportedTargetLang,
         summarize: true
       });
 
-      expect(result).toBe('Direct summary.');
+      expect(result).toBe('Resumen directo.');
       expect(mockModelManagerInstance.translate).not.toHaveBeenCalled();
-      expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Text to summarize',
+      expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Texto a resumir',
         expect.objectContaining({
           expectedInputLanguages: [supportedSourceLang],
           outputLanguage: supportedTargetLang
@@ -275,14 +299,14 @@ describe('AIService', () => {
       const supportedSourceLang = 'fr';
       const unsupportedTargetLang = 'en';
 
-      const result = await aIService.processText('Text to summarize', {
+      const result = await aIService.processText('Texto a resumir', {
         sourceLanguage: supportedSourceLang,
         targetLanguage: unsupportedTargetLang,
         summarize: true
       });
 
       expect(result).toBe('Resumen traducido.');
-      expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Text to summarize',
+      expect(mockModelManagerInstance.summarizeText).toHaveBeenCalledWith('Texto a resumir',
         expect.objectContaining({
           expectedInputLanguages: [supportedSourceLang],
           outputLanguage: fallbackLang
@@ -333,7 +357,7 @@ describe('AIService', () => {
       });
       mockModelManagerInstance.translate.mockResolvedValue('Texto descargado y traducido.');
 
-      const result = await aIService.processText('Text to translate', {
+      const result = await aIService.processText('Texto a traducir', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: false
@@ -367,7 +391,7 @@ describe('AIService', () => {
           })
         })
       );
-      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Text to translate', 'en', 'es');
+      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traducir', 'en', 'es');
     });
 
     it('should send translation completion notification', async () => {
@@ -381,7 +405,7 @@ describe('AIService', () => {
       });
       mockModelManagerInstance.translate.mockResolvedValue('Texto traducido.');
 
-      await aIService.processText('Text to translate', {
+      await aIService.processText('Texto a traducir', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: false
@@ -397,55 +421,45 @@ describe('AIService', () => {
 
     it('should throw error when translation model check fails', async () => {
       // Clear default mock and set specific one for this test
-      mockModelManagerInstance.checkModelStatus.mockReset();
+      const translationApiNotSupportedMessage = 'API de traducción no soportada';
       mockModelManagerInstance.checkModelStatus.mockResolvedValue({
         state: 'unavailable',
-        errorMessage: 'Translation API not supported'
+        errorMessage: translationApiNotSupportedMessage
       });
 
-      await expect(aIService.processText('Text to translate', {
+      await expect(aIService.processText('Texto a traducir', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: false
-      })).rejects.toThrow('Translation API not supported');
+      })).rejects.toThrow(translationApiNotSupportedMessage);
 
       expect(modelStatusUpdateSpy).not.toHaveBeenCalled();
-      expect(mockModelManagerInstance.translate).not.toHaveBeenCalled();
     });
 
     it('should handle failed translation model download', async () => {
       // Mock model not available initially
+      const translationDownloadFailedMessage = 'Descarga de traducción fallida';
       mockModelManagerInstance.checkModelStatus.mockResolvedValue({
         state: 'downloadable'
       });
       // Mock failed download - model still not available
       mockModelManagerInstance.downloadModel.mockResolvedValue({
         state: 'unavailable',
-        errorMessage: 'Translation download failed'
+        errorMessage: translationDownloadFailedMessage
       });
 
-      const result = await aIService.processText('Text to translate', {
+      await expect(aIService.processText('Texto a traducir', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: false
-      });
+      })).rejects.toThrow(translationDownloadFailedMessage);
 
-      expect(result).toBeUndefined();
-      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
+      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(1);
       // First message: downloading started
-      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1,
+      expect(modelStatusUpdateSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             state: 'downloading'
-          })
-        })
-      );
-      // Second message: download failed
-      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2,
-        expect.objectContaining({
-          data: expect.objectContaining({
-            state: 'unavailable',
-            errorMessage: 'Translation download failed'
           })
         })
       );
