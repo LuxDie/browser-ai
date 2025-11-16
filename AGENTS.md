@@ -35,6 +35,14 @@ Esta regla no se aplica para tareas de documentación, configuración, o cualqui
 - Los comentarios explicativos de lógica de negocio y diseño en el código generado deben estar en **castellano** (excepto casos en los que la especificación o el equipo indique lo contrario).
 - La documentación técnica generada (ej. archivos en `docs/`), debe estar en castellano.
 
+### Internacionalización
+
+Las cadenas de texto deben estar internacionalizadas con la API `browser.i18n.getMessage`.
+
+### Pruebas
+
+- Las cadenas de texto en las pruebas unitarias deben estar en castellano. Las que se usan más de una vez deben estar en constantes. Si se usan en una sola prueba deben tener alcance local. Los nombres de las constantes deben estar en inglés, según las reglas del proyecto.
+
 ### Uso de herramientas
 
 - Siempre prefiere utilizar herramientas antes que comandos de consola.

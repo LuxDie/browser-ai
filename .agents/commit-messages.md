@@ -7,10 +7,12 @@
 ## Formato Requerido
 
 - **Prefijo de tipo:** Usar tipos de commit convencionales: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`, `chore:`
-- **Alcance:** Opcional. Se debe especificar el dominio al que pertenece la modificación, no la capa técnica. Por ejemplo, `feat(auth): add user authentication system` en vez de `feat(component): add user authentication system`. La excepción a esta regla es cuando el alcance es general, por ejemplo `feat(ui): improve loading indicators`.
   - Las refactorizaciones de pruebas se prefijan con `test`
-  - Las modificaciones de simulacros para pruebas se prefijan con `test(mock)`
-  - Las modificaciones de pruebas deben utilizar el alcance `unit`, `integration` o `e2e`.
+- **Alcance:** Opcional. Se debe especificar el dominio al que pertenece la modificación, no la capa técnica. Por ejemplo, `feat(auth): add user authentication system` en vez de `feat(component): add user authentication system`. La excepción a esta regla es cuando el alcance es general, por ejemplo `feat(ui): improve loading indicators`.
+  - Las modificaciones de simulacros usan el alcance `mock`
+  - Las modificaciones de pruebas utilizan el alcance `unit`, `integration` o `e2e`
+  - Las modificaciones de documentación para desarrollo utilizan el alcance `dev`
+  - Las modificaciones de funcionalidad o infraestructura fundamentales usan el alcance `core`
 - **Línea de resumen:** Máximo 50 caracteres, escribir en inglés, ser conciso y claro
 - **Cuerpo del mensaje:** Opcional, para explicaciones detalladas si son necesarias
 - **Ejemplos:**
