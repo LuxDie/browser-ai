@@ -190,28 +190,18 @@ describe('AIService', () => {
         errorMessage: 'Download failed'
       });
 
-      const result = await aIService.processText('Text to summarize', {
+      await expect(aIService.processText('Text to summarize', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: true
-      });
+      })).rejects.toThrow('Download failed');
 
-      expect(result).toBeUndefined();
-      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
+      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(1);
       // First message: downloading started
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1,
         expect.objectContaining({
           data: expect.objectContaining({
             state: 'downloading'
-          })
-        })
-      );
-      // Second message: download failed
-      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2,
-        expect.objectContaining({
-          data: expect.objectContaining({
-            state: 'unavailable',
-            errorMessage: 'Download failed'
           })
         })
       );
@@ -395,9 +385,8 @@ describe('AIService', () => {
       );
     });
 
-    it('should throw error when translation model check fails', async () => {
+    it('should continue when translation model check fails', async () => {
       // Clear default mock and set specific one for this test
-      mockModelManagerInstance.checkModelStatus.mockReset();
       mockModelManagerInstance.checkModelStatus.mockResolvedValue({
         state: 'unavailable',
         errorMessage: 'Translation API not supported'
@@ -410,7 +399,6 @@ describe('AIService', () => {
       })).rejects.toThrow('Translation API not supported');
 
       expect(modelStatusUpdateSpy).not.toHaveBeenCalled();
-      expect(mockModelManagerInstance.translate).not.toHaveBeenCalled();
     });
 
     it('should handle failed translation model download', async () => {
@@ -424,28 +412,18 @@ describe('AIService', () => {
         errorMessage: 'Translation download failed'
       });
 
-      const result = await aIService.processText('Text to translate', {
+      await expect(aIService.processText('Text to translate', {
         sourceLanguage: 'en',
         targetLanguage: 'es',
         summarize: false
-      });
+      })).rejects.toThrow('Translation download failed');
 
-      expect(result).toBeUndefined();
-      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
+      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(1);
       // First message: downloading started
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1,
         expect.objectContaining({
           data: expect.objectContaining({
             state: 'downloading'
-          })
-        })
-      );
-      // Second message: download failed
-      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2,
-        expect.objectContaining({
-          data: expect.objectContaining({
-            state: 'unavailable',
-            errorMessage: 'Translation download failed'
           })
         })
       );

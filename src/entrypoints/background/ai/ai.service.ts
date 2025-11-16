@@ -13,34 +13,42 @@ interface ProcessOptions {
 
 export class AIService {
   #modelManager = ModelManager.getInstance();
+  #isNotificationPending = false;
+  async #setupModel(
+    this: AIService,
+    options: Parameters<ModelManager['checkModelStatus']>[0]
+  ) {
+    // Verificar disponibilidad del modelo
+    let modelStatus = await this.#modelManager.checkModelStatus(options);
+
+    // Si hay un error (API no disponible), lanzar error
+    if (modelStatus.errorMessage) {
+      throw new Error(modelStatus.errorMessage);
+    }
+
+    // TODO: manejar 'downloading'
+    if (modelStatus.state === 'downloadable') {
+
+      // Si la traducción requiere descargar un modelo, mostraremos una notificación al finalizar
+      this.#isNotificationPending = true;
+
+      void sendMessage('modelStatusUpdate', { state: 'downloading' });
+      modelStatus = await this.#modelManager.downloadModel(options);
+      // TODO: modelStatus debe arrojar el error
+      if (modelStatus.errorMessage) {
+        throw new Error(modelStatus.errorMessage);
+      }
+      void sendMessage('modelStatusUpdate', modelStatus);
+    }
+  }
 
   // TODO: lanzar un error en vez de devolver `undefined`
   async processText(text: string, options: ProcessOptions): Promise<string | undefined> {
-    let sendNotification = false;
     let processedText = text;
 
     if (options.summarize) {
 
-      // Verificar disponibilidad del modelo
-      let modelStatus = await this.#modelManager.checkModelStatus({ type: 'summarization' });
-
-      // Si hay un error (API no disponible), lanzar error
-      if (modelStatus.errorMessage) {
-        throw new Error(modelStatus.errorMessage);
-      }
-
-      if (modelStatus.state === 'downloadable') {
-        // Si el resumen requiere descargar un modelo, mostrar estado de descarga
-        modelStatus.state = 'downloading';
-        sendNotification = true;
-        void sendMessage('modelStatusUpdate', modelStatus);
-        modelStatus = await this.#modelManager.downloadModel({ type: 'summarization' });
-        void sendMessage('modelStatusUpdate', modelStatus);
-        if (modelStatus.state !== 'available') {
-          console.error(modelStatus.errorMessage);
-          return;
-        }
-      }
+      await this.#setupModel({ type: 'summarization' });
 
       // Lógica para manejar idiomas no soportados por el summarizer
       const isSourceSupported = SUMMARIZER_LANGUAGE_CODES.includes(options.sourceLanguage as SummarizerLanguageCode);
@@ -56,7 +64,16 @@ export class AIService {
         summarizerInputLanguage = options.sourceLanguage as SummarizerLanguageCode;
       } else {
         summarizerInputLanguage = summarizerDefaultLanguage;
-        processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, summarizerDefaultLanguage);
+        await this.#setupModel({
+          type: 'translation',
+          source: options.sourceLanguage,
+          target: summarizerDefaultLanguage
+        });
+        processedText = await this.#modelManager.translate(
+          processedText,
+          options.sourceLanguage,
+          summarizerDefaultLanguage
+        );
       }
 
       if (isTargetSupported) {
@@ -66,40 +83,30 @@ export class AIService {
       }
 
       const summarizerOptions: SummarizerOptions = {
-        type: 'tldr',
-        length: 'medium',
-        format: 'plain-text',
         expectedInputLanguages: [summarizerInputLanguage],
         outputLanguage: summarizerOutputLanguage
       };
       processedText = await this.#modelManager.summarizeText(processedText, summarizerOptions);
 
       if (summarizerOutputLanguage !== options.targetLanguage) {
+        await this.#setupModel({
+          type: 'translation',
+          source: summarizerDefaultLanguage,
+          target: options.targetLanguage
+        });
         processedText = await this.#modelManager.translate(processedText, summarizerDefaultLanguage, options.targetLanguage);
       }
-
-    } else {
-      let model = await this.#modelManager.checkModelStatus({ type: 'translation', source: options.sourceLanguage, target: options.targetLanguage });
-      // Si hay un error (API no disponible), lanzar error
-      if (model.errorMessage) {
-        throw new Error(model.errorMessage);
-      }
-      if (model.state === 'downloadable') {
-        // Si la traducción requiere descargar un modelo, mostraremos una notificación al finalizar
-        sendNotification = true;
-        model.state = 'downloading';
-        void sendMessage('modelStatusUpdate', model);
-        model = await this.#modelManager.downloadModel({ type: 'translation', source: options.sourceLanguage, target: options.targetLanguage });
-        void sendMessage('modelStatusUpdate', model);
-        if (model.state !== 'available') {
-          console.error(model.errorMessage);
-          return;
-        }
-      }
+    } else { // summarize === false
+      await this.#setupModel({
+        type: 'translation',
+        source: options.sourceLanguage,
+        target: options.targetLanguage
+      });
 
       processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, options.targetLanguage);
     }
-    if (sendNotification) {
+    
+    if (this.#isNotificationPending) {
       void browser.notifications.create({
         type: 'basic',
         title: browser.i18n.getMessage('extName'),
@@ -112,18 +119,10 @@ export class AIService {
   }
 
   async detectLanguage(text: string): Promise<string> {
-    // Verificar disponibilidad del modelo de detección de idioma
-    let modelStatus = await this.#modelManager.checkModelStatus({ type: 'language-detection' });
-
-    if (modelStatus.state === 'downloadable') {
-      // Si el modelo es descargable, descargarlo primero
-      modelStatus.state = 'downloading';
-      void sendMessage('modelStatusUpdate', modelStatus);
-      modelStatus = await this.#modelManager.downloadModel({ type: 'language-detection' });
-      void sendMessage('modelStatusUpdate', modelStatus);
-    }
+    await this.#setupModel({ type: 'language-detection' });
     return await this.#modelManager.detectLanguage(text);
   }
 }
 
-export const [registerAIService, getAIService] = defineProxyService('AIService', () => new AIService());
+export const [registerAIService, getAIService] =
+  defineProxyService('AIService', () => new AIService());
