@@ -122,6 +122,9 @@ export class AIService {
     await this.#setupModel({ type: 'language-detection' });
     return await this.#modelManager.detectLanguage(text);
   }
+  checkAPIAvailability(): boolean {
+    return this.#modelManager.checkAPIAvailability();
+  }
 }
 
 export const [registerAIService, getAIService] =

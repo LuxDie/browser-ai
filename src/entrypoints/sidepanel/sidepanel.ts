@@ -123,8 +123,7 @@ export class SidepanelApp {
 
   async #checkAPIAvailability(): Promise<boolean> {
     try {
-      const response = await sendMessage('checkAPIAvailability');
-      return response;
+      return await this.#AIService.checkAPIAvailability();
     } catch (error) {
       console.error('Error checking API availability:', error);
       return false;
@@ -193,7 +192,7 @@ export class SidepanelApp {
     }
 
     this.#resetTranslationState();
-    const languageCode = await sendMessage('detectLanguage', this.#state.text);
+    const languageCode = await this.#AIService.detectLanguage(this.#state.text);
     if (isLanguageSupported(languageCode)) {
       this.#state.sourceLanguage = languageCode;
     } else {

@@ -1,7 +1,7 @@
 import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@/entrypoints/background/languages';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
-import { registerAIService, getAIService } from '@/entrypoints/background/ai/ai.service';
+import { registerAIService } from '@/entrypoints/background/ai/ai.service';
 
 // Registrar servicios proxy
 registerAIService();
@@ -96,14 +96,6 @@ export default defineBackground({
       return await modelManager.checkModelStatus({ type: 'translation', source, target });
     });
 
-    onMessage('detectLanguage', async (message) => {
-      const text = message.data;
-      const aiService = getAIService();
-      const language = await aiService.detectLanguage(text);
-      console.log(`🔍 Language detected: ${language}`);
-      return language;
-    });
-
     onMessage('translateText', async (message) => {
       const { text, sourceLanguage, targetLanguage } = message.data;
       let sendNotification = false;
@@ -131,10 +123,6 @@ export default defineBackground({
       }
 
       return translatedText;
-    });
-
-    onMessage('checkAPIAvailability', () => {
-      return modelManager.checkAPIAvailability();
     });
 
     onMessage('getAvailableLanguages', () => {

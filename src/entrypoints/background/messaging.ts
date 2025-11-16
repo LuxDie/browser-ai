@@ -6,13 +6,11 @@ export interface ProtocolMap {
     source: SupportedLanguageCode;
     target: SupportedLanguageCode
   }): AIModelStatus;
-  detectLanguage(text: string): string;
   translateText(data: {
     text: string;
     targetLanguage: SupportedLanguageCode;
     sourceLanguage: SupportedLanguageCode
   }): string;
-  checkAPIAvailability(): boolean;
   getAvailableLanguages(): AvailableLanguages;
   getBrowserLanguage(): string;
   sidepanelReady(): void;
@@ -21,5 +19,5 @@ export interface ProtocolMap {
 }
 
 // eslint-disable-next-line @typescript-eslint/unbound-method
-export const { sendMessage, onMessage, removeAllListeners: removeMessageListeners } = 
+export const { sendMessage, onMessage, removeAllListeners: removeMessageListeners } =
   defineExtensionMessaging<ProtocolMap>();

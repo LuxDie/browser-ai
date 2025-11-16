@@ -5,7 +5,6 @@ import {
   removeMessageListeners
 } from '@/entrypoints/background/messaging';
 import background from '@/entrypoints/background';
-import { getAIService } from './ai/ai.service';
 
 // TODO: usar importación dinámica
 vi.mock('@/entrypoints/background/ai/ai.service', () => {
@@ -18,7 +17,6 @@ vi.mock('@/entrypoints/background/ai/ai.service', () => {
   };
 });
 
-const aIService = vi.mocked(getAIService());
 const selectedTextMock = vi.fn();
 const modelStatusUpdateMock = vi.fn();
 
@@ -75,21 +73,6 @@ describe('Background Script', () => {
   });
 
   describe('onMessage Listener', () => {
-    describe('when receiving a detectLanguage message', () => {
-      it('should call the language detection API with the correct text', async () => {
-        const testText = 'Esto es una prueba';
-        await sendMessage('detectLanguage', testText);
-        expect(aIService.detectLanguage).toHaveBeenCalledOnce();
-        expect(aIService.detectLanguage).toHaveBeenCalledWith(testText);
-      });
-
-      it('should return the detected language', async () => {
-        const detectedLanguage = 'en';
-        aIService.detectLanguage.mockResolvedValue(detectedLanguage);
-        const result = await sendMessage('detectLanguage', 'test');
-        expect(result).toEqual(detectedLanguage);
-      });
-    });
 
     describe('when receiving a translateTextRequest message with available model', () => {
       const testText = 'Este es un texto de prueba para traducir';
