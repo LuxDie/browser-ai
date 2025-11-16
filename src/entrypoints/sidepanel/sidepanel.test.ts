@@ -32,7 +32,6 @@ const messageHandlerSpies = {
   getAvailableLanguages: vi.fn(() => SUPPORTED_LANGUAGES),
   getBrowserLanguage: vi.fn(() => DEFAULT_BROWSER_LANGUAGE),
   detectLanguage: vi.fn(() => Promise.resolve(DEFAULT_DETECTED_LANGUAGE)),
-  cancelPendingTranslations: vi.fn(() => {}),
   sidepanelReady: vi.fn(() => {})
 };
 
@@ -55,7 +54,6 @@ async function initSidepanelApp() {
   onMessage('getAvailableLanguages', messageHandlerSpies.getAvailableLanguages);
   onMessage('getBrowserLanguage', messageHandlerSpies.getBrowserLanguage);
   onMessage('detectLanguage', messageHandlerSpies.detectLanguage);
-  onMessage('cancelPendingTranslations', messageHandlerSpies.cancelPendingTranslations);
   onMessage('sidepanelReady', messageHandlerSpies.sidepanelReady);
   new SidepanelApp();
   await flushPromises();
@@ -149,28 +147,6 @@ describe('SidepanelApp', () => {
         summarize: false
       }
     );
-  });
-
-  it('should cancel translation when target language changes', async () => {
-    // Cambiar idioma destino (esto debería cancelar la traducción)
-    const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
-    targetSelect.value = 'fr';
-    targetSelect.dispatchEvent(new Event('change'));
-    await flushPromises();
-
-    // Verificar que la traducción fue cancelada
-    expect(messageHandlerSpies.cancelPendingTranslations).toHaveBeenCalled();
-  });
-
-  it('should cancel translation when text changes', async () => {
-    // Cambiar texto
-    const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-    textarea.value = 'Esta es una oración de prueba para traducción.';
-    textarea.dispatchEvent(new Event('input', { bubbles: true }));
-    await flushPromises();
-
-    // Verificar que se envió el mensaje de cancelación
-    expect(messageHandlerSpies.cancelPendingTranslations).toHaveBeenCalled();
   });
 
   describe('Process Button Behavior', () => {
@@ -347,6 +323,31 @@ describe('SidepanelApp', () => {
        expect(processButton.textContent?.trim()).toBe('processButton');
     });
 
+    it('should enable button after typing in input field during processing', async () => {
+      // Configurar: Ingresar texto y detectar idioma
+      const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
+      textarea.value = 'Este es un texto más largo que debería activar la detección de idioma';
+      textarea.dispatchEvent(new Event('input'));
+      await flushPromises();
+
+      // Bloquear processText para que nunca se resuelva y podamos probar el estado durante el procesamiento
+      mockAIService.processText.mockReturnValue(new Promise(() => {}));
+
+      const processButton = document.getElementById('process-button') as HTMLButtonElement;
+      processButton.click();
+      await flushPromises();
+
+      // Cambiar el texto en el textarea durante el procesamiento
+      textarea.value = 'Nuevo texto diferente para procesar';
+      textarea.dispatchEvent(new Event('input'));
+      await flushPromises();
+
+      // El botón debería volver a estar habilitado después de cambiar el texto
+      expect(processButton.disabled).toBe(false);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+       expect(processButton.textContent?.trim()).toBe('processButton');
+    });
+
     it('should re-enable process button when translation fails with an error', async () => {
       // Crear una promesa controlable para el mock
       let rejectPromise: (error: Error) => void;
@@ -378,18 +379,6 @@ describe('SidepanelApp', () => {
     });
   });
 
-  describe('Language Change Behavior', () => {
-    it('should send cancel message when target language changes', async () => {
-      // Cambiar idioma destino (debería enviar siempre mensaje de cancelación)
-      const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
-      targetSelect.value = 'fr';
-      targetSelect.dispatchEvent(new Event('change'));
-      await flushPromises();
-
-      // Verificar que se envió el mensaje de cancelación
-      expect(messageHandlerSpies.cancelPendingTranslations).toHaveBeenCalled();
-    });
-  });
 
   describe('Model Downloading State', () => {
     it('should show model download message when downloading starts', async () => {
@@ -422,7 +411,7 @@ describe('SidepanelApp', () => {
       const modelStatusContainer = document.getElementById('model-status-container');
       expect(modelStatusContainer?.innerHTML).toBeTruthy();
 
-      // Cambiar idioma origen (debería enviar siempre mensaje de cancelación)
+      // Cambiar idioma origen (debería resetear el estado de traducción)
       const inputText = document.getElementById('input-text') as HTMLTextAreaElement;
       inputText.value = 'Este es un texto más largo que debería activar la detección de idioma';
       inputText.dispatchEvent(new Event('input'));
@@ -441,7 +430,7 @@ describe('SidepanelApp', () => {
       const modelStatusContainer = document.getElementById('model-status-container');
       expect(modelStatusContainer?.innerHTML).toBeTruthy();
 
-      // Cambiar idioma destino (debería enviar siempre mensaje de cancelación)
+      // Cambiar idioma destino (debería resetear el estado de traducción)
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
       targetSelect.value = 'fr';
       targetSelect.dispatchEvent(new Event('change'));

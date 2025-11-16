@@ -165,13 +165,10 @@ export class SidepanelApp {
 
     // Listener de selector de idioma destino
     this.#elements.targetLanguage?.addEventListener('change', (e) => {
-      const previousTargetLanguage = this.#state.targetLanguage;
       this.#state.targetLanguage = (e.target as HTMLSelectElement).value as SupportedLanguageCode;
 
-      // Cancelar traducciones pendientes cuando cambia el idioma destino
-      if (previousTargetLanguage !== this.#state.targetLanguage) {
-        this.#cancelPendingTranslations();
-      }
+      // Resetear estado de traducción para permitir nuevo procesamiento
+      this.#resetTranslationState();
 
       // Actualizar la interfaz después del cambio de idioma
       this.#render();
@@ -195,7 +192,7 @@ export class SidepanelApp {
       return;
     }
 
-    this.#cancelPendingTranslations();
+    this.#resetTranslationState();
     const languageCode = await sendMessage('detectLanguage', this.#state.text);
     if (isLanguageSupported(languageCode)) {
       this.#state.sourceLanguage = languageCode;
@@ -203,14 +200,6 @@ export class SidepanelApp {
       this.#state.error = browser.i18n.getMessage('detectedLanguageNotSupported', languageCode);
       this.#state.sourceLanguage = null;
     }
-    this.#render();
-  }
-
-  #cancelPendingTranslations(): void {
-    // Enviar mensaje de cancelación sin esperar respuesta
-    void sendMessage('cancelPendingTranslations');
-    
-    this.#resetTranslationState();
     this.#render();
   }
 

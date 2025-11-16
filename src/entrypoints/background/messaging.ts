@@ -13,7 +13,6 @@ export interface ProtocolMap {
     sourceLanguage: SupportedLanguageCode
   }): string;
   checkAPIAvailability(): boolean;
-  cancelPendingTranslations(): void;
   getAvailableLanguages(): AvailableLanguages;
   getBrowserLanguage(): string;
   sidepanelReady(): void;

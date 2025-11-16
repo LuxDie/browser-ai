@@ -1,6 +1,3 @@
-import {
-  type PendingTranslation
-} from '@/entrypoints/background/background.model';
 import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@/entrypoints/background/languages';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
@@ -20,9 +17,6 @@ export default defineBackground({
 
     // Background script para Browser AI
     // Maneja eventos del navegador y comunicación entre componentes
-
-    // Traducción pendiente durante descarga
-    let pendingTranslation: PendingTranslation | null = null;
 
     // Texto seleccionado pendiente para envío al sidepanel
     let pendingRequest: { text: string, summarize: boolean } | null = null;
@@ -141,13 +135,6 @@ export default defineBackground({
 
     onMessage('checkAPIAvailability', () => {
       return modelManager.checkAPIAvailability();
-    });
-
-    onMessage('cancelPendingTranslations', () => {
-      if (pendingTranslation) {
-        console.log('Cancelling pending translation:', pendingTranslation);
-        pendingTranslation = null;
-      }
     });
 
     onMessage('getAvailableLanguages', () => {
