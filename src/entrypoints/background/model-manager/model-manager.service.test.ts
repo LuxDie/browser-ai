@@ -77,7 +77,7 @@ describe('ModelManager - Summarization Features', () => {
 
     it('should handle download errors gracefully', async () => {
       // TODO: manejar rechazo con `rejects.toThrow`
-      vi.mocked(Summarizer.create).mockRejectedValueOnce(new Error('Download failed'));
+      vi.mocked(Summarizer.create).mockRejectedValueOnce(new Error('Descarga fallida'));
 
       const result = await modelManager.downloadModel({ type: 'summarization' });
 
@@ -99,14 +99,14 @@ describe('ModelManager - Summarization Features', () => {
   describe('summarizeText', () => {
     it('should summarize text successfully', async () => {
       const mockSummarizer: Pick<Summarizer, 'summarize'> = {
-        summarize: vi.fn(() => Promise.resolve('This is a summary.'))
+        summarize: vi.fn(() => Promise.resolve('Este es un resumen.'))
       };
       vi.mocked(Summarizer.create).mockResolvedValueOnce(mockSummarizer as Summarizer);
 
-      const result = await modelManager.summarizeText('This is a long text that needs to be summarized.');
+      const result = await modelManager.summarizeText('Este es un texto largo que necesita ser resumido.');
 
-      expect(result).toBe('This is a summary.');
-      expect(mockSummarizer.summarize).toHaveBeenCalledWith('This is a long text that needs to be summarized.');
+      expect(result).toBe('Este es un resumen.');
+      expect(mockSummarizer.summarize).toHaveBeenCalledWith('Este es un texto largo que necesita ser resumido.');
     });
 
     it('should handle custom summarizer options', async () => {
@@ -117,7 +117,7 @@ describe('ModelManager - Summarization Features', () => {
         outputLanguage: 'es' as const
       };
 
-      await modelManager.summarizeText('Long text here', options);
+      await modelManager.summarizeText('Texto largo aquí', options);
 
       expect(Summarizer.create).toHaveBeenCalledWith(
         expect.objectContaining(options)
@@ -126,11 +126,11 @@ describe('ModelManager - Summarization Features', () => {
 
     it('should handle summarization errors gracefully', async () => {
       const mockSummarizer: Pick<Summarizer, 'summarize'> = {
-        summarize: vi.fn(() => Promise.reject(new Error('Summarization failed'))),
+        summarize: vi.fn(() => Promise.reject(new Error('Resumen fallido'))),
       };
       vi.mocked(Summarizer.create).mockResolvedValueOnce(mockSummarizer as Summarizer);
 
-      const result = await modelManager.summarizeText('Text to summarize');
+      const result = await modelManager.summarizeText('Texto a resumir');
 
       expect(result).toBe('errorGeneratingSummary');
     });
@@ -140,7 +140,7 @@ describe('ModelManager - Summarization Features', () => {
 
       const modelManager = new ModelManager();
 
-      await expect(modelManager.summarizeText('Text to summarize'))
+      await expect(modelManager.summarizeText('Texto a resumir'))
       .rejects.toThrow('summarizerAPINotSupportedError');
     });
   });

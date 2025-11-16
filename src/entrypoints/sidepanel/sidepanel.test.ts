@@ -41,7 +41,7 @@ async function setTextAndProcess(): Promise<void> {
     // Establecer texto y procesar
   const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
   const processButton = document.getElementById('process-button') as HTMLButtonElement;
-  textarea.value = 'This is a longer text that should trigger language detection';
+  textarea.value = 'Este es un texto más largo que debería activar la detección de idioma';
   textarea.dispatchEvent(new Event('input'));
   await flushPromises();
   processButton.click();
@@ -102,7 +102,7 @@ describe('SidepanelApp', () => {
     // Establecer texto y procesar
     const root = document.getElementById('root');
     const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-    textarea.value = 'This is a long enough text to trigger language detection and it should work properly.';
+    textarea.value = 'Este es un texto lo suficientemente largo para activar la detección de idioma.';
     textarea.dispatchEvent(new Event('input'));
     await flushPromises();
 
@@ -112,7 +112,7 @@ describe('SidepanelApp', () => {
   it('should show "localProcessingBadge" indicator when using native API', async () => {
     const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
     const processButton = document.getElementById('process-button') as HTMLButtonElement;
-    textarea.value = 'This is a test text for processing';
+    textarea.value = 'Este es un texto de prueba para procesamiento';
     textarea.dispatchEvent(new Event('input'));
     // await flushPromises();
     await flushPromises();
@@ -128,7 +128,7 @@ describe('SidepanelApp', () => {
 
   it('should automatically detect language from text selected from context menu', async () => {
     // Simular recepción de texto desde menú contextual
-    await sendMessage('selectedText', { text: 'This is a test sentence for automatic translation.', summarize: false });
+    await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción automática.', summarize: false });
     // Esperar a que se active la traducción automática
     await flushPromises();
 
@@ -138,11 +138,11 @@ describe('SidepanelApp', () => {
 
   it('should automatically process text when selected from context menu', async () => {
     // Simular recepción de texto desde menú contextual
-    await sendMessage('selectedText', { text: 'This is a test sentence for automatic translation.', summarize: false });
+    await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción automática.', summarize: false });
     // Esperar a que se active el procesamiento automático
     await flushPromises();
     expect(mockAIService.processText).toHaveBeenCalledWith(
-      'This is a test sentence for automatic translation.',
+      'Esta es una oración de prueba para traducción automática.',
       {
         sourceLanguage: 'en',
         targetLanguage: 'es',
@@ -165,7 +165,7 @@ describe('SidepanelApp', () => {
   it('should cancel translation when text changes', async () => {
     // Cambiar texto
     const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-    textarea.value = 'This is a test sentence for translation.';
+    textarea.value = 'Esta es una oración de prueba para traducción.';
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
     await flushPromises();
 
@@ -195,7 +195,7 @@ describe('SidepanelApp', () => {
       messageHandlerSpies.detectLanguage.mockReturnValue(new Promise(() => {}));
 
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a longer text that should trigger language detection';
+      textarea.value = 'Este es un texto más largo que debería activar la detección de idioma';
       textarea.dispatchEvent(new Event('input'));
 
       // Esperar un tiempo muy corto para que se actualice la UI
@@ -211,7 +211,7 @@ describe('SidepanelApp', () => {
 
       // Agregar texto al textarea primero
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a test sentence for translation.';
+      textarea.value = 'Esta es una oración de prueba para traducción.';
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
       messageHandlerSpies.detectLanguage.mockResolvedValue(sourceLanguage);
@@ -234,7 +234,7 @@ describe('SidepanelApp', () => {
 
       // Agregar texto al textarea primero
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a test sentence for translation.';
+      textarea.value = 'Esta es una oración de prueba para traducción.';
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
       // Establecer idioma destino igual al origen para probar estado deshabilitado
@@ -256,7 +256,7 @@ describe('SidepanelApp', () => {
     it('should show "processingButton" and be disabled when processing is in progress', async () => {
       // Configurar: Ingresar texto y detectar idioma para habilitar procesamiento
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a longer text that should trigger language detection';
+      textarea.value = 'Este es un texto más largo que debería activar la detección de idioma';
       textarea.dispatchEvent(new Event('input'));
       await flushPromises();
       // Verificar que el botón esté habilitado inicialmente
@@ -289,7 +289,7 @@ describe('SidepanelApp', () => {
       await flushPromises();
 
       // Simular recepción de texto desde menú contextual (debería activar procesamiento automático)
-      await sendMessage('selectedText', { text: 'This is a test sentence for automatic translation.', summarize: false });
+      await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción automática.', summarize: false });
       await flushPromises();
 
       // Verificar que NO se solicitó procesamiento porque los idiomas son iguales y resumir está en false
@@ -302,7 +302,7 @@ describe('SidepanelApp', () => {
     it('should reset button state after processing completes', async () => {
       // Configurar: Ingresar texto y detectar idioma para habilitar procesamiento
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a longer text that should trigger language detection';
+      textarea.value = 'Este es un texto más largo que debería activar la detección de idioma';
       textarea.dispatchEvent(new Event('input'));
       await flushPromises();
       // Verificar que el botón esté habilitado inicialmente
@@ -323,7 +323,7 @@ describe('SidepanelApp', () => {
     it('should enable button after switching target language during processing', async () => {
       // Configurar: Ingresar texto y detectar idioma
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a longer text that should trigger language detection';
+      textarea.value = 'Este es un texto más largo que debería activar la detección de idioma';
       textarea.dispatchEvent(new Event('input'));
       await flushPromises();
 
@@ -356,7 +356,7 @@ describe('SidepanelApp', () => {
       mockAIService.processText.mockReturnValueOnce(mockPromise);
       // Configurar: Ingresar texto y detectar idioma para habilitar traducción
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a longer text that should trigger language detection';
+      textarea.value = 'Este es un texto más largo que debería activar la detección de idioma';
       textarea.dispatchEvent(new Event('input'));
       await flushPromises();
       const processButton = document.getElementById('process-button') as HTMLButtonElement;
@@ -424,7 +424,7 @@ describe('SidepanelApp', () => {
 
       // Cambiar idioma origen (debería enviar siempre mensaje de cancelación)
       const inputText = document.getElementById('input-text') as HTMLTextAreaElement;
-      inputText.value = 'This is a longer text that should trigger language detection';
+      inputText.value = 'Este es un texto más largo que debería activar la detección de idioma';
       inputText.dispatchEvent(new Event('input'));
       await flushPromises();
 
@@ -456,7 +456,7 @@ describe('SidepanelApp', () => {
     it('should display error message when translation fails with an error', async () => {
       // Configurar: Ingresar texto y detectar idioma para habilitar traducción
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a longer text that should trigger language detection';
+      textarea.value = 'Este es un texto más largo que debería activar la detección de idioma';
       textarea.dispatchEvent(new Event('input'));
       
       // Esperar a que se complete la detección de idioma
@@ -506,7 +506,7 @@ describe('SidepanelApp', () => {
     it('should send summarize option to ProcessTextService when checkbox is checked', async () => {
       // Configurar: Ingresar texto que active el procesamiento
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a longer text that should trigger language detection';
+      textarea.value = 'Este es un texto más largo que debería activar la detección de idioma';
       textarea.dispatchEvent(new Event('input'));
       
       // Esperar a que se complete la detección de idioma
@@ -527,7 +527,7 @@ describe('SidepanelApp', () => {
       await flushPromises();
 
       expect(mockAIService.processText).toHaveBeenCalledWith(
-        'This is a longer text that should trigger language detection',
+        'Este es un texto más largo que debería activar la detección de idioma',
         {
           sourceLanguage: 'en',
           targetLanguage: 'es',
@@ -539,7 +539,7 @@ describe('SidepanelApp', () => {
     it('should send summarize: false when checkbox is unchecked', async () => {
       // Configurar: Ingresar texto
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a longer text that should trigger language detection';
+      textarea.value = 'Este es un texto más largo que debería activar la detección de idioma';
       textarea.dispatchEvent(new Event('input'));
       
       // Esperar a que se complete la detección de idioma
@@ -555,7 +555,7 @@ describe('SidepanelApp', () => {
       await flushPromises();
 
       expect(mockAIService.processText).toHaveBeenCalledWith(
-        'This is a longer text that should trigger language detection',
+        'Este es un texto más largo que debería activar la detección de idioma',
         {
           sourceLanguage: 'en',
           targetLanguage: 'es',
@@ -572,7 +572,7 @@ describe('SidepanelApp', () => {
 
       // Ingresar texto
       const textarea = document.getElementById('input-text') as HTMLTextAreaElement;
-      textarea.value = 'This is a test sentence for translation.';
+      textarea.value = 'Esta es una oración de prueba para traducción.';
       textarea.dispatchEvent(new Event('input'));
       await flushPromises();
 
@@ -599,7 +599,7 @@ describe('SidepanelApp', () => {
 
     it('should automatically check summarize checkbox when selectedText message has summarize: true', async () => {
       // Simular recepción de texto desde menú contextual con summarize: true
-      await sendMessage('selectedText', { text: 'This is a test sentence for summarization.', summarize: true });
+      await sendMessage('selectedText', { text: 'Esta es una oración de prueba para resumen.', summarize: true });
 
       // Esperar a que se procese el mensaje y se actualice la UI
       await flushPromises();
@@ -618,7 +618,7 @@ describe('SidepanelApp', () => {
       expect(summarizeCheckbox.checked).toBe(true);
 
       // Simular recepción de texto desde menú contextual con summarize: false (menú "Traducir")
-      await sendMessage('selectedText', { text: 'This is a test sentence for translation.', summarize: false });
+      await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción.', summarize: false });
 
       // Esperar a que se procese el mensaje y se actualice la UI
       await flushPromises();

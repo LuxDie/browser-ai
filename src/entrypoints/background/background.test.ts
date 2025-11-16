@@ -77,7 +77,7 @@ describe('Background Script', () => {
   describe('onMessage Listener', () => {
     describe('when receiving a detectLanguage message', () => {
       it('should call the language detection API with the correct text', async () => {
-        const testText = 'This is a test';
+        const testText = 'Esto es una prueba';
         await sendMessage('detectLanguage', testText);
         expect(aIService.detectLanguage).toHaveBeenCalledOnce();
         expect(aIService.detectLanguage).toHaveBeenCalledWith(testText);
@@ -92,7 +92,7 @@ describe('Background Script', () => {
     });
 
     describe('when receiving a translateTextRequest message with available model', () => {
-      const testText = 'This is a test text to translate';
+      const testText = 'Este es un texto de prueba para traducir';
       const sourceLanguage = 'en';
       const targetLanguage = 'es';
 
@@ -136,7 +136,7 @@ describe('Background Script', () => {
 
       it('should send modelStatusUpdate when model is not available', async () => {
         vi.mocked(Translator.availability).mockResolvedValue('downloadable');
-        const testText = 'Test text';
+        const testText = 'Texto de prueba';
         const sourceLanguage = 'en';
         const targetLanguage = 'es';
         await sendMessage('translateText', { text: testText, sourceLanguage, targetLanguage });
@@ -155,7 +155,7 @@ describe('Background Script', () => {
 
 
         await sendMessage('translateText', {
-          text: 'Test text',
+          text: 'Texto de prueba',
           sourceLanguage: 'en',
           targetLanguage: 'es'
         });
@@ -173,7 +173,7 @@ describe('Background Script', () => {
       // Use base setup
   
       // Trigger context menu click
-      const selectedText = 'This is some selected text to translate';
+      const selectedText = 'Este es un texto seleccionado para traducir';
       fakeBrowser.contextMenus.onClicked.trigger({
         menuItemId: 'translateSelection',
         selectionText: selectedText
@@ -188,7 +188,7 @@ describe('Background Script', () => {
       await sendMessage('sidepanelReady');
 
       // Trigger context menu click
-      const selectedText = 'This is some selected text to translate';
+      const selectedText = 'Este es un texto seleccionado para traducir';
       fakeBrowser.contextMenus.onClicked.trigger({
         menuItemId: 'translateSelection',
         selectionText: selectedText
@@ -206,7 +206,7 @@ describe('Background Script', () => {
       // Use base setup
 
       // Trigger context menu click
-      const selectedText = 'This is some selected text to translate';
+      const selectedText = 'Este es un texto seleccionado para traducir';
       fakeBrowser.contextMenus.onClicked.trigger({
         menuItemId: 'translateSelection',
         selectionText: selectedText
