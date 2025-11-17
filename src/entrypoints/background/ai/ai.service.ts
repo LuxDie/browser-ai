@@ -3,7 +3,7 @@ import { ModelManager } from '@/entrypoints/background/model-manager/model-manag
 import { sendMessage } from '@/entrypoints/background/messaging';
 import type { SupportedLanguageCode, SummarizerLanguageCode } from '../languages';
 import { SUMMARIZER_LANGUAGE_CODES } from '../languages';
-import type { SummarizerOptions } from '../model-manager/model-manager.model';
+import type { SummarizerOptions, DownloadProgressCallback } from '../model-manager/model-manager.model';
 
 interface ProcessOptions {
   summarize: boolean;
@@ -32,7 +32,15 @@ export class AIService {
       this.#isNotificationPending = true;
 
       void sendMessage('modelStatusUpdate', { state: 'downloading' });
-      modelStatus = await this.#modelManager.downloadModel(modelParams);
+      const progressCallback: DownloadProgressCallback = (monitor) => {
+        monitor.addEventListener('downloadprogress', (event) => {
+          void sendMessage('modelStatusUpdate', {
+            state: 'downloading',
+            downloadProgress: Math.round(event.loaded * 100)
+          });
+        });
+      };
+      modelStatus = await this.#modelManager.downloadModel(modelParams, progressCallback);
       void sendMessage('modelStatusUpdate', modelStatus);
     } else if (modelStatus.state === 'downloading') {
 

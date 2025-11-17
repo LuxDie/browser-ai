@@ -70,7 +70,7 @@ describe('ModelManager - Summarization Features', () => {
       const result = await modelManager.downloadModel({ type: 'summarization' });
 
       expect(result.state).toBe('available');
-      expect(Summarizer.create).toHaveBeenCalled();
+      expect(Summarizer.create).toHaveBeenCalledWith({});
     });
 
     it('should handle download errors gracefully', async () => {
@@ -86,6 +86,25 @@ describe('ModelManager - Summarization Features', () => {
       const modelManager = new ModelManager();
 
       await expect(modelManager.downloadModel({ type: 'summarization' })).rejects.toThrow('summarizerAPINotSupported');
+    });
+
+    it('should pass progress callback to summarizer create when provided', async () => {
+      vi.mocked(Summarizer.availability).mockResolvedValueOnce('downloadable');
+      const mockProgressCallback = vi.fn();
+
+      await modelManager.downloadModel({ type: 'summarization' }, mockProgressCallback);
+
+      expect(Summarizer.create).toHaveBeenCalledWith(
+        expect.objectContaining({ monitor: mockProgressCallback })
+      );
+    });
+
+    it('should not pass monitor to summarizer create when no progress callback provided', async () => {
+      vi.mocked(Summarizer.availability).mockResolvedValueOnce('downloadable');
+
+      await modelManager.downloadModel({ type: 'summarization' });
+
+      expect(Summarizer.create).toHaveBeenCalledWith({});
     });
   });
 
