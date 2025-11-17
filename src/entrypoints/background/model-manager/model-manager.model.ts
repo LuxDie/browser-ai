@@ -11,3 +11,9 @@ export interface AIModelStatus {
   errorMessage?: string;
   downloadProgress?: number;
 }
+
+export interface DownloadProgressMonitor {
+  addEventListener(event: 'downloadprogress', listener: (event: { loaded: number }) => void): void;
+}
+
+export type DownloadProgressCallback = (monitor: DownloadProgressMonitor) => void;
