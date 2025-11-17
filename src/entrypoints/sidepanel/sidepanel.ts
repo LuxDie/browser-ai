@@ -3,7 +3,9 @@ import { type SupportedLanguages, type SupportedLanguageCode, LanguageService } 
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 import { getAIService } from '@/entrypoints/background/ai/ai.service';
+import { createApp, nextTick, ref, h, type Component, type App } from 'vue';
 import ProcessControls from '@/entrypoints/sidepanel/components/ProcessControls.vue';
+import ModelDownloadCard from '@/entrypoints/sidepanel/components/ModelDownloadCard.vue';
 
 interface State {
   text: string
@@ -40,6 +42,8 @@ export class SidepanelApp {
     downloadProgress: null as HTMLDivElement | null,
     modelOptions: null as HTMLDivElement | null
   };
+
+  #modelDownloadApp: (App & { _statusRef?: ReturnType<typeof ref<AIModelStatus>> }) | null = null;
 
   readonly #minDetectLength = 15;
 
@@ -271,11 +275,11 @@ export class SidepanelApp {
       `;
       this.#elements.inputText = document.getElementById('input-text') as HTMLTextAreaElement;
 
-      // Montar el componente Vue una vez
+      // Montar los componentes Vue
       const processRow = document.getElementById('process-row');
       if (processRow) {
-        const app = createApp(ProcessControls as Component);
-        app.mount(processRow);
+        const processApp = createApp(ProcessControls as Component);
+        processApp.mount(processRow);
 
         void nextTick(() => {
           // Obtener referencias después de mount
@@ -309,7 +313,6 @@ export class SidepanelApp {
     this.#updateResult();
     this.#updateError();
     this.#updateLanguageInfo();
-    this.#updateLanguageSelector();
   }
 
   #updateAPIWarning(): void {
@@ -349,14 +352,35 @@ export class SidepanelApp {
 
   #updateModelStatus(): void {
     const modelStatusContainer = document.getElementById('model-status-container');
-    if (modelStatusContainer) {
-      const newContent = this.#renderModelStatus();
-      const currentContent = modelStatusContainer.innerHTML;
+    if (!modelStatusContainer) return;
 
-      // Solo actualizar si el contenido cambió realmente para evitar reinicios de animación
-      if (newContent !== currentContent) {
-        modelStatusContainer.innerHTML = newContent;
+    if (this.#state.modelStatus?.state === 'downloading') {
+      // Si no hay app montada, montarla con un ref reactivo
+      if (!this.#modelDownloadApp) {
+        const statusRef = ref(this.#state.modelStatus);
+        this.#modelDownloadApp = createApp({
+          setup() {
+            return () => h(ModelDownloadCard, { status: statusRef.value });
+          },
+        });
+        this.#modelDownloadApp.mount(modelStatusContainer);
+
+        // Guardar la referencia al ref para actualizaciones futuras
+        this.#modelDownloadApp._statusRef = statusRef;
+      } else {
+        // Actualizar el ref reactivo
+        const statusRef = this.#modelDownloadApp._statusRef;
+        if (statusRef) {
+          statusRef.value = this.#state.modelStatus;
+        }
       }
+    } else {
+      // Si no está descargando, desmontar y limpiar
+      if (this.#modelDownloadApp) {
+        this.#modelDownloadApp.unmount();
+        this.#modelDownloadApp = null;
+      }
+      modelStatusContainer.innerHTML = '';
     }
   }
 
@@ -464,27 +488,7 @@ export class SidepanelApp {
     }
   }
 
-  #renderModelStatus(): string {
-    if (this.#state.modelStatus?.state === 'downloading') {
-      const downloadingText = this.#state.summarize
-        ? browser.i18n.getMessage('downloadingSummarizer')
-        : browser.i18n.getMessage('downloadingTranslator', [this.#state.sourceLanguage!, this.#state.targetLanguage]);
 
-      return `
-        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div class="flex items-center mb-3">
-            <span class="font-medium text-blue-800">${downloadingText}</span>
-          </div>
-          <div id="download-progress-bar" class="progress-indeterminate mb-2"></div>
-          <div class="text-sm text-blue-700">
-            ${browser.i18n.getMessage('downloadWaitMessage')}
-          </div>
-        </div>
-      `;
-    }
-
-    return '';
-  }
 
   #updateProcessRowWarning(): void {
     const warningContainer = document.getElementById('process-warning-container');

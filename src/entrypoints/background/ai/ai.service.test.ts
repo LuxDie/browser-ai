@@ -442,6 +442,23 @@ describe('AIService', () => {
       );
     });
 
+    it('should NOT send notification when translation model is already available', async () => {
+      // Mock model available
+      mockModelManagerService.checkModelStatus.mockResolvedValue({
+        state: 'available'
+      });
+      mockModelManagerService.translate.mockResolvedValue('Texto traducido.');
+
+      await aIService.processText('Texto a traducir', {
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
+        summarize: false
+      });
+
+      // Verify browser notification was NOT created
+      expect(browser.notifications.create).not.toHaveBeenCalled();
+    });
+
     it('should throw error when translation model check fails', async () => {
       // Clear default mock and set specific one for this test
       const translationApiNotSupportedMessage = 'API de traducción no soportada';
