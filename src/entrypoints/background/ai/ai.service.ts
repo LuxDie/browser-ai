@@ -147,6 +147,63 @@ export class AIService {
     await this.#setupModel({ type: 'language-detection' });
     return await this.#modelManager.detectLanguage(text, { signal: this.#abortController.signal });
   }
+
+  async write(text: string): Promise<string> {
+    let notificationPending = await this.#setupModel({ type: 'writer' });
+    const writtenText = await this.#modelManager.write(text);
+    if (notificationPending) {
+      void browser.notifications.create({
+        type: 'basic',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
+        iconUrl: 'icons/icon-128.png'
+      });
+    }
+    return writtenText;
+  }
+
+  async rewrite(text: string): Promise<string> {
+    let notificationPending = await this.#setupModel({ type: 'rewriter' });
+    const rewrittenText = await this.#modelManager.rewrite(text);
+    if (notificationPending) {
+      void browser.notifications.create({
+        type: 'basic',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
+        iconUrl: 'icons/icon-128.png'
+      });
+    }
+    return rewrittenText;
+  }
+
+  async proofread(text: string): Promise<string> {
+    let notificationPending = await this.#setupModel({ type: 'proofreader' });
+    const proofreadText = await this.#modelManager.proofread(text);
+    if (notificationPending) {
+      void browser.notifications.create({
+        type: 'basic',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
+        iconUrl: 'icons/icon-128.png'
+      });
+    }
+    return proofreadText;
+  }
+
+  async prompt(text: string): Promise<string> {
+    let notificationPending = await this.#setupModel({ type: 'prompt' });
+    const promptResult = await this.#modelManager.prompt(text);
+    if (notificationPending) {
+      void browser.notifications.create({
+        type: 'basic',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
+        iconUrl: 'icons/icon-128.png'
+      });
+    }
+    return promptResult;
+  }
+
   checkAPIAvailability(): boolean {
     return this.#modelManager.checkAPIAvailability();
   }

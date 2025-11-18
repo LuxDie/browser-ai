@@ -298,6 +298,42 @@
       }
     }
   },
+  "writerAPINotAvailable": {
+    "message": "La API de Escritura no está disponible"
+  },
+  "writerModelNotAvailable": {
+    "message": "El modelo de Escritura no está disponible"
+  },
+  "rewriterAPINotAvailable": {
+    "message": "La API de Reescritura no está disponible"
+  },
+  "rewriterModelNotAvailable": {
+    "message": "El modelo de Reescritura no está disponible"
+  },
+  "proofreaderAPINotAvailable": {
+    "message": "La API de Corrección no está disponible"
+  },
+  "proofreaderModelNotAvailable": {
+    "message": "El modelo de Corrección no está disponible"
+  },
+  "promptAPINotAvailable": {
+    "message": "La API de Prompt no está disponible"
+  },
+  "promptModelNotAvailable": {
+    "message": "El modelo de Prompt no está disponible"
+  },
+  "writerAPINotSupported": {
+    "message": "La API de Escritura no es soportada"
+  },
+  "rewriterAPINotSupported": {
+    "message": "La API de Reescritura no es soportada"
+  },
+  "proofreaderAPINotSupported": {
+    "message": "La API de Corrección no es soportada"
+  },
+  "promptAPINotSupported": {
+    "message": "La API de Prompt no es soportada"
+  },
   "detectedLanguageNotSupported": {
     "message": "El idioma detectado \"$code$\" no está soportado",
     "placeholders": {

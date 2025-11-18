@@ -298,6 +298,42 @@
       }
     }
   },
+  "writerAPINotAvailable": {
+    "message": "Writer API not available"
+  },
+  "writerModelNotAvailable": {
+    "message": "Writer model not available"
+  },
+  "rewriterAPINotAvailable": {
+    "message": "Rewriter API not available"
+  },
+  "rewriterModelNotAvailable": {
+    "message": "Rewriter model not available"
+  },
+  "proofreaderAPINotAvailable": {
+    "message": "Proofreader API not available"
+  },
+  "proofreaderModelNotAvailable": {
+    "message": "Proofreader model not available"
+  },
+  "promptAPINotAvailable": {
+    "message": "Prompt API not available"
+  },
+  "promptModelNotAvailable": {
+    "message": "Prompt model not available"
+  },
+  "writerAPINotSupported": {
+    "message": "Writer API not supported"
+  },
+  "rewriterAPINotSupported": {
+    "message": "Rewriter API not supported"
+  },
+  "proofreaderAPINotSupported": {
+    "message": "Proofreader API not supported"
+  },
+  "promptAPINotSupported": {
+    "message": "Prompt API not supported"
+  },
   "detectedLanguageNotSupported": {
     "message": "Detected language \"$code$\" is not supported",
     "placeholders": {

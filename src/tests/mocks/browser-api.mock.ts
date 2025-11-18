@@ -1,3 +1,4 @@
+/// <reference types="dom-chromium-ai" />
 import { vi } from 'vitest';
 
 type Listener = Parameters<typeof Browser.contextMenus.onClicked.addListener>[0]
