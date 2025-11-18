@@ -107,6 +107,10 @@ watch(summarize, () => {
   abortController.abort();
 });
 
+const handleCancel = () => {
+  abortController.abort();
+};
+
 </script>
 
 <template>
@@ -115,7 +119,7 @@ watch(summarize, () => {
       <h1 class="text-xl font-bold">Browser AI</h1>
     </header>
 
-    <ModelDownloadCard v-if="modelStatus" :status="modelStatus" />
+    <ModelDownloadCard v-if="modelStatus" :status="modelStatus" :can-cancel="true" @cancel="handleCancel" />
 
     <div class="flex flex-col gap-2">
       <label for="input-text">Text to process:</label>
