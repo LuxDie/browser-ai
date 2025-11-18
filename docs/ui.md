@@ -1,7 +1,7 @@
 # Documentación de UI
 
-**Versión:** v0.2.1
-**Última modificación:** 2025-11-06
+**Versión:** v0.3.0
+**Última modificación:** 2025-11-18
 
 La UI se presenta en un panel lateral con una única vista para facilitar el uso combinado y encadenado de las distintas funciones.
 
@@ -122,12 +122,13 @@ Durante la descarga del modelo:
 │                                     │
 │ La descarga puede tomar algunos     │
 │ minutos. Por favor, espere...       │
+│                                     │
+│ [Cancelar]                          │
 └─────────────────────────────────────┘
 ```
 
 **Nota**: La barra de progreso es indeterminada ya que la API de IA del navegador no proporciona información específica sobre el progreso porcentual, tamaño total del paquete o tiempo estimado de descarga.
-No se incluye un botón para cancelar la descarga ya que el navegador no expone esa funcionalidad.
-Ver [ADR 0002](/docs/adr/0002-removal-cancel-download-button.md).
+Se incluye un botón para cancelar la descarga.
 
 ### Notificación Push (No Bloqueante)
 Cuando el modelo está listo:

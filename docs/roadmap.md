@@ -1,7 +1,7 @@
 # Hoja de ruta para Browser AI
 
-**Versión:** v0.2.1
-**Última modificación:** 2025-11-07
+**Versión:** v0.3.0
+**Última modificación:** 2025-11-18
 
 Este escrito documenta a grandes rasgos la intención y la planificación del proyecto a futuro. Tiene como objetivo facilitar a las personas la decisión de utilizar y participar de su desarrollo.
 
@@ -9,6 +9,9 @@ Este escrito documenta a grandes rasgos la intención y la planificación del pr
 - ✅ Mejora de la infraestructura de desarrollo: frameworks, librerías, herramientas de construcción, etc.
 - ✅ Funcionalidad de resumen.
 - ✅ Internacionalización (Español e Inglés).
+- ✅ Descarga y gestión de modelos:
+  - Indicador de progreso de descarga.
+  - Funcionalidad de cancelación de descarga.
 
 ## Fase 2 — Capacidades lingüísticas adicionales
 - Escritura, reescritura, corrección. Se utilizarán las APIs integradas en el navegador (actualmente en fase experimental).
