@@ -3,7 +3,16 @@ import type { AIModelStatus } from '@/entrypoints/background/model-manager/model
 
 defineProps<{
   status: AIModelStatus;
+  canCancel?: boolean;
 }>();
+
+const emit = defineEmits<{
+  cancel: [];
+}>();
+
+const handleCancel = () => {
+  emit('cancel');
+};
 </script>
 
 <template>
@@ -31,5 +40,14 @@ defineProps<{
         ></div>
       </div>
     </div>
+
+    <div v-if="canCancel && status.state === 'downloading'" class="mt-4 flex justify-center">
+      <button
+        @click="handleCancel"
+        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+      >
+        Cancelar descarga
+      </button>
+    </div>
   </div>
-</template>
+ </template>
