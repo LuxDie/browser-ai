@@ -1,5 +1,5 @@
 import type { AIModelStatus, SummarizerOptions } from '@/entrypoints/background/model-manager/model-manager.model';
-import type { SupportedLanguageCode } from '../languages';
+import type { SupportedLanguageCode } from '../language/language.service';
 
 export class ModelManager {
   static #instance: ModelManager | null = null;

@@ -1,8 +1,8 @@
 import { defineProxyService } from '@webext-core/proxy-service';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import { sendMessage } from '@/entrypoints/background/messaging';
-import type { SupportedLanguageCode, SummarizerLanguageCode } from '../languages';
-import { SUMMARIZER_LANGUAGE_CODES } from '../languages';
+import { LanguageService } from '../language/language.service';
+import type { SupportedLanguageCode, SummarizerLanguageCode } from '../language/language.service';
 import type { SummarizerOptions } from '../model-manager/model-manager.model';
 
 interface ProcessOptions {
@@ -13,9 +13,10 @@ interface ProcessOptions {
 
 export class AIService {
   #modelManager = ModelManager.getInstance();
+  #languageService = LanguageService.getInstance();
   #isNotificationPending = false;
+
   async #setupModel(
-    this: AIService,
     modelParams: Parameters<ModelManager['checkModelStatus']>[0]
   ) {
     // Verificar disponibilidad del modelo
@@ -51,17 +52,16 @@ export class AIService {
       await this.#setupModel({ type: 'summarization' });
 
       // Lógica para manejar idiomas no soportados por el summarizer
-      const isSourceSupported = SUMMARIZER_LANGUAGE_CODES.includes(options.sourceLanguage as SummarizerLanguageCode);
-      const isTargetSupported = SUMMARIZER_LANGUAGE_CODES.includes(options.targetLanguage as SummarizerLanguageCode);
-      const summarizerDefaultLanguage = SUMMARIZER_LANGUAGE_CODES[0];
+      const summarizerLanguages = this.#languageService.getSummarizerLanguageCodes();
+      const summarizerDefaultLanguage = summarizerLanguages[0];
 
       processedText = text;
       let summarizerInputLanguage: SummarizerLanguageCode = summarizerDefaultLanguage;
       let summarizerOutputLanguage: SummarizerLanguageCode = summarizerDefaultLanguage;
 
       // Preparar el texto y idiomas para el summarizer
-      if (isSourceSupported) {
-        summarizerInputLanguage = options.sourceLanguage as SummarizerLanguageCode;
+      if (this.#languageService.isSummarizerLanguage(options.sourceLanguage)) {
+        summarizerInputLanguage = options.sourceLanguage;
       } else {
         summarizerInputLanguage = summarizerDefaultLanguage;
         await this.#setupModel({
@@ -76,8 +76,8 @@ export class AIService {
         );
       }
 
-      if (isTargetSupported) {
-        summarizerOutputLanguage = options.targetLanguage as SummarizerLanguageCode;
+      if (this.#languageService.isSummarizerLanguage(options.targetLanguage)) {
+        summarizerOutputLanguage = options.targetLanguage;
       } else {
         summarizerOutputLanguage = summarizerDefaultLanguage;
       }
@@ -105,7 +105,7 @@ export class AIService {
 
       processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, options.targetLanguage);
     }
-    
+
     if (this.#isNotificationPending) {
       void browser.notifications.create({
         type: 'basic',
@@ -114,7 +114,7 @@ export class AIService {
         iconUrl: 'icons/icon-128.png'
       });
     }
-    
+
     return processedText;
   }
 
@@ -127,5 +127,7 @@ export class AIService {
   }
 }
 
-export const [registerAIService, getAIService] =
-  defineProxyService('AIService', () => new AIService());
+export const [registerAIService, getAIService] = defineProxyService(
+  'AIService',
+  () => new AIService()
+);

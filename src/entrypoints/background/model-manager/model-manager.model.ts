@@ -1,5 +1,5 @@
 
-import type { SummarizerLanguageCode } from '@/entrypoints/background/languages';
+import type { SummarizerLanguageCode } from '@/entrypoints/background/language/language.service';
 
 export interface SummarizerOptions extends Omit<SummarizerCreateOptions, 'expectedInputLanguages' | 'outputLanguage'> {
   expectedInputLanguages: SummarizerLanguageCode[];

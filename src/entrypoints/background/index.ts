@@ -1,34 +1,21 @@
-import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@/entrypoints/background/languages';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import { registerAIService } from '@/entrypoints/background/ai/ai.service';
 
-// Registrar servicios proxy
-registerAIService();
-
-export type { SupportedLanguageCode } from '@/entrypoints/background/languages';
-export type AvailableLanguages = typeof SUPPORTED_LANGUAGES;
 export type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
-export const DEFAULT_TARGET_LANGUAGE: SupportedLanguageCode = 'es';
 
+/* Background script para Browser AI
+ * Maneja eventos del navegador y comunicación entre componentes
+ */
 export default defineBackground({
   type: 'module',
   main() {
+    // Registrar servicios proxy
+    registerAIService();
 
-    // Background script para Browser AI
-    // Maneja eventos del navegador y comunicación entre componentes
 
     // Texto seleccionado pendiente para envío al sidepanel
     let pendingRequest: { text: string, summarize: boolean } | null = null;
-
-    /**
-     * Detecta el idioma principal del navegador del usuario
-     * @returns Código de idioma (ej: 'es', 'en', 'fr') o null si no se puede detectar
-     */
-    function getBrowserLanguage(): string {
-      // Tomar el primer idioma y convertir 'es-ES' a 'es'
-      return navigator.language.split('-')[0]!;
-    }
 
     // Instancias de servicios
     const modelManager = ModelManager.getInstance();
@@ -125,13 +112,6 @@ export default defineBackground({
       return translatedText;
     });
 
-    onMessage('getAvailableLanguages', () => {
-      return SUPPORTED_LANGUAGES;
-    });
-
-    onMessage('getBrowserLanguage', () => {
-      return getBrowserLanguage();
-    });
 
     onMessage('sidepanelReady', () => {
       if (pendingRequest) {
@@ -155,4 +135,5 @@ export default defineBackground({
     browser.runtime.onStartup.addListener(() => {
       void createContextMenu();
     });
-  }});
+  }
+});

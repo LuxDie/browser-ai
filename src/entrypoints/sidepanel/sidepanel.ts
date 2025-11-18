@@ -1,13 +1,9 @@
 import '@/entrypoints/sidepanel/sidepanel.css';
-import {
-  DEFAULT_TARGET_LANGUAGE,
-} from '@/entrypoints/background';
-import type { AvailableLanguages, SupportedLanguageCode } from '@/entrypoints/background';
-import { getLanguageKey, isLanguageSupported } from '@/entrypoints/background/languages';
+import { type SupportedLanguages, type SupportedLanguageCode, LanguageService } from '@/entrypoints/background/language/language.service';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
-import type { AIModelStatus } from '../background/model-manager/model-manager.model';
-import { getAIService } from '../background/ai/ai.service';
-import ProcessControls from './components/ProcessControls.vue';
+import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
+import { getAIService } from '@/entrypoints/background/ai/ai.service';
+import ProcessControls from '@/entrypoints/sidepanel/components/ProcessControls.vue';
 
 interface State {
   text: string
@@ -20,26 +16,15 @@ interface State {
   summarize: boolean
   isLoading: boolean
   error: string | null
-  apiAvailable: boolean
   modelStatus: AIModelStatus | null
 }
 
 export class SidepanelApp {
   #AIService = getAIService();
-  #availableLanguages!: AvailableLanguages;
-  #state: State = {
-    text: '',
-    translatedText: '',
-    editedTranslatedText: '',
-    summaryText: '',
-    sourceLanguage: null,
-    targetLanguage: DEFAULT_TARGET_LANGUAGE,
-    summarize: false,
-    isLoading: false,
-    error: null,
-    apiAvailable: false,
-    modelStatus: null,
-  };
+  #languageService = LanguageService.getInstance();
+  #supportedLanguages!: SupportedLanguages;
+  #apiAvailable!: boolean;
+  #state!: State;
 
   #elements = {
     inputText: null as HTMLTextAreaElement | null,
@@ -56,8 +41,6 @@ export class SidepanelApp {
     modelOptions: null as HTMLDivElement | null
   };
 
-  #defaultTargetLanguage = DEFAULT_TARGET_LANGUAGE;
-
   readonly #minDetectLength = 15;
 
 
@@ -66,15 +49,28 @@ export class SidepanelApp {
   }
 
   async #init(): Promise<void> {
-    this.#state.apiAvailable = await this.#checkAPIAvailability();
-    this.#availableLanguages = await sendMessage('getAvailableLanguages');
+    this.#apiAvailable = await this.#checkAPIAvailability();
+    this.#supportedLanguages = this.#languageService.getSupportedLanguages();
 
-    const browserLang = await sendMessage('getBrowserLanguage');
+    const browserLang = this.#languageService.getBrowserLanguage();
     // Verificar si el idioma del navegador está soportado
-    this.#state.targetLanguage =
-      isLanguageSupported(browserLang)
-      ? browserLang
-      : this.#defaultTargetLanguage;
+    const targetLanguage =
+      this.#languageService.isLanguageSupported(browserLang)
+        ? browserLang
+        : this.#supportedLanguages[0];
+
+    this.#state = {
+      text: '',
+      translatedText: '',
+      editedTranslatedText: '',
+      summaryText: '',
+      sourceLanguage: null,
+      targetLanguage,
+      summarize: false,
+      isLoading: false,
+      error: null,
+      modelStatus: null,
+    };
 
     this.#render();
 
@@ -193,7 +189,7 @@ export class SidepanelApp {
 
     this.#resetTranslationState();
     const languageCode = await this.#AIService.detectLanguage(this.#state.text);
-    if (isLanguageSupported(languageCode)) {
+    if (this.#languageService.isLanguageSupported(languageCode)) {
       this.#state.sourceLanguage = languageCode;
     } else {
       this.#state.error = browser.i18n.getMessage('detectedLanguageNotSupported', languageCode);
@@ -313,12 +309,13 @@ export class SidepanelApp {
     this.#updateResult();
     this.#updateError();
     this.#updateLanguageInfo();
+    this.#updateLanguageSelector();
   }
 
   #updateAPIWarning(): void {
     const apiWarningContainer = document.getElementById('api-warning-container');
     if (apiWarningContainer) {
-      apiWarningContainer.innerHTML = !this.#state.apiAvailable ? `
+      apiWarningContainer.innerHTML = !this.#apiAvailable ? `
         <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p class="text-yellow-800 text-xs">
             ${browser.i18n.getMessage('apiWarning')}
@@ -342,8 +339,8 @@ export class SidepanelApp {
 
   #updateLanguageSelector(): void {
     if (this.#elements.targetLanguage) {
-      const optionsHTML = this.#availableLanguages.map(lang =>
-        `<option value="${lang}">${browser.i18n.getMessage(getLanguageKey(lang))}</option>`
+      const optionsHTML = this.#supportedLanguages.map(lang =>
+        `<option value="${lang}">${browser.i18n.getMessage(this.#languageService.getLanguageKey(lang))}</option>`
       ).join('');
       this.#elements.targetLanguage.innerHTML = optionsHTML;
       this.#elements.targetLanguage.value = this.#state.targetLanguage;
@@ -444,7 +441,7 @@ export class SidepanelApp {
     const notEnoughText = this.#state.text.trim().length < this.#minDetectLength;
 
     if (this.#state.sourceLanguage) {
-      const sourceLanguageKey = getLanguageKey(this.#state.sourceLanguage);
+      const sourceLanguageKey = this.#languageService.getLanguageKey(this.#state.sourceLanguage);
       const languageName = browser.i18n.getMessage(sourceLanguageKey);
       languageInfoContainer.innerHTML = `
         <div class="p-2 bg-blue-50 border border-blue-200 rounded-lg">

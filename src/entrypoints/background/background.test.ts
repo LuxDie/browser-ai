@@ -17,6 +17,10 @@ vi.mock('@/entrypoints/background/ai/ai.service', () => {
   };
 });
 
+vi.mock('@/entrypoints/background/language/language.service', () => ({
+  registerLanguageService: vi.fn(),
+}));
+
 const selectedTextMock = vi.fn();
 const modelStatusUpdateMock = vi.fn();
 
