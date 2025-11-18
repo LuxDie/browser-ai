@@ -2,6 +2,7 @@ import { describe, it, expect, vi, type MockedObject, afterEach, beforeEach } fr
 import { mount, flushPromises, config } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import SidepanelApp from './SidepanelApp.vue';
+<<<<<<< HEAD
 import { sendMessage, onMessage, removeMessageListeners } from '@/entrypoints/background/messaging';
 import type { LanguageService } from '@/entrypoints/background/language/language.service';
 import type { AIService } from '@/entrypoints/background/ai/ai.service';
@@ -10,6 +11,10 @@ import InputArea from '@/components/InputArea.vue';
 import ProcessControls from '@/components/ProcessControls.vue';
 import OutputArea from '@/components/OutputArea.vue';
 import ModelDownloadCard from '@/components/ModelDownloadCard.vue';
+=======
+import { sendMessage } from '@/entrypoints/background/messaging';
+import vuetify from '@/plugins/vuetify';
+>>>>>>> af4e7ee (feat: migrate ProcessControls.vue to Vue 3 Composition API)
 
 config.global.components = {
   AppHeader,
@@ -62,6 +67,7 @@ describe('SidepanelApp', () => {
     removeMessageListeners();
   });
 
+<<<<<<< HEAD
   it('should render the initial state correctly', () => {
     const wrapper = mount(SidepanelApp);
     const textarea = wrapper.find('textarea#input-text');
@@ -76,6 +82,32 @@ describe('SidepanelApp', () => {
     mount(SidepanelApp);
     expect(mockAIService.checkAPIAvailability).toHaveBeenCalled();
   });
+=======
+  it('should mount successfully', () => {
+    const wrapper = mount(SidepanelApp, {
+      global: {
+        plugins: [vuetify],
+      },
+    });
+    expect(wrapper.exists()).toBe(true);
+  });
+
+  it('should have a textarea for text input and call detectLanguage when text is changed', async () => {
+    const wrapper = mount(SidepanelApp, {
+      global: {
+        plugins: [vuetify],
+      },
+    });
+
+    // Check that the textarea exists
+    const textarea = wrapper.find('textarea#input-text');
+    expect(textarea.exists()).toBe(true);
+
+    // First, let's check if the mock is being called at all
+    expect(mockedAIService.detectLanguage).toHaveBeenCalledTimes(0);
+
+    await textarea.setValue('This is a very long text to trigger language detection.');
+>>>>>>> af4e7ee (feat: migrate ProcessControls.vue to Vue 3 Composition API)
 
   it('should send sidepanelReady message after initialization', async () => {
     mount(SidepanelApp);

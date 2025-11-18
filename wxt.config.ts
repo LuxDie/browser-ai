@@ -1,4 +1,5 @@
 import { defineConfig } from 'wxt';
+import vuetify from 'vite-plugin-vuetify';
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -29,4 +30,11 @@ export default defineConfig({
     },
     default_locale: 'es',
   },
+  vite: () => ({
+    plugins: [
+      vuetify({
+        autoImport: true,
+      }),
+    ],
+  }),
 });

@@ -157,11 +157,21 @@ const handleCancel = () => {
 </script>
 
 <template>
+<<<<<<< HEAD
   <div class="p-4 flex flex-col gap-4">
     <AppHeader :api-available="apiAvailable" />
+=======
+  <v-app>
+    <v-main>
+      <v-container>
+        <v-app-bar density="compact" flat>
+          <v-toolbar-title>Browser AI</v-toolbar-title>
+        </v-app-bar>
+>>>>>>> af4e7ee (feat: migrate ProcessControls.vue to Vue 3 Composition API)
 
-    <ModelDownloadCard v-if="modelStatus" :status="modelStatus" :can-cancel="true" @cancel="handleCancel" />
+        <ModelDownloadCard v-if="modelStatus" :status="modelStatus" :can-cancel="true" @cancel="handleCancel" />
 
+<<<<<<< HEAD
     <InputArea
       v-model="text"
       :source-language="sourceLanguage"
@@ -179,11 +189,51 @@ const handleCancel = () => {
       :can-process="canProcess"
       @process="processText"
     />
+=======
+        <v-row>
+          <v-col cols="12">
+            <v-textarea
+              id="input-text"
+              label="Text to process"
+              v-model="text"
+              rows="5"
+            ></v-textarea>
+            <div v-if="sourceLanguage">
+              Detected Language: {{ getLanguageKey(sourceLanguage) }}
+            </div>
+          </v-col>
+        </v-row>
 
-    <div v-if="error" class="text-red-500 bg-red-100 p-2 rounded-md">
-      {{ error }}
-    </div>
+        <ProcessControls
+          v-model:targetLanguage="targetLanguage"
+          v-model:summarize="summarize"
+          :available-languages="availableLanguages"
+          :is-loading="isLoading"
+          :can-process="!!sourceLanguage"
+          @process="processText"
+        />
+>>>>>>> af4e7ee (feat: migrate ProcessControls.vue to Vue 3 Composition API)
 
+        <v-alert v-if="error" type="error" class="my-4">
+          {{ error }}
+        </v-alert>
+
+<<<<<<< HEAD
     <OutputArea :translated-text="translatedText" />
   </div>
+=======
+        <v-row v-if="translatedText">
+          <v-col cols="12">
+            <v-textarea
+              label="Result"
+              :model-value="translatedText"
+              rows="5"
+              readonly
+            ></v-textarea>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-app>
+>>>>>>> af4e7ee (feat: migrate ProcessControls.vue to Vue 3 Composition API)
 </template>
