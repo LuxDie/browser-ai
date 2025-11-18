@@ -114,37 +114,53 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div class="p-4 flex flex-col gap-4">
-    <header>
-      <h1 class="text-xl font-bold">Browser AI</h1>
-    </header>
+  <v-app>
+    <v-main>
+      <v-container>
+        <v-app-bar density="compact" flat>
+          <v-toolbar-title>Browser AI</v-toolbar-title>
+        </v-app-bar>
 
-    <ModelDownloadCard v-if="modelStatus" :status="modelStatus" :can-cancel="true" @cancel="handleCancel" />
+        <ModelDownloadCard v-if="modelStatus" :status="modelStatus" :can-cancel="true" @cancel="handleCancel" />
 
-    <div class="flex flex-col gap-2">
-      <label for="input-text">Text to process:</label>
-      <textarea id="input-text" v-model="text" class="border p-2 rounded-md" rows="5"></textarea>
-      <div v-if="sourceLanguage">
-        Detected Language: {{ getLanguageKey(sourceLanguage) }}
-      </div>
-    </div>
+        <v-row>
+          <v-col cols="12">
+            <v-textarea
+              id="input-text"
+              label="Text to process"
+              v-model="text"
+              rows="5"
+            ></v-textarea>
+            <div v-if="sourceLanguage">
+              Detected Language: {{ getLanguageKey(sourceLanguage) }}
+            </div>
+          </v-col>
+        </v-row>
 
-    <ProcessControls
-      v-model:targetLanguage="targetLanguage"
-      v-model:summarize="summarize"
-      :available-languages="availableLanguages"
-      :is-loading="isLoading"
-      :can-process="!!sourceLanguage"
-      @process="processText"
-    />
+        <ProcessControls
+          v-model:targetLanguage="targetLanguage"
+          v-model:summarize="summarize"
+          :available-languages="availableLanguages"
+          :is-loading="isLoading"
+          :can-process="!!sourceLanguage"
+          @process="processText"
+        />
 
-    <div v-if="error" class="text-red-500 bg-red-100 p-2 rounded-md">
-      {{ error }}
-    </div>
+        <v-alert v-if="error" type="error" class="my-4">
+          {{ error }}
+        </v-alert>
 
-    <div v-if="translatedText" class="flex flex-col gap-2">
-      <label for="output-text">Result:</label>
-      <textarea id="output-text" :value="translatedText" class="border p-2 rounded-md" rows="5" readonly></textarea>
-    </div>
-  </div>
+        <v-row v-if="translatedText">
+          <v-col cols="12">
+            <v-textarea
+              label="Result"
+              :model-value="translatedText"
+              rows="5"
+              readonly
+            ></v-textarea>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>

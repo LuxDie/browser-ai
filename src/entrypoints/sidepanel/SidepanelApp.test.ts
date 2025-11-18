@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import SidepanelApp from './SidepanelApp.vue';
 import { sendMessage } from '@/entrypoints/background/messaging';
+import vuetify from '@/plugins/vuetify';
 
 
 const { mockAIServiceInstance } = vi.hoisted(() => ({
@@ -59,20 +60,27 @@ describe('SidepanelApp', () => {
   });
 
   it('should mount successfully', () => {
-    const wrapper = mount(SidepanelApp);
+    const wrapper = mount(SidepanelApp, {
+      global: {
+        plugins: [vuetify],
+      },
+    });
     expect(wrapper.exists()).toBe(true);
   });
 
-  it('should call detectLanguage when text is changed', async () => {
-    const wrapper = mount(SidepanelApp);
+  it('should have a textarea for text input and call detectLanguage when text is changed', async () => {
+    const wrapper = mount(SidepanelApp, {
+      global: {
+        plugins: [vuetify],
+      },
+    });
+
+    // Check that the textarea exists
+    const textarea = wrapper.find('textarea#input-text');
+    expect(textarea.exists()).toBe(true);
 
     // First, let's check if the mock is being called at all
     expect(mockedAIService.detectLanguage).toHaveBeenCalledTimes(0);
-
-    // Simulate user input by finding the textarea and setting its value
-    // Text must be >= 15 characters to trigger detection
-    const textarea = wrapper.find('textarea#input-text');
-    expect(textarea.exists()).toBe(true);
 
     await textarea.setValue('This is a very long text to trigger language detection.');
 

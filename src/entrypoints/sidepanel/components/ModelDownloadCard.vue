@@ -16,38 +16,21 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div
-    class="w-full max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 dark:bg-gray-800 dark:border-gray-700"
-  >
-    <h5 class="mb-3 text-base font-semibold text-gray-900 md:text-xl dark:text-white">
-      Descargando modelo de IA
-    </h5>
-    <p class="text-sm font-normal text-gray-500 dark:text-gray-400">
-      El modelo se está descargando en segundo plano. Puedes seguir usando la extensión.
-    </p>
-
-    <div class="p-4 mt-4 bg-gray-100 rounded-lg dark:bg-gray-700">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-sm font-medium text-gray-900 dark:text-white">Progreso</span>
-        <span class="text-sm font-medium text-gray-900 dark:text-white">
-          {{ Math.round(status.downloadProgress ?? 0) }}%
-        </span>
-      </div>
-      <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-600">
-        <div
-          class="bg-blue-600 h-2.5 rounded-full"
-          :style="{ width: `${status.downloadProgress ?? 0}%` }"
-        ></div>
-      </div>
-    </div>
-
-    <div v-if="canCancel && status.state === 'downloading'" class="mt-4 flex justify-center">
-      <button
-        @click="handleCancel"
-        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
-      >
+  <v-card class="mb-4">
+    <v-card-title>Descargando modelo de IA</v-card-title>
+    <v-card-text>
+      <p>El modelo se está descargando en segundo plano. Puedes seguir usando la extensión.</p>
+      <v-progress-linear
+        :model-value="status.downloadProgress ?? 0"
+        height="10"
+        striped
+        class="mt-4"
+      ></v-progress-linear>
+    </v-card-text>
+    <v-card-actions v-if="canCancel && status.state === 'downloading'">
+      <v-btn @click="handleCancel" block>
         Cancelar descarga
-      </button>
-    </div>
-  </div>
- </template>
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</template>

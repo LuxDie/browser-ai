@@ -11,10 +11,19 @@ export default defineConfig({
     setupFiles: ['./src/tests/setup.ts'],
     mockReset: true,
     silent: true,
+    css: true,
+    server: {
+      deps: {
+        inline: [/vuetify/],
+      },
+    },
+  },
+  server: {
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src')
+      '@': resolve(__dirname, './src'),
+      'vuetify/lib/components/VCode/VCode.css': resolve(__dirname, './src/tests/mocks/style.mock.ts'),
     }
   }
 })
