@@ -7,6 +7,8 @@ import { createApp, nextTick, ref, h, type Component, type App } from 'vue';
 import ProcessControls from '@/entrypoints/sidepanel/components/ProcessControls.vue';
 import ModelDownloadCard from '@/entrypoints/sidepanel/components/ModelDownloadCard.vue';
 
+const DEFAULT_TARGET_LANGUAGE: SupportedLanguageCode = 'es';
+
 interface State {
   text: string
   translatedText: string
@@ -516,3 +518,4 @@ export class SidepanelApp {
 document.addEventListener('DOMContentLoaded', () => {
   new SidepanelApp();
 });
+
