@@ -5,7 +5,28 @@
 
 ## APIs integradas del navegador (Prioridad principal)
 
-Browser AI explota las nuevas APIs de IA integrada en el navegador, siendo pionero en esta tecnología emergente. Las funciones preestablecidas como "Resumir", "Traducir", "Corregir" se mapean directamente a estas APIs nativas del navegador.
+Browser AI explota las nuevas APIs de IA integrada en el navegador, siendo pionero en esta tecnología emergente.
+
+### APIs Soportadas
+- **Language Detector**: Identificación automática del idioma del texto.
+- **Translator**: Traducción de texto entre diferentes idiomas.
+- **Summarizer**: Generación de resúmenes de texto.
+- **Writer**: Generación de nuevo contenido de texto.
+- **Rewriter**: Reescritura de texto existente manteniendo el significado original.
+- **Proofreader**: Corrección de errores gramaticales, ortográficos y de estilo.
+- **Prompt**: Interacción con modelos de IA para prompts personalizados.
+
+Todas estas APIs se mapean directamente a las funcionalidades nativas del navegador.
+
+### Versión Objetivo
+
+- **Language Detector**: N/A
+- **Translator**: N/A
+- **Summarizer**: N/A
+- **Writer**: N/A
+- **Rewriter**: N/A
+- **Proofreader**: N/A
+- **Prompt**: N/A
 
 ### Ventajas de las APIs integradas:
 - **Rendimiento nativo**: Optimizado por el navegador
