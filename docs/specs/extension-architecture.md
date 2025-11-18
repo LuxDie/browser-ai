@@ -18,14 +18,14 @@
 ## Componentes de Backend (Service Worker)
 
 ### `AIService` (background)
-- **Orquestación**: Dirige las operaciones de IA (traducción, resumen) y aplica la lógica de negocio.
+- **Orquestación**: Dirige las operaciones de IA (traducción, resumen, escritura, reescritura, corrección de pruebas, prompts) y aplica la lógica de negocio.
 - **Abstracción de proveedores**: Maneja las APIs integradas.
 - **Ejecución diferida**: Almacena operaciones pendientes durante la descarga de modelos.
 - **Notificaciones**: Envía notificaciones push cuando los modelos están listos.
 
 ### `ModelManager` (background)
-- **Gestión de Modelos**: Abstrae las APIs de `Translator` y `Summarizer` del navegador.
-- **Detección de disponibilidad**: Verifica la disponibilidad de los modelos de traducción y resumen.
+- **Gestión de Modelos**: Abstrae las APIs de `LanguageDetector`, `Translator`, `Summarizer`, `Writer`, `Rewriter`, `Proofreader` y `Prompt` del navegador.
+- **Detección de disponibilidad**: Verifica la disponibilidad de los modelos de IA (detección de idioma, traducción, resumen, escritura, reescritura, corrección de pruebas, prompts).
 - **Gestión de descargas**: Inicia y monitorea las descargas de modelos.
 
 ## Componentes de UI (Sidepanel)
