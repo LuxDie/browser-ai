@@ -111,8 +111,14 @@ export class ModelManager {
     { type: 'translation'; source: SupportedLanguageCode; target: SupportedLanguageCode } |
     { type: 'summarization' } |
     { type: 'language-detection' },
-    monitor?: DownloadProgressCallback):
+    monitor?: DownloadProgressCallback,
+    options?: { signal?: AbortSignal }):
     Promise<AIModelStatus> {
+    // Verificar si la operación ya fue cancelada antes de empezar
+    if (options?.signal?.aborted) {
+      return { state: 'available' };
+    }
+
     // Marcar como descargando en el caché
     const cacheKey = (config.type === 'translation' ?
       `${config.source}-${config.target}` :
@@ -132,7 +138,8 @@ export class ModelManager {
       const createOptions: TranslatorCreateOptions = {
         sourceLanguage: config.source,
         targetLanguage: config.target,
-        ...(monitor && { monitor })
+        ...(monitor && { monitor }),
+        ...(options?.signal && { signal: options.signal })
       };
       await api.create(createOptions);
     } else if (config.type === 'summarization') {
@@ -141,7 +148,10 @@ export class ModelManager {
         throw new Error(browser.i18n.getMessage('summarizerAPINotSupported') ||
           'Summarizer API no soportada');
       }
-      const createOptions: SummarizerCreateOptions = { ...(monitor && { monitor }) };
+      const createOptions: SummarizerCreateOptions = {
+        ...(monitor && { monitor }),
+        ...(options?.signal && { signal: options.signal })
+      };
       await api.create(createOptions);
     } else {
       const api = this.#browserAPIs.languageDetector;
@@ -149,7 +159,10 @@ export class ModelManager {
         throw new Error(browser.i18n.getMessage('languageDetectorAPINotSupported') ||
           'LanguageDetector API no soportada');
       }
-      const createOptions: LanguageDetectorCreateOptions = { ...(monitor && { monitor } )};
+      const createOptions: LanguageDetectorCreateOptions = {
+        ...(monitor && { monitor } ),
+        ...(options?.signal && { signal: options.signal })
+      };
       await api.create(createOptions);
     }
 
@@ -164,7 +177,7 @@ export class ModelManager {
   }
 
   // Traducir texto
-  async translate(text: string, source: string, target: string): Promise<string> {
+  async translate(text: string, source: string, target: string, options?: { signal?: AbortSignal }): Promise<string> {
     const translator = this.#browserAPIs.translator;
 
     if (!translator) {
@@ -175,7 +188,8 @@ export class ModelManager {
     console.log(`Translating "${text}" from ${source} to ${target}`);
     const translatorInstance = await translator.create({
       sourceLanguage: source,
-      targetLanguage: target
+      targetLanguage: target,
+      ...(options?.signal && { signal: options.signal })
     });
     const translatedText = await translatorInstance.translate(text);
     console.log(`Translated: "${translatedText}"`);
@@ -183,7 +197,7 @@ export class ModelManager {
   }
 
   // Resumir texto
-  async summarize(text: string, inputOptions?: SummarizerOptions): Promise<string> {
+  async summarize(text: string, inputOptions?: SummarizerOptions, options?: { signal?: AbortSignal }): Promise<string> {
     const summarizer = this.#browserAPIs.summarizer;
 
     if (!summarizer) {
@@ -200,20 +214,20 @@ export class ModelManager {
     };
 
     console.log(`Summarizing text with options:`, summarizerOptions);
-    const summarizerInstance = await summarizer.create(summarizerOptions);
+    const summarizerInstance = await summarizer.create({ ...summarizerOptions, ...(options?.signal && { signal: options.signal })});
     const summary = await summarizerInstance.summarize(text);
     console.log(`Summary generated: "${summary}"`);
     return summary;
   }
 
-  async detectLanguage(text: string): Promise<string> {
+  async detectLanguage(text: string, options?: { signal?: AbortSignal }): Promise<string> {
     const languageDetector = this.#browserAPIs.languageDetector;
 
     if (!languageDetector) {
       throw new Error('LanguageDetector API no soportada');
     }
 
-    const detector = await languageDetector.create();
+    const detector = await languageDetector.create(options);
     const results = await detector.detect(text);
     // Tomar el idioma más probable detectado
     const detectedLanguage = results[0]!.detectedLanguage!;

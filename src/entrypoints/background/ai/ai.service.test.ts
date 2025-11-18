@@ -65,7 +65,7 @@ describe('AIService', () => {
       target: 'es'
     });
     expect(mockModelManagerInstance.downloadModel).not.toHaveBeenCalled();
-    expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traducir', 'en', 'es');
+    expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traducir', 'en', 'es', expect.anything());
   });
 
   it('should download model and send status messages when summarization model is downloadable', async () => {
@@ -87,7 +87,7 @@ describe('AIService', () => {
 
     expect(result).toBe('Resumen descargado.');
     expect(mockModelManagerInstance.checkModelStatus).toHaveBeenCalledWith({ type: 'summarization' });
-    expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'summarization' }, expect.any(Function));
+    expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'summarization' }, expect.any(Function), expect.any(Object));
     expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
     // First message: downloading started
     expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1,
@@ -109,7 +109,8 @@ describe('AIService', () => {
       expect.objectContaining({
         expectedInputLanguages: ['en'],
         outputLanguage: 'es'
-      })
+      }),
+      expect.any(Object)
     );
   });
 
@@ -264,7 +265,8 @@ describe('AIService', () => {
         expect.objectContaining({
           expectedInputLanguages: [supportedSourceLang],
           outputLanguage: supportedTargetLang
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -281,12 +283,13 @@ describe('AIService', () => {
       });
 
       expect(result).toBe('Resumen de texto traducido.');
-      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a resumir', unsupportedSourceLang, fallbackLang);
+      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a resumir', unsupportedSourceLang, fallbackLang, expect.any(Object));
       expect(mockModelManagerInstance.summarize).toHaveBeenCalledWith('Traducido a respaldo.',
         expect.objectContaining({
           expectedInputLanguages: [fallbackLang],
           outputLanguage: supportedTargetLang
-        })
+        }),
+        expect.any(Object)
       );
     });
 
@@ -295,6 +298,7 @@ describe('AIService', () => {
       mockModelManagerInstance.translate.mockResolvedValue('Resumen traducido.');
       const supportedSourceLang = 'fr';
       const unsupportedTargetLang = 'en';
+      const fallbackLang = 'fr'; // Use the same fallback as in this test context
 
       const result = await aIService.processText('Texto a resumir', {
         sourceLanguage: supportedSourceLang,
@@ -307,9 +311,10 @@ describe('AIService', () => {
         expect.objectContaining({
           expectedInputLanguages: [supportedSourceLang],
           outputLanguage: fallbackLang
-        })
+        }),
+        expect.any(Object)
       );
-      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Resumen en respaldo.', fallbackLang, unsupportedTargetLang);
+      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Resumen en respaldo.', fallbackLang, unsupportedTargetLang, {});
     });
 
     it('should translate to fallback language, summarize, and translate summary back when neither language is supported', async () => {
@@ -331,13 +336,14 @@ describe('AIService', () => {
 
       expect(result).toBe('Resumen traducido.');
       expect(mockModelManagerInstance.translate).toHaveBeenCalledTimes(2);
-      expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(1, 'Texto en español', unsupportedSourceLang, fallbackLang);
-      expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(2, 'Resumen en respaldo.', fallbackLang, unsupportedTargetLang);
+expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(1, 'Texto en español', unsupportedSourceLang, fallbackLang, expect.any(Object));
+    expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(2, 'Resumen en respaldo.', fallbackLang, unsupportedTargetLang, expect.any(Object));
       expect(mockModelManagerInstance.summarize).toHaveBeenCalledWith('Traducido a respaldo.',
         expect.objectContaining({
           expectedInputLanguages: [fallbackLang],
           outputLanguage: fallbackLang
-        })
+        }),
+        expect.any(Object)
       );
     });
   });
@@ -370,7 +376,7 @@ describe('AIService', () => {
         type: 'translation',
         source: 'en',
         target: 'es'
-      }, expect.any(Function));
+      }, expect.any(Function), expect.any(Object));
       expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
       // First message: downloading started
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1,
@@ -388,7 +394,7 @@ describe('AIService', () => {
           })
         })
       );
-      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traducir', 'en', 'es');
+expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traducir', 'en', 'es', expect.any(Object));
     });
 
     it('should send translation completion notification', async () => {

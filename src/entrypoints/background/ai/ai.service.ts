@@ -16,7 +16,8 @@ export class AIService {
   #isNotificationPending = false;
   async #setupModel(
     this: AIService,
-    modelParams: Parameters<ModelManager['checkModelStatus']>[0]
+    modelParams: Parameters<ModelManager['checkModelStatus']>[0],
+    options?: { signal?: AbortSignal }
   ) {
     // Verificar disponibilidad del modelo
     let modelStatus = await this.#modelManager.checkModelStatus(modelParams);
@@ -24,6 +25,11 @@ export class AIService {
     // Si hay un error (API no disponible), lanzar error
     if (modelStatus.errorMessage) {
       throw new Error(modelStatus.errorMessage);
+    }
+
+    // Verificar si la operación fue cancelada antes de empezar
+    if (options?.signal?.aborted) {
+      throw new Error('Descarga de modelo cancelada por el usuario');
     }
 
     if (modelStatus.state === 'downloadable') {
@@ -40,7 +46,7 @@ export class AIService {
           });
         });
       };
-      modelStatus = await this.#modelManager.downloadModel(modelParams, progressCallback);
+      modelStatus = await this.#modelManager.downloadModel(modelParams, progressCallback, options);
       void sendMessage('modelStatusUpdate', modelStatus);
     } else if (modelStatus.state === 'downloading') {
 
@@ -49,14 +55,16 @@ export class AIService {
 
       void sendMessage('modelStatusUpdate', modelStatus);
     }
+
+    return modelStatus;
   }
 
-  async processText(text: string, options: ProcessOptions): Promise<string> {
+  async processText(text: string, options: ProcessOptions, signal?: AbortSignal): Promise<string> {
     let processedText = text;
 
     if (options.summarize) {
 
-      await this.#setupModel({ type: 'summarization' });
+      await this.#setupModel({ type: 'summarization' }, { ...(signal && { signal }) });
 
       // Lógica para manejar idiomas no soportados por el summarizer
       const isSourceSupported = SUMMARIZER_LANGUAGE_CODES.includes(options.sourceLanguage as SummarizerLanguageCode);
@@ -76,11 +84,12 @@ export class AIService {
           type: 'translation',
           source: options.sourceLanguage,
           target: summarizerDefaultLanguage
-        });
+        }, { ...(signal && { signal }) });
         processedText = await this.#modelManager.translate(
           processedText,
           options.sourceLanguage,
-          summarizerDefaultLanguage
+          summarizerDefaultLanguage,
+          { ...(signal && { signal }) }
         );
       }
 
@@ -94,24 +103,24 @@ export class AIService {
         expectedInputLanguages: [summarizerInputLanguage],
         outputLanguage: summarizerOutputLanguage
       };
-      processedText = await this.#modelManager.summarize(processedText, summarizerOptions);
+      processedText = await this.#modelManager.summarize(processedText, summarizerOptions, { ...(signal && { signal }) });
 
       if (summarizerOutputLanguage !== options.targetLanguage) {
         await this.#setupModel({
           type: 'translation',
           source: summarizerDefaultLanguage,
           target: options.targetLanguage
-        });
-        processedText = await this.#modelManager.translate(processedText, summarizerDefaultLanguage, options.targetLanguage);
+        }, { ...(signal && { signal }) });
+        processedText = await this.#modelManager.translate(processedText, summarizerDefaultLanguage, options.targetLanguage, { ...(signal && { signal }) });
       }
     } else { // summarize === false
       await this.#setupModel({
         type: 'translation',
         source: options.sourceLanguage,
         target: options.targetLanguage
-      });
+      }, { ...(signal && { signal }) });
 
-      processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, options.targetLanguage);
+      processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, options.targetLanguage, { ...(signal && { signal }) });
     }
     
     if (this.#isNotificationPending) {
@@ -126,9 +135,9 @@ export class AIService {
     return processedText;
   }
 
-  async detectLanguage(text: string): Promise<string> {
-    await this.#setupModel({ type: 'language-detection' });
-    return await this.#modelManager.detectLanguage(text);
+  async detectLanguage(text: string, options?: { signal?: AbortSignal }): Promise<string> {
+    await this.#setupModel({ type: 'language-detection' }, options);
+    return await this.#modelManager.detectLanguage(text, options);
   }
   checkAPIAvailability(): boolean {
     return this.#modelManager.checkAPIAvailability();
