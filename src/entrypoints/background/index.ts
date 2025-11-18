@@ -64,7 +64,7 @@ export default defineBackground({
 
     // Manejador de clics en el menú contextual
     browser.contextMenus.onClicked.addListener((info, tab) => {
-      if (!tab) {
+      if (!tab || !tab.id) {
         throw new Error(browser.i18n.getMessage('tabNotFoundError'));
       }
 
@@ -73,7 +73,13 @@ export default defineBackground({
         const summarize = info.menuItemId === 'summarizeSelection';
 
         void (async () => {
-          await browser.sidePanel.open({ windowId: tab.windowId });
+          const tabId = tab.id!;
+          await browser.sidePanel.open({ tabId });
+          await browser.sidePanel.setOptions({
+            tabId,
+            path: 'sidepanel.html',
+            enabled: true
+          });
 
           // Intentar enviar el texto al sidepanel inmediatamente
           try {
