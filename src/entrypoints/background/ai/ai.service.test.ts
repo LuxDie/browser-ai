@@ -31,9 +31,13 @@ const mockLanguageService: MockedObject<Pick<LanguageService, 'getSummarizerLang
   isSummarizerLanguage: vi.fn(() => true) as any,
 };
 
-const mockModelManagerService: MockedObject<Pick<ModelManager, 'summarize' | 'translate' | 'checkModelStatus' | 'downloadModel'>> = {
+const mockModelManagerService: MockedObject<Pick<ModelManager, 'summarize' | 'translate' | 'write' | 'rewrite' | 'proofread' | 'prompt' | 'checkModelStatus' | 'downloadModel'>> = {
   summarize: vi.fn(() => Promise.resolve('Texto resumido.')),
   translate: vi.fn(() => Promise.resolve('Texto traducido.')),
+  write: vi.fn(() => Promise.resolve('Texto escrito.')),
+  rewrite: vi.fn(() => Promise.resolve('Texto reescrito.')),
+  proofread: vi.fn(() => Promise.resolve('Texto corregido.')),
+  prompt: vi.fn(() => Promise.resolve('Resultado del prompt.')),
   checkModelStatus: vi.fn(() => Promise.resolve({ state: 'available' as const })),
   downloadModel: vi.fn(),
 };
@@ -574,6 +578,158 @@ describe('AIService', () => {
           })
         })
       );
+    });
+  });
+
+  describe('AIService - write', () => {
+    it('should write text when model is available', async () => {
+      mockModelManagerService.write.mockResolvedValue('Texto escrito.');
+
+      const result = await aIService.write('Texto a escribir');
+
+      expect(result).toBe('Texto escrito.');
+      expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({ type: 'writer' });
+      expect(mockModelManagerService.downloadModel).not.toHaveBeenCalled();
+      expect(mockModelManagerService.write).toHaveBeenCalledWith('Texto a escribir');
+    });
+
+    it('should download model and send status messages when writer model is downloadable', async () => {
+      mockModelManagerService.checkModelStatus.mockResolvedValueOnce({ state: 'downloadable' });
+      mockModelManagerService.downloadModel.mockResolvedValueOnce({ state: 'available' });
+      mockModelManagerService.write.mockResolvedValueOnce('Texto escrito descargado.');
+
+      const result = await aIService.write('Texto a escribir');
+
+      expect(result).toBe('Texto escrito descargado.');
+      expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({ type: 'writer' });
+      expect(mockModelManagerService.downloadModel).toHaveBeenCalledWith({ type: 'writer' }, expect.any(Function), undefined);
+      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ state: 'downloading' }) }));
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ data: expect.objectContaining({ state: 'available' }) }));
+      expect(mockModelManagerService.write).toHaveBeenCalledWith('Texto a escribir');
+    });
+
+    it('should throw error when writer model check fails', async () => {
+      const writerApiNotSupportedMessage = 'API de escritura no soportada';
+      mockModelManagerService.checkModelStatus.mockResolvedValue({ state: 'unavailable', errorMessage: writerApiNotSupportedMessage });
+
+      await expect(aIService.write('Texto a escribir')).rejects.toThrow(writerApiNotSupportedMessage);
+
+      expect(modelStatusUpdateSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('AIService - rewrite', () => {
+    it('should rewrite text when model is available', async () => {
+      mockModelManagerService.rewrite.mockResolvedValue('Texto reescrito.');
+
+      const result = await aIService.rewrite('Texto a reescribir');
+
+      expect(result).toBe('Texto reescrito.');
+      expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({ type: 'rewriter' });
+      expect(mockModelManagerService.downloadModel).not.toHaveBeenCalled();
+      expect(mockModelManagerService.rewrite).toHaveBeenCalledWith('Texto a reescribir');
+    });
+
+    it('should download model and send status messages when rewriter model is downloadable', async () => {
+      mockModelManagerService.checkModelStatus.mockResolvedValueOnce({ state: 'downloadable' });
+      mockModelManagerService.downloadModel.mockResolvedValueOnce({ state: 'available' });
+      mockModelManagerService.rewrite.mockResolvedValueOnce('Texto reescrito descargado.');
+
+      const result = await aIService.rewrite('Texto a reescribir');
+
+      expect(result).toBe('Texto reescrito descargado.');
+      expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({ type: 'rewriter' });
+      expect(mockModelManagerService.downloadModel).toHaveBeenCalledWith({ type: 'rewriter' }, expect.any(Function), undefined);
+      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ state: 'downloading' }) }));
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ data: expect.objectContaining({ state: 'available' }) }));
+      expect(mockModelManagerService.rewrite).toHaveBeenCalledWith('Texto a reescribir');
+    });
+
+    it('should throw error when rewriter model check fails', async () => {
+      const rewriterApiNotSupportedMessage = 'API de reescritura no soportada';
+      mockModelManagerService.checkModelStatus.mockResolvedValue({ state: 'unavailable', errorMessage: rewriterApiNotSupportedMessage });
+
+      await expect(aIService.rewrite('Texto a reescribir')).rejects.toThrow(rewriterApiNotSupportedMessage);
+
+      expect(modelStatusUpdateSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('AIService - proofread', () => {
+    it('should proofread text when model is available', async () => {
+      mockModelManagerService.proofread.mockResolvedValue('Texto corregido.');
+
+      const result = await aIService.proofread('Texto a corregir');
+
+      expect(result).toBe('Texto corregido.');
+      expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({ type: 'proofreader' });
+      expect(mockModelManagerService.downloadModel).not.toHaveBeenCalled();
+      expect(mockModelManagerService.proofread).toHaveBeenCalledWith('Texto a corregir');
+    });
+
+    it('should download model and send status messages when proofreader model is downloadable', async () => {
+      mockModelManagerService.checkModelStatus.mockResolvedValueOnce({ state: 'downloadable' });
+      mockModelManagerService.downloadModel.mockResolvedValueOnce({ state: 'available' });
+      mockModelManagerService.proofread.mockResolvedValueOnce('Texto corregido descargado.');
+
+      const result = await aIService.proofread('Texto a corregir');
+
+      expect(result).toBe('Texto corregido descargado.');
+      expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({ type: 'proofreader' });
+      expect(mockModelManagerService.downloadModel).toHaveBeenCalledWith({ type: 'proofreader' }, expect.any(Function), undefined);
+      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ state: 'downloading' }) }));
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ data: expect.objectContaining({ state: 'available' }) }));
+      expect(mockModelManagerService.proofread).toHaveBeenCalledWith('Texto a corregir');
+    });
+
+    it('should throw error when proofreader model check fails', async () => {
+      const proofreaderApiNotSupportedMessage = 'API de corrección de pruebas no soportada';
+      mockModelManagerService.checkModelStatus.mockResolvedValue({ state: 'unavailable', errorMessage: proofreaderApiNotSupportedMessage });
+
+      await expect(aIService.proofread('Texto a corregir')).rejects.toThrow(proofreaderApiNotSupportedMessage);
+
+      expect(modelStatusUpdateSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('AIService - prompt', () => {
+    it('should prompt text when model is available', async () => {
+      mockModelManagerService.prompt.mockResolvedValue('Resultado del prompt.');
+
+      const result = await aIService.prompt('Texto para prompt');
+
+      expect(result).toBe('Resultado del prompt.');
+      expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({ type: 'prompt' });
+      expect(mockModelManagerService.downloadModel).not.toHaveBeenCalled();
+      expect(mockModelManagerService.prompt).toHaveBeenCalledWith('Texto para prompt');
+    });
+
+    it('should download model and send status messages when prompt model is downloadable', async () => {
+      mockModelManagerService.checkModelStatus.mockResolvedValueOnce({ state: 'downloadable' });
+      mockModelManagerService.downloadModel.mockResolvedValueOnce({ state: 'available' });
+      mockModelManagerService.prompt.mockResolvedValueOnce('Resultado del prompt descargado.');
+
+      const result = await aIService.prompt('Texto para prompt');
+
+      expect(result).toBe('Resultado del prompt descargado.');
+      expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({ type: 'prompt' });
+      expect(mockModelManagerService.downloadModel).toHaveBeenCalledWith({ type: 'prompt' }, expect.any(Function), undefined);
+      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ state: 'downloading' }) }));
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ data: expect.objectContaining({ state: 'available' }) }));
+      expect(mockModelManagerService.prompt).toHaveBeenCalledWith('Texto para prompt');
+    });
+
+    it('should throw error when prompt model check fails', async () => {
+      const promptApiNotSupportedMessage = 'API de prompt no soportada';
+      mockModelManagerService.checkModelStatus.mockResolvedValue({ state: 'unavailable', errorMessage: promptApiNotSupportedMessage });
+
+      await expect(aIService.prompt('Texto para prompt')).rejects.toThrow(promptApiNotSupportedMessage);
+
+      expect(modelStatusUpdateSpy).not.toHaveBeenCalled();
     });
   });
 });

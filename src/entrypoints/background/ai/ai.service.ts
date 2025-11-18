@@ -14,6 +14,7 @@ interface ProcessOptions {
 export class AIService {
   #modelManager = ModelManager.getInstance();
   #languageService = LanguageService.getInstance();
+  #isNotificationPending = false;
   async #setupModel(
     this: AIService,
     modelParams: Parameters<ModelManager['checkModelStatus']>[0],
@@ -61,12 +62,12 @@ export class AIService {
 
   async processText(text: string, options: ProcessOptions, signal?: AbortSignal): Promise<string> {
     let processedText = text;
-    let notificationPending = false;
+    this.#isNotificationPending = false;
 
     if (options.summarize) {
 
       if (await this.#setupModel({ type: 'summarization' }, { ...(signal && { signal }) })) {
-        notificationPending = true;
+        this.#isNotificationPending = true;
       }
 
       // Lógica para manejar idiomas no soportados por el summarizer
@@ -87,7 +88,7 @@ export class AIService {
           source: options.sourceLanguage,
           target: summarizerDefaultLanguage
         }, { ...(signal && { signal }) })) {
-          notificationPending = true;
+          this.#isNotificationPending = true;
         }
         processedText = await this.#modelManager.translate(
           processedText,
@@ -115,7 +116,7 @@ export class AIService {
           source: summarizerDefaultLanguage,
           target: options.targetLanguage
         }, { ...(signal && { signal }) })) {
-          notificationPending = true;
+          this.#isNotificationPending = true;
         }
         processedText = await this.#modelManager.translate(processedText, summarizerDefaultLanguage, options.targetLanguage, { ...(signal && { signal }) });
       }
@@ -125,13 +126,13 @@ export class AIService {
         source: options.sourceLanguage,
         target: options.targetLanguage
       }, { ...(signal && { signal }) })) {
-        notificationPending = true;
+        this.#isNotificationPending = true;
       }
 
       processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, options.targetLanguage, { ...(signal && { signal }) });
     }
 
-    if (notificationPending) {
+    if (this.#isNotificationPending) {
       void browser.notifications.create({
         type: 'basic',
         title: browser.i18n.getMessage('extName'),
@@ -147,6 +148,63 @@ export class AIService {
     await this.#setupModel({ type: 'language-detection' }, options);
     return await this.#modelManager.detectLanguage(text, options);
   }
+
+  async write(text: string): Promise<string> {
+    this.#isNotificationPending = await this.#setupModel({ type: 'writer' });
+    const writtenText = await this.#modelManager.write(text);
+    if (this.#isNotificationPending) {
+      void browser.notifications.create({
+        type: 'basic',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
+        iconUrl: 'icons/icon-128.png'
+      });
+    }
+    return writtenText;
+  }
+
+  async rewrite(text: string): Promise<string> {
+    this.#isNotificationPending = await this.#setupModel({ type: 'rewriter' });
+    const rewrittenText = await this.#modelManager.rewrite(text);
+    if (this.#isNotificationPending) {
+      void browser.notifications.create({
+        type: 'basic',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
+        iconUrl: 'icons/icon-128.png'
+      });
+    }
+    return rewrittenText;
+  }
+
+  async proofread(text: string): Promise<string> {
+    this.#isNotificationPending = await this.#setupModel({ type: 'proofreader' });
+    const proofreadText = await this.#modelManager.proofread(text);
+    if (this.#isNotificationPending) {
+      void browser.notifications.create({
+        type: 'basic',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
+        iconUrl: 'icons/icon-128.png'
+      });
+    }
+    return proofreadText;
+  }
+
+  async prompt(text: string): Promise<string> {
+    this.#isNotificationPending = await this.#setupModel({ type: 'prompt' });
+    const promptResult = await this.#modelManager.prompt(text);
+    if (this.#isNotificationPending) {
+      void browser.notifications.create({
+        type: 'basic',
+        title: browser.i18n.getMessage('extName'),
+        message: browser.i18n.getMessage('textProcessedNotification'),
+        iconUrl: 'icons/icon-128.png'
+      });
+    }
+    return promptResult;
+  }
+
   checkAPIAvailability(): boolean {
     return this.#modelManager.checkAPIAvailability();
   }
