@@ -1,6 +1,6 @@
 # Experiencia de Usuario (UX)
 
-**Versión:** v0.2.1
+**Versión:** v0.3.0
 
 ## Principios de Diseño
 
@@ -50,7 +50,7 @@
 ### Estados de Carga
 - **Procesando local**: Indicador con mensaje "Procesando con IA del navegador..."
 - **Procesando nube**: Indicador con mensaje "Enviando a servicio de IA..."
-- **Descargando modelo**: Barra de progreso para modelos grandes
+- **Descargando modelo**: Barra de progreso para modelos grandes, con opción de cancelar la descarga.
 
 ### Estados de Error
 - **Error de IA local**: "No pude procesar esto localmente. ¿Quieres intentar con IA en la nube?"
