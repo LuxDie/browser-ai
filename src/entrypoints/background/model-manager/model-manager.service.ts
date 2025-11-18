@@ -1,4 +1,5 @@
-import type { AIModelStatus, SummarizerOptions, DownloadProgressCallback } from '@/entrypoints/background/model-manager/model-manager.model';
+/// <reference types="dom-chromium-ai" />
+import type { AIModelStatus, SummarizerOptions, DownloadProgressCallback, WriterOptions, RewriterOptions, ProofreaderOptions, PromptOptions, WriterCreateOptions, RewriterCreateOptions, ProofreaderCreateOptions, PromptCreateOptions, SummarizerCreateOptions } from '@/entrypoints/background/model-manager/model-manager.model';
 import type { SupportedLanguageCode } from '../languages';
 
 export class ModelManager {
@@ -12,29 +13,53 @@ export class ModelManager {
   }
 
   #browserAPIs: {
-    languageDetector: typeof LanguageDetector | null
-    translator: typeof Translator | null
-    summarizer: typeof Summarizer | null
+    languageDetector: any | null
+    translator: any | null
+    summarizer: any | null
+    writer: any | null
+    rewriter: any | null
+    proofreader: any | null
+    prompt: any | null
   } = {
       languageDetector: null,
       translator: null,
-      summarizer: null
+      summarizer: null,
+      writer: null,
+      rewriter: null,
+      proofreader: null,
+      prompt: null
     };
 
   constructor() {
-    this.#browserAPIs.languageDetector = 'LanguageDetector' in self ? LanguageDetector : null;
-    this.#browserAPIs.translator = 'Translator' in self ? Translator : null;
-    this.#browserAPIs.summarizer = 'Summarizer' in self ? Summarizer : null;
+    this.#browserAPIs.languageDetector = 'LanguageDetector' in self ? (self as any).LanguageDetector : null;
+    this.#browserAPIs.translator = 'Translator' in self ? (self as any).Translator : null;
+    this.#browserAPIs.summarizer = 'Summarizer' in self ? (self as any).Summarizer : null;
+    this.#browserAPIs.writer = 'Writer' in self ? (self as any).Writer : null;
+    this.#browserAPIs.rewriter = 'Rewriter' in self ? (self as any).Rewriter : null;
+    this.#browserAPIs.proofreader = 'Proofreader' in self ? (self as any).Proofreader : null;
+    this.#browserAPIs.prompt = 'Prompt' in self ? (self as any).Prompt : null;
   }
 
   checkAPIAvailability(): boolean {
-    return !!(this.#browserAPIs.languageDetector ?? this.#browserAPIs.translator ?? this.#browserAPIs.summarizer);
+    return !!(
+      this.#browserAPIs.languageDetector ??
+      this.#browserAPIs.translator ??
+      this.#browserAPIs.summarizer ??
+      this.#browserAPIs.writer ??
+      this.#browserAPIs.rewriter ??
+      this.#browserAPIs.proofreader ??
+      this.#browserAPIs.prompt
+    );
   }
 
   async checkModelStatus(config:
     { type: 'language-detection' } |
     { type: 'translation'; source: SupportedLanguageCode; target: SupportedLanguageCode } |
-    { type: 'summarization' }
+    { type: 'summarization' } |
+    { type: 'writer' } |
+    { type: 'rewriter' } |
+    { type: 'proofreader' } |
+    { type: 'prompt' }
   ): Promise<AIModelStatus> {
     if (config.type === 'translation') {
       const { source, target } = config;
@@ -62,7 +87,7 @@ export class ModelManager {
             `Modelo no soportado: ${availability}`
         })
       };
-    } else if(config.type === 'summarization') {
+    } else if (config.type === 'summarization') {
       const summarizer = this.#browserAPIs.summarizer;
 
       if (!summarizer) {
@@ -80,6 +105,86 @@ export class ModelManager {
         ...(availability === 'unavailable' && {
           errorMessage: browser.i18n.getMessage('summarizerModelNotAvailable') ||
             'Modelo de resumen no disponible'
+        })
+      };
+    } else if (config.type === 'writer') {
+      const writer = this.#browserAPIs.writer;
+
+      if (!writer) {
+        return {
+          state: 'unavailable',
+          errorMessage: browser.i18n.getMessage('writerAPINotAvailable') ||
+            'Writer API no disponible'
+        };
+      }
+
+      const availability = await writer.availability();
+      return {
+        state: availability,
+        ...(availability === 'downloading' && { downloadProgress: 0 }),
+        ...(availability === 'unavailable' && {
+          errorMessage: browser.i18n.getMessage('writerModelNotAvailable') ||
+            'Modelo de escritura no disponible'
+        })
+      };
+    } else if (config.type === 'rewriter') {
+      const rewriter = this.#browserAPIs.rewriter;
+
+      if (!rewriter) {
+        return {
+          state: 'unavailable',
+          errorMessage: browser.i18n.getMessage('rewriterAPINotAvailable') ||
+            'Rewriter API no disponible'
+        };
+      }
+
+      const availability = await rewriter.availability();
+      return {
+        state: availability,
+        ...(availability === 'downloading' && { downloadProgress: 0 }),
+        ...(availability === 'unavailable' && {
+          errorMessage: browser.i18n.getMessage('rewriterModelNotAvailable') ||
+            'Modelo de reescritura no disponible'
+        })
+      };
+    } else if (config.type === 'proofreader') {
+      const proofreader = this.#browserAPIs.proofreader;
+
+      if (!proofreader) {
+        return {
+          state: 'unavailable',
+          errorMessage: browser.i18n.getMessage('proofreaderAPINotAvailable') ||
+            'Proofreader API no disponible'
+        };
+      }
+
+      const availability = await proofreader.availability();
+      return {
+        state: availability,
+        ...(availability === 'downloading' && { downloadProgress: 0 }),
+        ...(availability === 'unavailable' && {
+          errorMessage: browser.i18n.getMessage('proofreaderModelNotAvailable') ||
+            'Modelo de corrección de pruebas no disponible'
+        })
+      };
+    } else if (config.type === 'prompt') {
+      const prompt = this.#browserAPIs.prompt;
+
+      if (!prompt) {
+        return {
+          state: 'unavailable',
+          errorMessage: browser.i18n.getMessage('promptAPINotAvailable') ||
+            'Prompt API no disponible'
+        };
+      }
+
+      const availability = await prompt.availability();
+      return {
+        state: availability,
+        ...(availability === 'downloading' && { downloadProgress: 0 }),
+        ...(availability === 'unavailable' && {
+          errorMessage: browser.i18n.getMessage('promptModelNotAvailable') ||
+            'Modelo de prompt no disponible'
         })
       };
     } else {
@@ -110,7 +215,11 @@ export class ModelManager {
   async downloadModel(config:
     { type: 'translation'; source: SupportedLanguageCode; target: SupportedLanguageCode } |
     { type: 'summarization' } |
-    { type: 'language-detection' },
+    { type: 'language-detection' } |
+    { type: 'writer' } |
+    { type: 'rewriter' } |
+    { type: 'proofreader' } |
+    { type: 'prompt' },
     monitor?: DownloadProgressCallback,
     options?: { signal?: AbortSignal }):
     Promise<AIModelStatus> {
@@ -153,6 +262,50 @@ export class ModelManager {
         ...(options?.signal && { signal: options.signal })
       };
       await api.create(createOptions);
+    } else if (config.type === 'writer') {
+      const api = this.#browserAPIs.writer;
+      if (!api) {
+        throw new Error(browser.i18n.getMessage('writerAPINotSupported') ||
+          'Writer API no soportada');
+      }
+      const createOptions: WriterCreateOptions = {
+        ...(monitor && { monitor }),
+        ...(options?.signal && { signal: options.signal })
+      };
+      await api.create(createOptions);
+    } else if (config.type === 'rewriter') {
+      const api = this.#browserAPIs.rewriter;
+      if (!api) {
+        throw new Error(browser.i18n.getMessage('rewriterAPINotSupported') ||
+          'Rewriter API no soportada');
+      }
+      const createOptions: RewriterCreateOptions = {
+        ...(monitor && { monitor }),
+        ...(options?.signal && { signal: options.signal })
+      };
+      await api.create(createOptions);
+    } else if (config.type === 'proofreader') {
+      const api = this.#browserAPIs.proofreader;
+      if (!api) {
+        throw new Error(browser.i18n.getMessage('proofreaderAPINotSupported') ||
+          'Proofreader API no soportada');
+      }
+      const createOptions: ProofreaderCreateOptions = {
+        ...(monitor && { monitor }),
+        ...(options?.signal && { signal: options.signal })
+      };
+      await api.create(createOptions);
+    } else if (config.type === 'prompt') {
+      const api = this.#browserAPIs.prompt;
+      if (!api) {
+        throw new Error(browser.i18n.getMessage('promptAPINotSupported') ||
+          'Prompt API no soportada');
+      }
+      const createOptions: PromptCreateOptions = {
+        ...(monitor && { monitor }),
+        ...(options?.signal && { signal: options.signal })
+      };
+      await api.create(createOptions);
     } else {
       const api = this.#browserAPIs.languageDetector;
       if (!api) {
@@ -160,7 +313,7 @@ export class ModelManager {
           'LanguageDetector API no soportada');
       }
       const createOptions: LanguageDetectorCreateOptions = {
-        ...(monitor && { monitor } ),
+        ...(monitor && { monitor }),
         ...(options?.signal && { signal: options.signal })
       };
       await api.create(createOptions);
@@ -214,7 +367,7 @@ export class ModelManager {
     };
 
     console.log(`Summarizing text with options:`, summarizerOptions);
-    const summarizerInstance = await summarizer.create({ ...summarizerOptions, ...(options?.signal && { signal: options.signal })});
+    const summarizerInstance = await summarizer.create({ ...summarizerOptions, ...(options?.signal && { signal: options.signal }) });
     const summary = await summarizerInstance.summarize(text);
     console.log(`Summary generated: "${summary}"`);
     return summary;
@@ -232,6 +385,82 @@ export class ModelManager {
     // Tomar el idioma más probable detectado
     const detectedLanguage = results[0]!.detectedLanguage!;
     return detectedLanguage;
+  }
+
+  async write(text: string, inputOptions?: WriterOptions): Promise<string> {
+    const writer = this.#browserAPIs.writer;
+
+    if (!writer) {
+      throw new Error(browser.i18n.getMessage('writerAPINotSupported') || 'Writer API no soportada');
+    }
+
+    const writerOptions: WriterOptions = {
+      // Default options for writer, if any
+      ...inputOptions
+    };
+
+    console.log(`Writing text with options:`, writerOptions);
+    const writerInstance = await writer.create(writerOptions);
+    const writtenText = await writerInstance.write(text);
+    console.log(`Written: "${writtenText}"`);
+    return writtenText;
+  }
+
+  async rewrite(text: string, inputOptions?: RewriterOptions): Promise<string> {
+    const rewriter = this.#browserAPIs.rewriter;
+
+    if (!rewriter) {
+      throw new Error(browser.i18n.getMessage('rewriterAPINotSupported') || 'Rewriter API no soportada');
+    }
+
+    const rewriterOptions: RewriterOptions = {
+      // Default options for rewriter, if any
+      ...inputOptions
+    };
+
+    console.log(`Rewriting text with options:`, rewriterOptions);
+    const rewriterInstance = await rewriter.create(rewriterOptions);
+    const rewrittenText = await rewriterInstance.rewrite(text);
+    console.log(`Rewritten: "${rewrittenText}"`);
+    return rewrittenText;
+  }
+
+  async proofread(text: string, inputOptions?: ProofreaderOptions): Promise<string> {
+    const proofreader = this.#browserAPIs.proofreader;
+
+    if (!proofreader) {
+      throw new Error(browser.i18n.getMessage('proofreaderAPINotSupported') || 'Proofreader API no soportada');
+    }
+
+    const proofreaderOptions: ProofreaderOptions = {
+      // Default options for proofreader, if any
+      ...inputOptions
+    };
+
+    console.log(`Proofreading text with options:`, proofreaderOptions);
+    const proofreaderInstance = await proofreader.create(proofreaderOptions);
+    const proofreadText = await proofreaderInstance.proofread(text);
+    console.log(`Proofread: "${proofreadText}"`);
+    return proofreadText.results[0].text;
+  }
+
+  async prompt(text: string, inputOptions?: PromptOptions): Promise<string> {
+    const promptAPI = this.#browserAPIs.prompt;
+
+    if (!promptAPI) {
+      throw new Error(browser.i18n.getMessage('promptAPINotSupported') || 'Prompt API no soportada');
+    }
+
+    const promptOptions: PromptOptions = {
+      // Default options for prompt, if any
+      ...inputOptions
+    };
+
+    console.log(`Prompting with options:`, promptOptions);
+    const promptInstance = await promptAPI.create(promptOptions);
+    const promptResult = await promptInstance.prompt(text);
+    console.log(`Prompt result: "${promptResult}"`);
+    return promptResult;
   }
 }
 

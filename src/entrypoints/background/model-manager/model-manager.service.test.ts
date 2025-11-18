@@ -1,3 +1,4 @@
+/// <reference types="dom-chromium-ai" />
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 
@@ -123,7 +124,7 @@ describe('ModelManager - Summarization Features', () => {
 
     it('should handle custom summarizer options', async () => {
       const options = {
-        type: 'key-points' as const,
+        type: 'tldr' as const,
         length: 'short' as const,
         expectedInputLanguages: ['en' as const],
         outputLanguage: 'es' as const

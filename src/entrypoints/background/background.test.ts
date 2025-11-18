@@ -1,3 +1,4 @@
+/// <reference types="dom-chromium-ai" />
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   sendMessage,
@@ -5,6 +6,10 @@ import {
   removeMessageListeners
 } from '@/entrypoints/background/messaging';
 import background from '@/entrypoints/background';
+
+type MockedOnClickedEvent = typeof browser.contextMenus.onClicked & {
+  trigger: (info: any, tab?: any) => void;
+};
 
 // TODO: usar importación dinámica
 vi.mock('@/entrypoints/background/ai/ai.service', () => {
@@ -157,7 +162,7 @@ describe('Background Script', () => {
   
       // Trigger context menu click
       const selectedText = 'Este es un texto seleccionado para traducir';
-      (fakeBrowser.contextMenus.onClicked as any).trigger({
+      (fakeBrowser.contextMenus.onClicked as MockedOnClickedEvent).trigger({
         menuItemId: 'translateSelection',
         selectionText: selectedText
       }, { id: 123 });
@@ -172,7 +177,7 @@ describe('Background Script', () => {
 
       // Trigger context menu click
       const selectedText = 'Este es un texto seleccionado para traducir';
-      (fakeBrowser.contextMenus.onClicked as any).trigger({
+      (fakeBrowser.contextMenus.onClicked as MockedOnClickedEvent).trigger({
         menuItemId: 'translateSelection',
         selectionText: selectedText
       }, { id: 123 });
@@ -190,7 +195,7 @@ describe('Background Script', () => {
 
       // Trigger context menu click
       const selectedText = 'Este es un texto seleccionado para traducir';
-      (fakeBrowser.contextMenus.onClicked as any).trigger({
+      (fakeBrowser.contextMenus.onClicked as MockedOnClickedEvent).trigger({
         menuItemId: 'translateSelection',
         selectionText: selectedText
       }, { id: 123 });
