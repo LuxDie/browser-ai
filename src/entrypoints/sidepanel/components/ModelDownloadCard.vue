@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
-const props = defineProps<{
+defineProps<{
   status: AIModelStatus;
   canCancel?: boolean;
 }>();

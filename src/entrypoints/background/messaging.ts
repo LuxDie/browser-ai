@@ -1,5 +1,5 @@
 import { defineExtensionMessaging } from '@webext-core/messaging';
-import type { AvailableLanguages, SupportedLanguageCode } from '@/entrypoints/background';
+import type { SupportedLanguageCode } from '@/entrypoints/background';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 export interface ProtocolMap {
   getModelStatus(data: {
@@ -11,7 +11,7 @@ export interface ProtocolMap {
     targetLanguage: SupportedLanguageCode;
     sourceLanguage: SupportedLanguageCode
   }): string;
-  getAvailableLanguages(): AvailableLanguages;
+  getAvailableLanguages(): readonly SupportedLanguageCode[];
   getBrowserLanguage(): string;
   sidepanelReady(): void;
   selectedText(data: { text: string; summarize?: boolean }): void;
