@@ -17,7 +17,7 @@ describe('ModelDownloadCard.vue', () => {
     });
 
     expect(wrapper.find('h5').text()).toBe('Descargando modelo de IA');
-    expect(wrapper.text()).toContain('50.00%');
+    expect(wrapper.text()).toContain('50%');
   });
 
   it('should update the progress bar width based on downloadProgress', () => {
@@ -39,7 +39,7 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    expect(wrapper.text()).toContain('0.00%');
+    expect(wrapper.text()).toContain('0%');
     const progressBar = wrapper.find('.bg-blue-600');
     expect(progressBar.attributes('style')).toContain('width: 0%');
   });
@@ -52,7 +52,7 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    expect(wrapper.text()).toContain('100.00%');
+    expect(wrapper.text()).toContain('100%');
     const progressBar = wrapper.find('.bg-blue-600');
     expect(progressBar.attributes('style')).toContain('width: 100%');
   });

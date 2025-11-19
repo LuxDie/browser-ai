@@ -21,7 +21,7 @@ defineProps<{
       <div class="flex items-center justify-between mb-2">
         <span class="text-sm font-medium text-gray-900 dark:text-white">Progreso</span>
         <span class="text-sm font-medium text-gray-900 dark:text-white">
-          {{ (status.downloadProgress ?? 0).toFixed(2) }}%
+          {{ Math.round(status.downloadProgress ?? 0) }}%
         </span>
       </div>
       <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-600">
