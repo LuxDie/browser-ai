@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils';
 import { describe, it, expect, vi } from 'vitest';
 import ProcessControls from './ProcessControls.vue';
 import type { SupportedLanguageCode } from '@/entrypoints/background';
+import vuetify from '@/plugins/vuetify';
 
 // Mock browser.i18n
 vi.stubGlobal('browser', {
@@ -22,33 +23,38 @@ describe('ProcessControls.vue', () => {
   it('should render the component with correct structure', () => {
     const wrapper = mount(ProcessControls, {
       props: defaultProps,
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    expect(wrapper.find('#summarize-checkbox').exists()).toBe(true);
-    expect(wrapper.find('#target-language').exists()).toBe(true);
-    expect(wrapper.find('#process-button').exists()).toBe(true);
+    expect(wrapper.find('.v-checkbox').exists()).toBe(true);
+    expect(wrapper.find('.v-select').exists()).toBe(true);
+    expect(wrapper.find('.v-btn').exists()).toBe(true);
   });
 
   it('should display correct labels using i18n', () => {
     const wrapper = mount(ProcessControls, {
       props: defaultProps,
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    expect(wrapper.text()).toContain('optionsLabel');
-    expect(wrapper.text()).toContain('summarizeLabel');
-    expect(wrapper.text()).toContain('targetLanguageLabel');
+    expect(wrapper.find('.v-checkbox').text()).toContain('summarizeLabel');
+    expect(wrapper.find('.v-select').text()).toContain('targetLanguageLabel');
   });
 
   it('should render available languages in select options', () => {
     const wrapper = mount(ProcessControls, {
       props: defaultProps,
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    const options = wrapper.findAll('#target-language option');
-    expect(options).toHaveLength(3);
-    expect(options.at(0)?.attributes('value')).toBe('en');
-    expect(options.at(1)?.attributes('value')).toBe('es');
-    expect(options.at(2)?.attributes('value')).toBe('fr');
+    const select = wrapper.findComponent({ name: 'VSelect' });
+    expect(select.props('items')).toEqual(defaultProps.availableLanguages);
   });
 
   it('should have checkbox checked when summarize is true', () => {
@@ -57,10 +63,13 @@ describe('ProcessControls.vue', () => {
         ...defaultProps,
         summarize: true,
       },
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    const checkbox = wrapper.find('#summarize-checkbox');
-    expect((checkbox.element as HTMLInputElement).checked).toBe(true);
+    const checkbox = wrapper.findComponent({ name: 'VCheckbox' });
+    expect(checkbox.props('modelValue')).toBe(true);
   });
 
   it('should have checkbox unchecked when summarize is false', () => {
@@ -69,10 +78,13 @@ describe('ProcessControls.vue', () => {
         ...defaultProps,
         summarize: false,
       },
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    const checkbox = wrapper.find('#summarize-checkbox');
-    expect((checkbox.element as HTMLInputElement).checked).toBe(false);
+    const checkbox = wrapper.findComponent({ name: 'VCheckbox' });
+    expect(checkbox.props('modelValue')).toBe(false);
   });
 
   it('should have select value set to targetLanguage', () => {
@@ -81,32 +93,41 @@ describe('ProcessControls.vue', () => {
         ...defaultProps,
         targetLanguage: 'fr' as SupportedLanguageCode,
       },
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    const select = wrapper.find('#target-language');
-    expect((select.element as HTMLSelectElement).value).toBe('fr');
+    const select = wrapper.findComponent({ name: 'VSelect' });
+    expect(select.props('modelValue')).toBe('fr');
   });
 
-  it('should emit update:summarize when checkbox changes', async () => {
+  it('should emit update:summarize when checkbox changes', () => {
     const wrapper = mount(ProcessControls, {
       props: defaultProps,
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    const checkbox = wrapper.find('#summarize-checkbox');
-    await checkbox.setValue(true);
+    const checkbox = wrapper.findComponent({ name: 'VCheckbox' });
+    checkbox.vm.$emit('update:modelValue', true);
 
     const emitted = wrapper.emitted('update:summarize');
     expect(emitted).toBeTruthy();
     expect(emitted![0]).toEqual([true]);
   });
 
-  it('should emit update:targetLanguage when select changes', async () => {
+  it('should emit update:targetLanguage when select changes', () => {
     const wrapper = mount(ProcessControls, {
       props: defaultProps,
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    const select = wrapper.find('#target-language');
-    await select.setValue('fr');
+    const select = wrapper.findComponent({ name: 'VSelect' });
+    select.vm.$emit('update:modelValue', 'fr');
 
     const emittedTargetLanguage = wrapper.emitted('update:targetLanguage');
     expect(emittedTargetLanguage).toBeTruthy();
@@ -116,9 +137,12 @@ describe('ProcessControls.vue', () => {
   it('should emit process when button is clicked', async () => {
     const wrapper = mount(ProcessControls, {
       props: defaultProps,
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    const button = wrapper.find('#process-button');
+    const button = wrapper.findComponent({ name: 'VBtn' });
     await button.trigger('click');
 
     const emittedProcess = wrapper.emitted('process');
@@ -132,10 +156,13 @@ describe('ProcessControls.vue', () => {
         ...defaultProps,
         canProcess: false,
       },
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    const button = wrapper.find('#process-button');
-    expect(button.attributes('disabled')).toBeDefined();
+    const button = wrapper.findComponent({ name: 'VBtn' });
+    expect(button.props('disabled')).toBe(true);
   });
 
   it('should disable button when isLoading is true', () => {
@@ -144,10 +171,13 @@ describe('ProcessControls.vue', () => {
         ...defaultProps,
         isLoading: true,
       },
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    const button = wrapper.find('#process-button');
-    expect(button.attributes('disabled')).toBeDefined();
+    const button = wrapper.findComponent({ name: 'VBtn' });
+    expect(button.props('disabled')).toBe(true);
   });
 
   it('should show loading text when isLoading is true', () => {
@@ -156,39 +186,24 @@ describe('ProcessControls.vue', () => {
         ...defaultProps,
         isLoading: true,
       },
+      global: {
+        plugins: [vuetify],
+      },
     });
 
-    const button = wrapper.find('#process-button');
-    expect(button.text()).toContain('Procesando...');
+    const button = wrapper.findComponent({ name: 'VBtn' });
+    expect(button.props('loading')).toBe(true);
   });
 
   it('should show process text when not loading', () => {
     const wrapper = mount(ProcessControls, {
       props: defaultProps,
-    });
-
-    const button = wrapper.find('#process-button');
-    expect(button.text()).toContain('Procesar');
-  });
-
-  it('should show loading spinner when isLoading is true', () => {
-    const wrapper = mount(ProcessControls, {
-      props: {
-        ...defaultProps,
-        isLoading: true,
+      global: {
+        plugins: [vuetify],
       },
     });
 
-    const spinner = wrapper.find('.loading-spinner');
-    expect(spinner.exists()).toBe(true);
-  });
-
-  it('should not show loading spinner when not loading', () => {
-    const wrapper = mount(ProcessControls, {
-      props: defaultProps,
-    });
-
-    const spinner = wrapper.find('.loading-spinner');
-    expect(spinner.exists()).toBe(false);
+    const button = wrapper.findComponent({ name: 'VBtn' });
+    expect(button.text()).toContain('Procesar');
   });
 });
