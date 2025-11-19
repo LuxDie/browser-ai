@@ -340,8 +340,8 @@ describe('AIService', () => {
 
       expect(result).toBe('Resumen traducido.');
       expect(mockModelManagerInstance.translate).toHaveBeenCalledTimes(2);
-expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(1, 'Texto en español', unsupportedSourceLang, fallbackLang, expect.any(Object));
-    expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(2, 'Resumen en respaldo.', fallbackLang, unsupportedTargetLang, expect.any(Object));
+      expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(1, 'Texto en español', unsupportedSourceLang, fallbackLang, expect.any(Object));
+      expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(2, 'Resumen en respaldo.', fallbackLang, unsupportedTargetLang, expect.any(Object));
       expect(mockModelManagerInstance.summarize).toHaveBeenCalledWith('Traducido a respaldo.',
         expect.objectContaining({
           expectedInputLanguages: [fallbackLang],
@@ -398,7 +398,7 @@ expect(mockModelManagerInstance.translate).toHaveBeenNthCalledWith(1, 'Texto en 
           })
         })
       );
-expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traducir', 'en', 'es', expect.any(Object));
+      expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traducir', 'en', 'es', expect.any(Object));
     });
 
     it('should send translation completion notification', async () => {
@@ -576,7 +576,7 @@ expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traduci
 
       expect(result).toBe('Texto escrito descargado.');
       expect(mockModelManagerInstance.checkModelStatus).toHaveBeenCalledWith({ type: 'writer' });
-      expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'writer' });
+      expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'writer' }, expect.any(Function), undefined);
       expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ state: 'downloading' }) }));
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ data: expect.objectContaining({ state: 'available' }) }));
@@ -614,7 +614,7 @@ expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traduci
 
       expect(result).toBe('Texto reescrito descargado.');
       expect(mockModelManagerInstance.checkModelStatus).toHaveBeenCalledWith({ type: 'rewriter' });
-      expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'rewriter' });
+      expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'rewriter' }, expect.any(Function), undefined);
       expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ state: 'downloading' }) }));
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ data: expect.objectContaining({ state: 'available' }) }));
@@ -652,7 +652,7 @@ expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traduci
 
       expect(result).toBe('Texto corregido descargado.');
       expect(mockModelManagerInstance.checkModelStatus).toHaveBeenCalledWith({ type: 'proofreader' });
-      expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'proofreader' });
+      expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'proofreader' }, expect.any(Function), undefined);
       expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ state: 'downloading' }) }));
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ data: expect.objectContaining({ state: 'available' }) }));
@@ -690,7 +690,7 @@ expect(mockModelManagerInstance.translate).toHaveBeenCalledWith('Texto a traduci
 
       expect(result).toBe('Resultado del prompt descargado.');
       expect(mockModelManagerInstance.checkModelStatus).toHaveBeenCalledWith({ type: 'prompt' });
-      expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'prompt' });
+      expect(mockModelManagerInstance.downloadModel).toHaveBeenCalledWith({ type: 'prompt' }, expect.any(Function), undefined);
       expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1, expect.objectContaining({ data: expect.objectContaining({ state: 'downloading' }) }));
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({ data: expect.objectContaining({ state: 'available' }) }));
