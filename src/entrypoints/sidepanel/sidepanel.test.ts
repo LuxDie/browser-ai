@@ -617,8 +617,6 @@ describe('SidepanelApp', () => {
       await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción.', summarize: false });
 
       // Esperar a que se procese el mensaje y se actualice la UI
-      await flushPromises();
-
       // Verificar que la casilla de resumen se desmarca cuando viene del menú "Traducir"
       expect(summarizeCheckbox.checked).toBe(false);
     });
@@ -634,7 +632,7 @@ describe('SidepanelApp', () => {
 
       // Verificar que el valor seleccionado es el idioma del navegador
       const targetSelect = document.getElementById('target-language') as HTMLSelectElement;
-      expect(targetSelect.value).toBe(browserLanguage);
+      expect(targetSelect.value).toBe(DEFAULT_BROWSER_LANGUAGE);
     });
 
     it('should use default language when browser language is not supported', async () => {

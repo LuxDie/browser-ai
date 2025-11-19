@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { describe, it, expect, vi } from 'vitest';
 import ProcessControls from './ProcessControls.vue';
-import type { SupportedLanguageCode } from '@/entrypoints/background';
+import type { SupportedLanguageCode } from '@/entrypoints/background/language/language.service';
 import vuetify from '@/plugins/vuetify';
 
 // Mock browser.i18n

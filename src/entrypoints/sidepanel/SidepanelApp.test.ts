@@ -23,6 +23,18 @@ vi.mock('@/entrypoints/background/ai/ai.service', () => ({
 // Mock messaging system
 vi.mock('@/entrypoints/background/messaging');
 
+// Mock LanguageService
+vi.mock('@/entrypoints/background/language/language.service', () => ({
+  LanguageService: {
+    getInstance: vi.fn(() => ({
+      getSupportedLanguages: vi.fn(() => ['en', 'es']),
+      getBrowserLanguage: vi.fn(() => 'en'),
+      getLanguageKey: vi.fn((code: string) => `language_${code}`),
+      isLanguageSupported: vi.fn(() => true),
+    })),
+  },
+}));
+
 // Mock browser.i18n
 vi.stubGlobal('browser', {
   i18n: {
@@ -48,15 +60,6 @@ describe('SidepanelApp', () => {
     });
 
     mockedSendMessage.mockResolvedValue(undefined); // Mock any sendMessage calls
-    mockedSendMessage.mockImplementation((name) => {
-      if (name === 'getAvailableLanguages') {
-        return Promise.resolve(['en', 'es'] as any);
-      }
-      if (name === 'getBrowserLanguage') {
-        return Promise.resolve('en');
-      }
-      return Promise.resolve(undefined);
-    });
   });
 
   it('should mount successfully', () => {

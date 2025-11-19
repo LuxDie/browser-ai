@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { SupportedLanguageCode } from '@/entrypoints/background/language/language.service';
-import { getLanguageKey } from '@/entrypoints/background/language/language.service';
+import { LanguageService } from '@/entrypoints/background/language/language.service';
+
+const languageService = LanguageService.getInstance();
 
 // Props
 defineProps<{
@@ -23,7 +25,7 @@ const handleProcess = () => {
 };
 
 const getLanguageName = (code: SupportedLanguageCode) => {
-  return browser.i18n.getMessage(getLanguageKey(code));
+  return browser.i18n.getMessage(languageService.getLanguageKey(code));
 };
 </script>
 
