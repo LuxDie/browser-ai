@@ -27,6 +27,27 @@ export class ModelManager {
     this.#browserAPIs.summarizer = 'Summarizer' in self ? Summarizer : null;
   }
 
+  /**
+   * Método para inyectar mocks de las APIs del navegador durante las pruebas E2E.
+   * Solo debe usarse en entornos de testing.
+   * @param mocks - Objeto con los mocks de las APIs
+   */
+  setMockAPIs(mocks: {
+    languageDetector?: typeof LanguageDetector | null
+    translator?: typeof Translator | null
+    summarizer?: typeof Summarizer | null
+  }): void {
+    if (mocks.languageDetector !== undefined) {
+      this.#browserAPIs.languageDetector = mocks.languageDetector;
+    }
+    if (mocks.translator !== undefined) {
+      this.#browserAPIs.translator = mocks.translator;
+    }
+    if (mocks.summarizer !== undefined) {
+      this.#browserAPIs.summarizer = mocks.summarizer;
+    }
+  }
+
   checkAPIAvailability(): boolean {
     return !!(this.#browserAPIs.languageDetector ?? this.#browserAPIs.translator ?? this.#browserAPIs.summarizer);
   }
