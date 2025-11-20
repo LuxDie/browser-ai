@@ -62,7 +62,7 @@ export class ModelManager {
             `Modelo no soportado: ${availability}`
         })
       };
-    } else if(config.type === 'summarization') {
+    } else if (config.type === 'summarization') {
       const summarizer = this.#browserAPIs.summarizer;
 
       if (!summarizer) {
@@ -110,7 +110,8 @@ export class ModelManager {
   async downloadModel(config:
     { type: 'translation'; source: SupportedLanguageCode; target: SupportedLanguageCode } |
     { type: 'summarization' } |
-    { type: 'language-detection' }):
+    { type: 'language-detection' },
+    monitor?: CreateMonitorCallback):
     Promise<AIModelStatus> {
     // Marcar como descargando en el caché
     const cacheKey = (config.type === 'translation' ?
@@ -128,21 +129,28 @@ export class ModelManager {
         throw new Error(browser.i18n.getMessage('translatorAPINotSupported') ||
           'Translator API no soportada');
       }
-      await api.create({ sourceLanguage: config.source, targetLanguage: config.target });
+      const createOptions: TranslatorCreateOptions = {
+        sourceLanguage: config.source,
+        targetLanguage: config.target,
+        ...(monitor && { monitor })
+      };
+      await api.create(createOptions);
     } else if (config.type === 'summarization') {
       const api = this.#browserAPIs.summarizer;
       if (!api) {
         throw new Error(browser.i18n.getMessage('summarizerAPINotSupported') ||
           'Summarizer API no soportada');
       }
-      await api.create();
+      const createOptions: SummarizerCreateOptions = { ...(monitor && { monitor }) };
+      await api.create(createOptions);
     } else {
       const api = this.#browserAPIs.languageDetector;
       if (!api) {
         throw new Error(browser.i18n.getMessage('languageDetectorAPINotSupported') ||
           'LanguageDetector API no soportada');
       }
-      await api.create();
+      const createOptions: LanguageDetectorCreateOptions = { ...(monitor && { monitor }) };
+      await api.create(createOptions);
     }
 
     // Limpiar el caché y retornar disponible
@@ -151,8 +159,8 @@ export class ModelManager {
   }
 
   // Alias para compatibilidad hacia atrás
-  async downloadTranslationModel(source: string, target: string): Promise<AIModelStatus> {
-    return this.downloadModel({ type: 'translation', source: source as SupportedLanguageCode, target: target as SupportedLanguageCode });
+  async downloadTranslationModel(source: string, target: string, progressCallback?: CreateMonitorCallback): Promise<AIModelStatus> {
+    return this.downloadModel({ type: 'translation', source: source as SupportedLanguageCode, target: target as SupportedLanguageCode }, progressCallback);
   }
 
   // Traducir texto

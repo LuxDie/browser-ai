@@ -33,7 +33,15 @@ export class AIService {
       this.#isNotificationPending = true;
 
       void sendMessage('modelStatusUpdate', { state: 'downloading' });
-      modelStatus = await this.#modelManager.downloadModel(modelParams);
+      const progressCallback: CreateMonitorCallback = (monitor) => {
+        monitor.addEventListener('downloadprogress', (event) => {
+          void sendMessage('modelStatusUpdate', {
+            state: 'downloading',
+            downloadProgress: Math.round(event.loaded * 100)
+          });
+        });
+      };
+      modelStatus = await this.#modelManager.downloadModel(modelParams, progressCallback);
       void sendMessage('modelStatusUpdate', modelStatus);
     } else if (modelStatus.state === 'downloading') {
 

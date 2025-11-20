@@ -102,7 +102,7 @@ describe('AIService', () => {
 
     expect(result).toBe('Resumen descargado.');
     expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({ type: 'summarization' });
-    expect(mockModelManagerService.downloadModel).toHaveBeenCalledWith({ type: 'summarization' });
+    expect(mockModelManagerService.downloadModel).toHaveBeenCalledWith({ type: 'summarization' }, expect.any(Function));
     expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
     // First message: downloading started
     expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1,
@@ -396,7 +396,7 @@ describe('AIService', () => {
         type: 'translation',
         source: 'en',
         target: 'es'
-      });
+      }, expect.any(Function));
       expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(2);
       // First message: downloading started
       expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1,
@@ -485,6 +485,72 @@ describe('AIService', () => {
       );
       // No notification sent on failure
       expect(browser.notifications.create).not.toHaveBeenCalled();
+    });
+
+    it('should send progress update messages during model download', async () => {
+      // Mock model downloadable
+      mockModelManagerService.checkModelStatus.mockResolvedValueOnce({
+        state: 'downloadable'
+      });
+
+      // Mock downloadModel to call the progress callback
+      mockModelManagerService.downloadModel.mockImplementationOnce((_config, progressCallback) => {
+        // Simulate calling the progress callback with 50% progress
+        if (progressCallback) {
+          const mockMonitor: Pick<CreateMonitor, 'addEventListener'> = {
+            addEventListener: vi.fn((event, listener) => {
+              if (event === 'downloadprogress') {
+                // Simulate progress event
+                listener({ loaded: 0.5 });
+              }
+            })
+          };
+          progressCallback(mockMonitor as CreateMonitor);
+        }
+        return Promise.resolve({ state: 'available' });
+      });
+
+      mockModelManagerService.summarize.mockResolvedValueOnce('Resumen descargado.');
+
+      await aIService.processText('Texto a resumir', {
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
+        summarize: true
+      });
+
+      // Should have called modelStatusUpdate 3 times:
+      // 1. downloading started
+      // 2. progress update (50%)
+      // 3. download completed
+      expect(modelStatusUpdateSpy).toHaveBeenCalledTimes(3);
+
+      // First message: downloading started
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(1,
+        expect.objectContaining({
+          data: expect.objectContaining({
+            state: 'downloading'
+          })
+        })
+      );
+
+      // Second message: progress update
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(2,
+        expect.objectContaining({
+          data: expect.objectContaining({
+            state: 'downloading',
+            downloadProgress: 50
+          })
+        })
+      );
+
+      // Third message: download completed
+      expect(modelStatusUpdateSpy).toHaveBeenNthCalledWith(3,
+        expect.objectContaining({
+          data: expect.objectContaining({
+            state: 'available'
+          })
+        })
+      );
     });
   });
 });
