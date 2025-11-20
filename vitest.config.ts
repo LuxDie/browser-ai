@@ -11,6 +11,13 @@ export default defineConfig({
     setupFiles: ['./src/tests/setup.ts'],
     mockReset: true,
     silent: true,
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/e2e/**',
+      '**/.{idea,git,cache,output,temp}/**',
+      '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*'
+    ],
   },
   resolve: {
     alias: {
