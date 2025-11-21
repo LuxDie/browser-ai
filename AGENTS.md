@@ -4,6 +4,8 @@
 
 **Regla fundamental:** Todo cambio o adición al proyecto, sin excepción, debe basarse estrictamente en la [especificación técnica](/docs/)
 
+- [Reglas para mensajes de confirmación Git](/.agents/commit-messages.md)
+
 ### Reglas generales
 - **Importante**: si te atascas tratando de corregir un error, especialmente en fallos de pruebas, desiste luego de los primeros intentos y completa el resto de la tarea. Al finalizar, informa al usuario sobre el problema y por qué no se pudo corregir.
 - No aplicar soluciones alternativas a lo que pidió el usuario. Si el plan original no funciona, detener la tarea y pedir nuevas instrucciones.
@@ -22,7 +24,6 @@ Siempre verificar lo siguiente antes de completar cualquier tarea de desarrollo:
 7. Confirmar que todos los comandos se ejecuten sin errores
 
 Esta regla no se aplica para tareas de documentación, configuración, o cualquier operación que no involucre modificaciones del código fuente local.
-
 
 ### Reglas de Pruebas
 
