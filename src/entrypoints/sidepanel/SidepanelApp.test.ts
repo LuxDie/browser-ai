@@ -36,11 +36,13 @@ const mockAIService: MockedObject<Pick<
   AIService,
   'processText' |
   'detectLanguage' |
-  'checkAPIAvailability'>
+  'checkAPIAvailability' |
+  'cancelProcessing'>
 > = {
   processText: vi.fn(() => Promise.resolve(PROCESSED_TEXT)),
   detectLanguage: vi.fn(() => Promise.resolve(mockSupportedLanguages[0])),
   checkAPIAvailability: vi.fn(() => true),
+  cancelProcessing: vi.fn(),
 };
 
 const LONG_TEXT = 'Este es un texto largo que debería activar la detección de idioma';
@@ -339,6 +341,23 @@ describe('SidepanelApp', () => {
 
       expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(false);
     });
+
+    it('should hide model download message when cancel button is clicked', async () => {
+      const wrapper = mount(SidepanelApp);
+      await flushPromises();
+
+      // Show download message
+      await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
+      await flushPromises();
+      expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(true);
+
+      // Find the card and emit cancel
+      const card = wrapper.findComponent({ name: 'ModelDownloadCard' });
+      card.vm.$emit('cancel');
+      await flushPromises();
+
+      expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(false);
+    });
   });
 
   describe('Error Handling', () => {
@@ -347,6 +366,17 @@ describe('SidepanelApp', () => {
       mockAIService.processText.mockRejectedValue(new Error(errorMessage));
       await setTextAndProcess(wrapper);
       expect(wrapper.get('[data-testid=error-container]').text()).toContain(errorMessage);
+    });
+
+    it('should not display error message when processText is aborted', async () => {
+      const abortError = new Error('The operation was aborted');
+      abortError.name = 'AbortError';
+      mockAIService.processText.mockRejectedValue(abortError);
+      const wrapper = mount(SidepanelApp);
+      await setTextAndProcess(wrapper);
+
+      expect(wrapper.text()).not.toContain('processingError');
+      expect(wrapper.text()).not.toContain('aborted');
     });
   });
 

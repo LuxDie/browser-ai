@@ -38,7 +38,7 @@ describe('Background Script', () => {
   describe('onInstalled Listener', () => {
 
     beforeEach(async () => {
-      await fakeBrowser.runtime.onInstalled.trigger();
+      await fakeBrowser.runtime.onInstalled.trigger({ reason: 'install', temporary: false });
     });
 
     it('should create the context menu', () => {
@@ -149,5 +149,4 @@ describe('Background Script', () => {
       });
     });
   });
-
 });

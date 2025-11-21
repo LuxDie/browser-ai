@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, type MockedObject } from 'vitest';
 import { flushPromises, resetDOM } from '@/tests/utils';
 import { onMessage, sendMessage, removeMessageListeners } from '@/entrypoints/background/messaging';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
+import type { AIService } from '../background/ai/ai.service';
 
 vi.mock('@/entrypoints/background/ai/ai.service', () => ({
   getAIService: () => mockAIService,
@@ -12,10 +13,18 @@ vi.mock('@/entrypoints/background/language/language.service', () => ({
   },
 }));
 
-const mockAIService = {
-  processText: vi.fn(),
-  detectLanguage: vi.fn(),
-  checkAPIAvailability: vi.fn(() => Promise.resolve(true)),
+// TODO: centralizar simulacro
+const mockAIService: MockedObject<Pick<
+  AIService,
+  'processText' |
+  'detectLanguage' |
+  'checkAPIAvailability' |
+  'cancelProcessing'>
+> = {
+  processText: vi.fn(() => Promise.resolve(PROCESSED_TEXT)),
+  detectLanguage: vi.fn(() => Promise.resolve(mockSupportedLanguages[0])),
+  checkAPIAvailability: vi.fn(() => true),
+  cancelProcessing: vi.fn(),
 };
 
 const mockLanguageService = {
@@ -26,6 +35,9 @@ const mockLanguageService = {
 };
 
 const sidepanelReadySpy = vi.fn();
+
+const PROCESSED_TEXT = 'Texto procesado';
+const mockSupportedLanguages = ['en', 'es'] as const;
 
 describe('sidepanel.ts', () => {
   beforeAll(() => {

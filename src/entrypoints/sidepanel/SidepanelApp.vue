@@ -20,10 +20,7 @@ const isLoading = ref(false);
 const error = ref<string | null>(null);
 const summarize = ref(false);
 const supportedLanguages = ref<SupportedLanguageCode[]>([]);
-
 const warning = ref<string | null>(null);
-
-
 
 const canProcess = computed(() => {
   const hasText = text.value.trim().length > 0;
@@ -105,6 +102,10 @@ const processText = async () => {
     translatedText.value = response;
   } catch (e: unknown) {
     if (e instanceof Error) {
+      if (e.name === 'AbortError') {
+        // No mostrar error cuando el usuario cancela el procesamiento
+        return;
+      }
       const errorMessage = e.message;
       error.value = `${t('processingError')}\n${errorMessage}`;
     }
@@ -114,10 +115,7 @@ const processText = async () => {
 };
 
 watch(text, async (newText) => {
-
-  isLoading.value = false; // Restablecer estado de carga cuando cambia el texto
-  modelStatus.value = null; // Restablecer estado del modelo cuando cambia el texto
-  warning.value = null;
+  resetSharedState();
   if (newText.trim().length < 15) {
     sourceLanguage.value = null;
     error.value = null; // Limpiar error cuando el texto es demasiado corto
@@ -140,16 +138,30 @@ watch(text, async (newText) => {
 });
 
 watch(targetLanguage, () => {
-
-  isLoading.value = false; // Restablecer estado de carga cuando cambia el idioma de destino
-  modelStatus.value = null; // Restablecer estado del modelo cuando cambia el idioma de destino
-  warning.value = null;
+  resetSharedState();
 });
 
 watch(summarize, () => {
+  resetSharedState();
+});
 
-  isLoading.value = false; // Restablecer estado de carga cuando cambia resumir
+const handleCancel = () => {
+  AIService.cancelProcessing();
+  modelStatus.value = null;
+};
+
+const resetSharedState = () => {
+  isLoading.value = false;
+  modelStatus.value = null;
   warning.value = null;
+};
+
+const dCardParams = computed(() => {
+  if (!modelStatus.value) throw new Error('No model status');
+  return {
+    source: sourceLanguage.value!,
+    target: targetLanguage.value,
+  };
 });
 
 </script>
@@ -158,7 +170,7 @@ watch(summarize, () => {
   <div data-testid="sidepanel-app-container" class="p-4 flex flex-col gap-4">
     <AppHeader :api-available="apiAvailable" />
 
-    <ModelDownloadCard v-if="modelStatus" :status="modelStatus" />
+    <ModelDownloadCard v-if="modelStatus" :status="modelStatus" :params="dCardParams" @cancel="handleCancel" />
 
     <InputArea
       v-model="text"
