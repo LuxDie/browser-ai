@@ -25,4 +25,14 @@ describe('OutputArea', () => {
     expect(textarea.exists()).toBe(true);
     expect((textarea.element as HTMLTextAreaElement).value).toBe(translatedText);
   });
+
+  it('should render LocalProcessingBadge', () => {
+    const wrapper = mount(OutputArea, {
+      props: {
+        translatedText: 'Some text'
+      }
+    });
+
+    expect(wrapper.findComponent({ name: 'LocalProcessingBadge' }).exists()).toBe(true);
+  });
 });
