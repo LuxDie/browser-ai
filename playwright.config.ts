@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Configuración de Playwright para pruebas E2E de la extensión Browser AI.
@@ -57,8 +60,8 @@ export default defineConfig({
             `--load-extension=${resolve(__dirname, '.output/chrome-mv3')}`,
             '--no-sandbox'
           ],
-          // Mantener el navegador abierto para debugging si es necesario
-          headless: process.env['CI'] ? true : false,
+          // Forzar modo headless para evitar problemas en entornos sin UI
+          headless: true,
         }
       },
     },
