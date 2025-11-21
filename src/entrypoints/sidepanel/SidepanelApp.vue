@@ -7,6 +7,7 @@ import AppHeader from '@/components/AppHeader.vue';
 import InputArea from '@/components/InputArea.vue';
 import ProcessControls from '@/components/ProcessControls.vue';
 import ModelDownloadCard from '@/components/ModelDownloadCard.vue';
+import OutputArea from '@/components/OutputArea.vue';
 
 const AIService = getAIService();
 const languageService = LanguageService.getInstance();
@@ -180,14 +181,6 @@ watch(summarize, () => {
       {{ error }}
     </div>
 
-    <div v-if="translatedText" class="flex flex-col gap-2">
-      <div class="flex justify-between items-center">
-        <label for="output-text">Result:</label>
-        <span id="processing-source" class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-          {{ t('localProcessingBadge') }}
-        </span>
-      </div>
-      <textarea id="output-text" :value="translatedText" class="border p-2 rounded-md" rows="5" readonly></textarea>
-    </div>
+    <OutputArea :translated-text="translatedText" />
   </div>
 </template>
