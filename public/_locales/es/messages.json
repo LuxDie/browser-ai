@@ -8,6 +8,9 @@
   "processingError": {
     "message": "Hubo un error al procesar la solicitud"
   },
+  "languageDetectionError": {
+    "message": "Error al detectar el idioma"
+  },
   "inputLabel": {
     "message": "Texto a procesar"
   },

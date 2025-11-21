@@ -6,7 +6,10 @@
     "message": "AI-powered translation using Chrome's built-in APIs"
   },
   "processingError": {
-    "message": "There was an error processing the request"
+    "message": "An error occurred while processing the request"
+  },
+  "languageDetectionError": {
+    "message": "Failed to detect language"
   },
   "inputLabel": {
     "message": "Text to process"
