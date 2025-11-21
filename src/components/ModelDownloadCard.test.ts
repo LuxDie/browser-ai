@@ -56,4 +56,39 @@ describe('ModelDownloadCard.vue', () => {
     const progressBar = wrapper.find('.bg-blue-600');
     expect(progressBar.attributes('style')).toContain('width: 100%');
   });
+  it('should render cancel button when canCancel is true and state is downloading', () => {
+    const wrapper = mount(ModelDownloadCard, {
+      props: {
+        status: mockStatus,
+        canCancel: true,
+      },
+    });
+
+    const button = wrapper.find('button');
+    expect(button.exists()).toBe(true);
+    expect(button.text()).toBe('cancelDownload');
+  });
+
+  it('should emit cancel event when button is clicked', async () => {
+    const wrapper = mount(ModelDownloadCard, {
+      props: {
+        status: mockStatus,
+        canCancel: true,
+      },
+    });
+
+    await wrapper.find('button').trigger('click');
+    expect(wrapper.emitted('cancel')).toBeTruthy();
+  });
+
+  it('should not render cancel button when canCancel is false', () => {
+    const wrapper = mount(ModelDownloadCard, {
+      props: {
+        status: mockStatus,
+        canCancel: false,
+      },
+    });
+
+    expect(wrapper.find('button').exists()).toBe(false);
+  });
 });

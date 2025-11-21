@@ -11,6 +11,7 @@ export interface ProtocolMap {
     targetLanguage: SupportedLanguageCode;
     sourceLanguage: SupportedLanguageCode
   }): string;
+
   sidepanelReady(): void;
   selectedText(data: { text: string; summarize?: boolean }): void;
   modelStatusUpdate(data: AIModelStatus): void;
