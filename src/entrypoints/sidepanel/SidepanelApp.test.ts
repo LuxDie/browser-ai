@@ -441,6 +441,26 @@ describe('SidepanelApp', () => {
 
       expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(false);
     });
+
+    it('should hide model download message when cancel button is clicked', async () => {
+      const wrapper = mount(SidepanelApp);
+      await flushPromises();
+
+      // Show download message
+      const messageHandler = mockedOnMessage.mock.calls.find(call => call[0] === 'modelStatusUpdate')?.[1];
+      if (messageHandler) {
+        await messageHandler({ data: { state: 'downloading', downloadProgress: 0 } } as any);
+      }
+      await nextTick();
+      expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(true);
+
+      // Find the card and emit cancel
+      const card = wrapper.findComponent({ name: 'ModelDownloadCard' });
+      card.vm.$emit('cancel');
+      await nextTick();
+
+      expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(false);
+    });
   });
 
   describe('Error Handling', () => {

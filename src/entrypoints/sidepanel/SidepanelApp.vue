@@ -149,13 +149,18 @@ watch(summarize, () => {
   warning.value = null;
 });
 
+const handleCancel = () => {
+  AIService.cancelProcessing();
+  modelStatus.value = null;
+};
+
 </script>
 
 <template>
   <div class="p-4 flex flex-col gap-4">
     <AppHeader :api-available="apiAvailable" />
 
-    <ModelDownloadCard v-if="modelStatus" :status="modelStatus" />
+    <ModelDownloadCard v-if="modelStatus" :status="modelStatus" :can-cancel="true" @cancel="handleCancel" />
 
     <InputArea
       v-model="text"
