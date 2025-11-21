@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
 const props = defineProps<{
@@ -7,8 +8,18 @@ const props = defineProps<{
     source: string;
     target: string;
   };
+  canCancel?: boolean;
 }>();
 
+const emit = defineEmits<{
+  cancel: [];
+}>();
+
+const handleCancel = () => {
+  emit('cancel');
+};
+
+// Computed para obtener el título
 const title = computed(() => {
   if (props.params) {
     return t('downloadingTranslator', [props.params.source, props.params.target]);
@@ -46,5 +57,14 @@ const progressPercentage = computed(() => {
          ></div>
        </div>
      </div>
+
+    <div v-if="canCancel && status.state === 'downloading'" class="mt-4 flex justify-center">
+      <button
+        @click="handleCancel"
+        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+      >
+        {{ t('cancelDownload') }}
+      </button>
+    </div>
    </div>
  </template>

@@ -311,5 +311,8 @@
   },
   "modelDownloadCancelled": {
     "message": "Model download cancelled by user"
+  },
+  "cancelDownload": {
+    "message": "Cancel download"
   }
 }
