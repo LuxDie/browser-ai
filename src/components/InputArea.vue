@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import {
-  LanguageService,
   type SupportedLanguageCode
 } from '@/entrypoints/background/language/language.service';
-
-const languageService = LanguageService.getInstance();
+import DetectedLanguage from '@/components/DetectedLanguage.vue';
 
 const modelValue = defineModel<string>();
 
@@ -22,8 +20,6 @@ defineProps<{
       class="border p-2 rounded-md"
       rows="5"
     ></textarea>
-    <div v-if="sourceLanguage">
-      {{ t('detectedLanguage', t(languageService.getLanguageKey(sourceLanguage))) }}
-    </div>
+    <DetectedLanguage v-if="sourceLanguage" :source-language="sourceLanguage" />
   </div>
 </template>
