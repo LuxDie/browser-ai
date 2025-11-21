@@ -14,11 +14,10 @@ interface ProcessOptions {
 export class AIService {
   #modelManager = ModelManager.getInstance();
   #languageService = LanguageService.getInstance();
-  #isNotificationPending = false;
-
   async #setupModel(
     modelParams: Parameters<ModelManager['checkModelStatus']>[0]
-  ) {
+  ): Promise<boolean> {
+    let downloadTriggered = false;
     // Verificar disponibilidad del modelo
     let modelStatus = await this.#modelManager.checkModelStatus(modelParams);
 
@@ -30,7 +29,7 @@ export class AIService {
     if (modelStatus.state === 'downloadable') {
 
       // Si la traducción requiere descargar un modelo, mostraremos una notificación al finalizar
-      this.#isNotificationPending = true;
+      downloadTriggered = true;
 
       void sendMessage('modelStatusUpdate', { state: 'downloading' });
       const progressCallback: CreateMonitorCallback = (monitor) => {
@@ -46,18 +45,20 @@ export class AIService {
     } else if (modelStatus.state === 'downloading') {
 
       // Si el modelo ya está descargándose, mostraremos una notificación al finalizar
-      this.#isNotificationPending = true;
+      downloadTriggered = true;
 
       void sendMessage('modelStatusUpdate', modelStatus);
     }
+    return downloadTriggered;
   }
 
   async processText(text: string, options: ProcessOptions): Promise<string> {
     let processedText = text;
+    let notificationPending = false;
 
     if (options.summarize) {
 
-      await this.#setupModel({ type: 'summarization' });
+      notificationPending = await this.#setupModel({ type: 'summarization' });
 
       // Lógica para manejar idiomas no soportados por el summarizer
       const summarizerLanguages = this.#languageService.getSummarizerLanguageCodes();
@@ -72,7 +73,7 @@ export class AIService {
         summarizerInputLanguage = options.sourceLanguage;
       } else {
         summarizerInputLanguage = summarizerDefaultLanguage;
-        await this.#setupModel({
+        notificationPending = await this.#setupModel({
           type: 'translation',
           source: options.sourceLanguage,
           target: summarizerDefaultLanguage
@@ -97,7 +98,7 @@ export class AIService {
       processedText = await this.#modelManager.summarize(processedText, summarizerOptions);
 
       if (summarizerOutputLanguage !== options.targetLanguage) {
-        await this.#setupModel({
+        notificationPending = await this.#setupModel({
           type: 'translation',
           source: summarizerDefaultLanguage,
           target: options.targetLanguage
@@ -105,7 +106,7 @@ export class AIService {
         processedText = await this.#modelManager.translate(processedText, summarizerDefaultLanguage, options.targetLanguage);
       }
     } else { // summarize === false
-      await this.#setupModel({
+      notificationPending = await this.#setupModel({
         type: 'translation',
         source: options.sourceLanguage,
         target: options.targetLanguage
@@ -114,7 +115,7 @@ export class AIService {
       processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, options.targetLanguage);
     }
 
-    if (this.#isNotificationPending) {
+    if (notificationPending) {
       void browser.notifications.create({
         type: 'basic',
         title: browser.i18n.getMessage('extName'),
