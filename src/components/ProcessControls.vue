@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { SupportedLanguageCode } from '@/entrypoints/background/language/language.service';
-import { LanguageService } from '@/entrypoints/background/language/language.service';
 import SummarizeOption from './SummarizeOption.vue';
-
-const languageService = LanguageService.getInstance();
+import LanguageSelector from './LanguageSelector.vue';
 
 const props = defineProps<{
   targetLanguage: SupportedLanguageCode;
@@ -37,21 +35,11 @@ const isButtonDisabled = computed(() => {
       :model-value="summarize"
       @update:model-value="emit('update:summarize', $event)"
     />
-    <div class="flex-1">
-      <label for="target-language" class="block text-sm font-medium text-gray-700 mb-2">
-        {{ t('targetLanguageLabel') }}
-      </label>
-      <select
-        id="target-language"
-        :value="targetLanguage"
-        class="input-field"
-        @change="emit('update:targetLanguage', ($event.target as HTMLSelectElement).value as SupportedLanguageCode)"
-      >
-        <option v-for="lang in availableLanguages" :key="lang" :value="lang">
-          {{ languageService.getLanguageKey(lang) }}
-        </option>
-      </select>
-    </div>
+    <LanguageSelector
+      :model-value="targetLanguage"
+      :available-languages="availableLanguages"
+      @update:model-value="emit('update:targetLanguage', $event)"
+    />
     <button
       id="process-button"
       class="btn-primary px-6 disabled:opacity-50 disabled:cursor-not-allowed"
