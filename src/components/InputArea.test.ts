@@ -29,4 +29,25 @@ describe('InputArea', () => {
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['Hello']);
   });
 
+  it('should show DetectedLanguage component when sourceLanguage is provided', () => {
+    const wrapper = mount(InputArea, {
+      props: {
+        modelValue: '',
+        sourceLanguage: 'en'
+      }
+    });
+
+    expect(wrapper.findComponent({ name: 'DetectedLanguage' }).exists()).toBe(true);
+  });
+
+  it('should not show DetectedLanguage component when sourceLanguage is null', () => {
+    const wrapper = mount(InputArea, {
+      props: {
+        modelValue: '',
+        sourceLanguage: null
+      }
+    });
+
+    expect(wrapper.findComponent({ name: 'DetectedLanguage' }).exists()).toBe(false);
+  });
 });
