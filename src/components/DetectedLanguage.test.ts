@@ -18,7 +18,7 @@ describe('DetectedLanguage', () => {
         return correctString;
       }
       return msg;
-    })
+    });
     const wrapper = mount(DetectedLanguage, {
       props: {
         sourceLanguage: 'es'
