@@ -62,6 +62,7 @@ onMounted(async () => {
     // Detectar idioma primero
     if (text.value.trim().length >= 15) {
       try {
+        AIService.cancelProcessing();
         const lang = await AIService.detectLanguage(text.value);
         if (languageService.isLanguageSupported(lang)) {
           sourceLanguage.value = lang;
@@ -71,7 +72,7 @@ onMounted(async () => {
           error.value = t('detectedLanguageNotSupported', lang);
         }
       } catch (e: unknown) {
-        if (e instanceof Error) {
+        if (e instanceof Error && e.name !== 'AbortError') {
           error.value = t('languageDetectionError');
         }
       }
@@ -92,6 +93,8 @@ const processText = async () => {
   isLoading.value = true;
   error.value = null;
   translatedText.value = '';
+  AIService.cancelProcessing();
+
   try {
     const response = await AIService.processText(
       text.value,
@@ -103,7 +106,7 @@ const processText = async () => {
     );
     translatedText.value = response;
   } catch (e: unknown) {
-    if (e instanceof Error) {
+    if (e instanceof Error && e.name !== 'AbortError') {
       const errorMessage = e.message;
       error.value = `${t('processingError')}\n${errorMessage}`;
     }
@@ -113,7 +116,7 @@ const processText = async () => {
 };
 
 watch(text, async (newText) => {
-
+  AIService.cancelProcessing();
   isLoading.value = false; // Restablecer estado de carga cuando cambia el texto
   modelStatus.value = null; // Restablecer estado del modelo cuando cambia el texto
   warning.value = null;
@@ -132,21 +135,21 @@ watch(text, async (newText) => {
       error.value = t('detectedLanguageNotSupported', lang);
     }
   } catch (e: unknown) {
-    if (e instanceof Error) {
+    if (e instanceof Error && e.name !== 'AbortError') {
       error.value = t('languageDetectionError');
     }
   }
 });
 
 watch(targetLanguage, () => {
-
+  AIService.cancelProcessing();
   isLoading.value = false; // Restablecer estado de carga cuando cambia el idioma de destino
   modelStatus.value = null; // Restablecer estado del modelo cuando cambia el idioma de destino
   warning.value = null;
 });
 
 watch(summarize, () => {
-
+  AIService.cancelProcessing();
   isLoading.value = false; // Restablecer estado de carga cuando cambia resumir
   warning.value = null;
 });
