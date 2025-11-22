@@ -4,6 +4,7 @@ import { getAIService } from '@/entrypoints/background/ai/ai.service';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { type SupportedLanguageCode, LanguageService } from '@/entrypoints/background/language/language.service';
 import AppHeader from '@/components/AppHeader.vue';
+import InputArea from '@/components/InputArea.vue';
 import ProcessControls from '@/components/ProcessControls.vue';
 import ModelDownloadCard from '@/components/ModelDownloadCard.vue';
 
@@ -157,13 +158,10 @@ watch(summarize, () => {
 
     <ModelDownloadCard v-if="modelStatus" :status="modelStatus" />
 
-    <div class="flex flex-col gap-2">
-      <label for="input-text">Text to process:</label>
-      <textarea id="input-text" v-model="text" class="border p-2 rounded-md" rows="5"></textarea>
-      <div v-if="sourceLanguage">
-        {{ t('detectedLanguage', t(languageService.getLanguageKey(sourceLanguage))) }}
-      </div>
-    </div>
+    <InputArea
+      v-model="text"
+      :source-language="sourceLanguage"
+    />
 
     <div v-if="warning" id="process-warning-container" class="text-yellow-800 bg-yellow-100 p-2 rounded-md">
       {{ warning }}
