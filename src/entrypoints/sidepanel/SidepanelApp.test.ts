@@ -40,10 +40,11 @@ const mockLanguageService: MockedObject<Pick<LanguageService, 'getSupportedLangu
   isLanguageSupported: vi.fn(() => true) as any,
   getLanguageKey: vi.fn((code: string) => `lang_${code}` as any)
 };
-const mockAIService: MockedObject<Pick<AIService, 'processText' | 'detectLanguage' | 'checkAPIAvailability'>> = {
+const mockAIService: MockedObject<Pick<AIService, 'processText' | 'detectLanguage' | 'checkAPIAvailability' | 'cancelProcessing'>> = {
   processText: vi.fn(() => Promise.resolve('Texto procesado')),
   detectLanguage: vi.fn(() => Promise.resolve(DEFAULT_DETECTED_LANGUAGE)),
   checkAPIAvailability: vi.fn(() => true as any),
+  cancelProcessing: vi.fn(),
 };
 
 const DEFAULT_DETECTED_LANGUAGE = 'it';
