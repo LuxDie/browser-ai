@@ -16,11 +16,18 @@
 - **Obligatoriedad de pruebas unitarias:** Toda nueva funcionalidad o corrección debe incluir pruebas unitarias que acompañen la implementación
 - **Actualización ante cambios:** Si se modifica comportamiento existente, actualizar las pruebas afectadas o agregar nuevas según corresponda
 - **Refactorización**: **Nunca** se debe eliminar un caso de prueba salvo que realmente sea obsoleto
+- Las cadenas de texto en las pruebas unitarias deben estar en castellano. Las que se usan más de una vez deben estar en constantes. Si se usan en una sola prueba deben tener alcance local. Los nombres de las constantes deben estar en inglés, según las reglas del proyecto.
+- Las variables globales se simulan con `vi.stubGlobals`, no con `Object.assign`
+- Las pruebas unitarias deben simular todo servicio externo para mantener la aislación
+- Las pruebas están configuradas con `mockReset: true`, lo que significa que los simulacros se reestablecen en cada prueba. Por eso no es necesario llamar a `clearAllMocks` ni ninguna función similar en los archivos de pruebas. Esto resetea las implementaciones establecidas con `mockResolvedValue`, etc., pero **no** las establecidas con `vi.fn(func)`
+- No es necesario el uso de `vi.hoisted`
+- Las simulaciones de APIs de navegador se cargan en `setup.ts`, así que no es necesario definir estos simulacros en cada archivo de pruebas
 
 ### Código y estructura generado:
 
 - Todo nombre técnico (funciones, clases, archivos, carpetas, APIs, variables, constantes, descripciones de tests, etc.) debe estar en inglés
 - Strings de UI y mensajes de error deben estar en castellano
+- El proyecto utiliza auto-importación, por lo cual todas las importaciones de las librerías (WXT, Vue, etc.) y de la carpeta `utils` no necesitan importarse explícitamente. La carpeta `components` **no** se auto-importa
 
 ### Comentarios y documentación interna generada por agentes:
 
@@ -29,13 +36,7 @@
 
 ### Internacionalización
 
-Las cadenas de texto deben estar internacionalizadas con la API `browser.i18n.getMessage`.
-
-### Pruebas
-
-- Las cadenas de texto en las pruebas unitarias deben estar en castellano. Las que se usan más de una vez deben estar en constantes. Si se usan en una sola prueba deben tener alcance local. Los nombres de las constantes deben estar en inglés, según las reglas del proyecto.
-- Las variables globales se simulan con `vi.stubGlobals`, no con `Object.assign`
-- Las pruebas unitarias deben simular todo servicio externo para mantener la aislación
+Las cadenas de texto deben estar internacionalizadas con la función `t`.
 
 ### Uso de herramientas
 
