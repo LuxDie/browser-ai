@@ -1,10 +1,16 @@
 import '@/entrypoints/sidepanel/sidepanel.css';
-import { type SupportedLanguages, type SupportedLanguageCode, LanguageService } from '@/entrypoints/background/language/language.service';
+import {
+  type SupportedLanguages,
+  type SupportedLanguageCode,
+  LanguageService
+} from '@/entrypoints/background/language/language.service';
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
-import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
+import type {
+  AIModelStatus
+} from '@/entrypoints/background/model-manager/model-manager.model';
 import { getAIService } from '@/entrypoints/background/ai/ai.service';
 import { createApp, nextTick, ref, h, type Component, type App } from 'vue';
-import ProcessControls from '@/components/ProcessControls.vue';
+import ProcessControls from '@/components/ProcessControlsTemplate.vue';
 import ModelDownloadCard from '@/components/ModelDownloadCard.vue';
 
 interface State {
