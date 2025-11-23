@@ -1,4 +1,3 @@
-import '@/entrypoints/sidepanel/sidepanel.css';
 import { createApp, type Component } from 'vue';
 import SidepanelApp from '@/entrypoints/sidepanel/SidepanelApp.vue';
 

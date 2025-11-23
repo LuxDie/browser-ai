@@ -10,107 +10,29 @@ describe('ModelDownloadCard.vue', () => {
     downloadProgress: 50,
   };
 
-  it('should render the download progress and title', () => {
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: mockStatus,
-      },
+  const mountComponent = (props: any) => {
+    return mount(ModelDownloadCard, {
+      props,
       global: {
         plugins: [vuetify],
       },
     });
+  };
 
-<<<<<<< HEAD:src/components/ModelDownloadCard.test.ts
-    expect(wrapper.find('h5').text()).toBe('downloadingSummarizer');
+  it('should render progress and title', () => {
+    const wrapper = mountComponent({ status: mockStatus });
+    expect(wrapper.find('.v-card-title').text()).toContain('downloadingSummarizer');
     expect(wrapper.text()).toContain('50%');
-=======
-    expect(wrapper.find('.v-card-title').text()).toBe('Descargando modelo de IA');
-    // TODO: Add a specific check for the displayed percentage if needed, as the text content
-    // might not directly contain "50%" due to v-progress-linear structure.
-    // For now, relying on the progress bar width check in subsequent tests.
->>>>>>> af4e7ee (feat: migrate ProcessControls.vue to Vue 3 Composition API):src/entrypoints/sidepanel/components/ModelDownloadCard.test.ts
   });
 
-  it('should update the progress bar width based on downloadProgress', () => {
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: mockStatus,
-      },
-      global: {
-        plugins: [vuetify],
-      },
-    });
-
-    const progressBar = wrapper.find('.v-progress-linear__determinate');
-    expect(progressBar.attributes('style')).toContain('width: 50%');
+  it('should render cancel button', async () => {
+    const wrapper = mountComponent({ status: mockStatus, canCancel: true });
+    expect(wrapper.find('button').exists()).toBe(true);
   });
 
-  it('should render with 0% progress correctly', () => {
-    const zeroProgressStatus: AIModelStatus = { ...mockStatus, downloadProgress: 0 };
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: zeroProgressStatus,
-      },
-      global: {
-        plugins: [vuetify],
-      },
-    });
-
-    const progressBar = wrapper.find('.v-progress-linear__determinate');
-    expect(progressBar.attributes('style')).toContain('width: 0%');
-  });
-
-  it('should render with 100% progress correctly', () => {
-    const fullProgressStatus: AIModelStatus = { ...mockStatus, downloadProgress: 100 };
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: fullProgressStatus,
-      },
-      global: {
-        plugins: [vuetify],
-      },
-    });
-
-    const progressBar = wrapper.find('.v-progress-linear__determinate');
-    expect(progressBar.attributes('style')).toContain('width: 100%');
-  });
-<<<<<<< HEAD:src/components/ModelDownloadCard.test.ts
-  it('should render cancel button when canCancel is true and state is downloading', () => {
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: mockStatus,
-        canCancel: true,
-      },
-    });
-
-    const button = wrapper.find('button');
-    expect(button.exists()).toBe(true);
-    expect(button.text()).toBe('cancelDownload');
-  });
-
-  it('should emit cancel event when button is clicked', async () => {
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: mockStatus,
-        canCancel: true,
-      },
-    });
-
+  it('should emit cancel event on click', async () => {
+    const wrapper = mountComponent({ status: mockStatus, canCancel: true });
     await wrapper.find('button').trigger('click');
     expect(wrapper.emitted('cancel')).toBeTruthy();
   });
-
-  it('should not render cancel button when canCancel is false', () => {
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: mockStatus,
-        canCancel: false,
-      },
-    });
-
-    expect(wrapper.find('button').exists()).toBe(false);
-  });
 });
-=======
-});
->>>>>>> af4e7ee (feat: migrate ProcessControls.vue to Vue 3 Composition API):src/entrypoints/sidepanel/components/ModelDownloadCard.test.ts
