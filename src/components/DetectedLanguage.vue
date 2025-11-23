@@ -16,5 +16,5 @@ const languageMessage = computed(() => {
 </script>
 
 <template>
-  <div>{{ languageMessage }}</div>
+  <div data-testid="detected-language">{{ languageMessage }}</div>
 </template>

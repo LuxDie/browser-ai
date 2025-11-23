@@ -164,7 +164,7 @@ watch(summarize, () => {
       :source-language="sourceLanguage"
     />
 
-    <div v-if="warning" id="process-warning-container" class="text-yellow-800 bg-yellow-100 p-2 rounded-md">
+    <div v-if="warning" id="process-warning-container" data-testid="warning-container" class="text-yellow-800 bg-yellow-100 p-2 rounded-md">
       {{ warning }}
     </div>
 
@@ -177,7 +177,7 @@ watch(summarize, () => {
       @process="processText"
     />
 
-    <div v-if="error" class="text-red-500 bg-red-100 p-2 rounded-md">
+    <div v-if="error" data-testid="error-container" class="text-red-500 bg-red-100 p-2 rounded-md">
       {{ error }}
     </div>
 

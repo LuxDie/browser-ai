@@ -9,7 +9,7 @@ const modelValue = defineModel<boolean>();
     </label>
     <div class="flex items-center gap-2">
       <input
-        id="summarize-checkbox"
+        id="summarize-checkbox" data-testid="summarize-checkbox"
         v-model="modelValue"
         type="checkbox"
         class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
