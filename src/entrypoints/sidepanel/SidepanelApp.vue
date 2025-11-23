@@ -19,8 +19,6 @@ const availableLanguages = ref<SupportedLanguageCode[]>([]);
 
 const warning = ref<string | null>(null);
 
-
-
 const canProcess = computed(() => {
   const hasText = text.value.trim().length > 0;
   const hasSourceLanguage = sourceLanguage.value !== null;
@@ -157,33 +155,47 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div class="p-4 flex flex-col gap-4">
-    <AppHeader :api-available="apiAvailable" />
+  <v-app>
+    <v-container class="d-flex flex-column ga-4">
+      <AppHeader :api-available="apiAvailable" />
 
-    <ModelDownloadCard v-if="modelStatus" :status="modelStatus" :can-cancel="true" @cancel="handleCancel" />
+      <ModelDownloadCard
+        v-if="modelStatus"
+        :status="modelStatus"
+        :can-cancel="true"
+        @cancel="handleCancel"
+      />
 
-    <InputArea
-      v-model="text"
-      :source-language="sourceLanguage"
-    />
+      <InputArea
+        v-model="text"
+        :source-language="sourceLanguage"
+      />
 
-    <div v-if="warning" id="process-warning-container" class="text-yellow-800 bg-yellow-100 p-2 rounded-md">
-      {{ warning }}
-    </div>
+      <v-alert
+        v-if="warning"
+        id="process-warning-container"
+        :text="warning"
+        type="warning"
+        variant="tonal"
+      />
 
-    <ProcessControls
-      v-model:targetLanguage="targetLanguage"
-      v-model:summarize="summarize"
-      :available-languages="availableLanguages"
-      :is-loading="isLoading"
-      :can-process="canProcess"
-      @process="processText"
-    />
+      <ProcessControls
+        v-model:targetLanguage="targetLanguage"
+        v-model:summarize="summarize"
+        :available-languages="availableLanguages"
+        :is-loading="isLoading"
+        :can-process="canProcess"
+        @process="processText"
+      />
 
-    <div v-if="error" class="text-red-500 bg-red-100 p-2 rounded-md">
-      {{ error }}
-    </div>
+      <v-alert
+        v-if="error"
+        :text="error"
+        type="error"
+        variant="tonal"
+      />
 
-    <OutputArea :translated-text="translatedText" />
-  </div>
+      <OutputArea :translated-text="translatedText" />
+    </v-container>
+  </v-app>
 </template>

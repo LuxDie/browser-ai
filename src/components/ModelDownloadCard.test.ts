@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils';
 import { describe, it, expect } from 'vitest';
 import ModelDownloadCard from '@/components/ModelDownloadCard.vue';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
+import { VCardTitle, VProgressLinear, VBtn } from 'vuetify/components';
 
 describe('ModelDownloadCard.vue', () => {
   const mockStatus: AIModelStatus = {
@@ -16,7 +17,7 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    expect(wrapper.find('h5').text()).toBe('downloadingSummarizer');
+    expect(wrapper.findComponent(VCardTitle).text()).toBe('downloadingSummarizer');
     expect(wrapper.text()).toContain('50%');
   });
 
@@ -27,8 +28,8 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    const progressBar = wrapper.find('.bg-blue-600');
-    expect(progressBar.attributes('style')).toContain('width: 50%');
+    const progressBar = wrapper.findComponent(VProgressLinear);
+    expect(progressBar.props('modelValue')).toBe(50);
   });
 
   it('should render with 0% progress correctly', () => {
@@ -40,8 +41,8 @@ describe('ModelDownloadCard.vue', () => {
     });
 
     expect(wrapper.text()).toContain('0%');
-    const progressBar = wrapper.find('.bg-blue-600');
-    expect(progressBar.attributes('style')).toContain('width: 0%');
+    const progressBar = wrapper.findComponent(VProgressLinear);
+    expect(progressBar.props('modelValue')).toBe(0);
   });
 
   it('should render with 100% progress correctly', () => {
@@ -53,9 +54,10 @@ describe('ModelDownloadCard.vue', () => {
     });
 
     expect(wrapper.text()).toContain('100%');
-    const progressBar = wrapper.find('.bg-blue-600');
-    expect(progressBar.attributes('style')).toContain('width: 100%');
+    const progressBar = wrapper.findComponent(VProgressLinear);
+    expect(progressBar.props('modelValue')).toBe(100);
   });
+
   it('should render cancel button when canCancel is true and state is downloading', () => {
     const wrapper = mount(ModelDownloadCard, {
       props: {
@@ -64,7 +66,7 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    const button = wrapper.find('button');
+    const button = wrapper.findComponent(VBtn);
     expect(button.exists()).toBe(true);
     expect(button.text()).toBe('cancelDownload');
   });
@@ -77,7 +79,7 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    await wrapper.find('button').trigger('click');
+    await wrapper.findComponent(VBtn).trigger('click');
     expect(wrapper.emitted('cancel')).toBeTruthy();
   });
 
@@ -89,6 +91,6 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    expect(wrapper.find('button').exists()).toBe(false);
+    expect(wrapper.findComponent(VBtn).exists()).toBe(false);
   });
 });

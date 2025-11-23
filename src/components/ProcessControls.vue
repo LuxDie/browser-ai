@@ -26,19 +26,20 @@ const buttonText = computed(() => {
 </script>
 
 <template>
-  <div class="flex gap-2 items-end">
+  <div class="d-flex ga-2 align-end">
     <SummarizeOption v-model="summarize" />
     <LanguageSelector
       v-model="targetLanguage"
       :available-languages="availableLanguages"
     />
-    <button
+    <v-btn
       id="process-button"
-      class="btn-primary px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="px-6"
       :disabled="!canProcess"
+      :loading="isLoading"
       @click="emit('process')"
     >
       {{ buttonText }}
-    </button>
+    </v-btn>
   </div>
 </template>

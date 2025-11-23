@@ -11,14 +11,12 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
-    <label for="input-text">{{ t('inputLabel') }}</label>
-    <textarea
-      id="input-text"
-      v-model="modelValue"
-      class="border p-2 rounded-md"
-      rows="5"
-    ></textarea>
-    <DetectedLanguage :source-language="sourceLanguage" />
-  </div>
+  <v-textarea
+    v-model="modelValue"
+    :label="t('inputLabel')"
+    rows="5"
+    variant="outlined"
+    clearable
+  />
+  <DetectedLanguage :source-language="sourceLanguage" />
 </template>

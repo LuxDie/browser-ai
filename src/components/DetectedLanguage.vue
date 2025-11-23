@@ -17,6 +17,11 @@ const languageName = computed(() => {
 
 <template>
   <div v-if="sourceLanguage">
-    {{ t('detectedLanguage', languageName) }}
+    <v-alert
+      id="detected-language-container"
+      :text="t('detectedLanguage', languageName)"
+      type="info"
+      variant="tonal"
+    />
   </div>
 </template>
