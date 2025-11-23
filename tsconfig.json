@@ -1,10 +1,12 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
     // Opciones de verificación de tipos más estrictas
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-
     // Opciones de estilo
     "noImplicitReturns": true,
     "noImplicitOverride": true,
@@ -12,7 +14,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noPropertyAccessFromIndexSignature": true,
-
     // Opciones recomendadas
     "verbatimModuleSyntax": true,
     "isolatedModules": true,

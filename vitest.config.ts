@@ -1,20 +1,11 @@
-import { defineConfig } from 'vitest/config'
-import { resolve } from 'path'
-import { WxtVitest } from 'wxt/testing/vitest-plugin'
-import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vitest/config';
+import { WxtVitest } from 'wxt/testing/vitest-plugin';
 
 export default defineConfig({
-  plugins: [WxtVitest(), vue()],
+  plugins: [WxtVitest()],
   test: {
-    environment: 'happy-dom',
     globals: true,
+    environment: 'happy-dom',
     setupFiles: ['./src/tests/setup.ts'],
-    mockReset: true,
-    silent: true,
   },
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, './src')
-    }
-  }
-})
+});
