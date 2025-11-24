@@ -2,33 +2,20 @@
 
 ## Flujo de Trabajo Mandatorio: Especificación Primero (Specification-First)
 
-**Regla fundamental:** Todo cambio o adición al proyecto, sin excepción, debe basarse estrictamente en la [especificación técnica](/docs/)
+- **Regla fundamental:** Todo cambio o adición al proyecto, sin excepción, debe basarse estrictamente en la [especificación técnica](/docs/)
 
 - [Reglas para mensajes de confirmación Git](/.agents/commit-messages.md)
 
 ### Reglas generales
-- **Importante**: si te atascas tratando de corregir un error, especialmente en fallos de pruebas, desiste luego de los primeros intentos y completa el resto de la tarea. Al finalizar, informa al usuario sobre el problema y por qué no se pudo corregir.
-- No aplicar soluciones alternativas a lo que pidió el usuario. Si el plan original no funciona, detener la tarea y pedir nuevas instrucciones.
-
-### Calidad de código
-
-Siempre verificar lo siguiente antes de completar cualquier tarea de desarrollo:
-
-1. Verificar que las ediciones cumplen con los estándares de calidad delineados en las [guías de desarrollo](docs/guides)
-2. Ejecutar en paralelo (usando `comando & comando ... & wait`):
-  - `npm run lint` para verificar errores de ESLint
-  - `npm run type-check` para verificar errores de TypeScript
-  - `npm run test` para verificar las pruebas
-  - `npm run build` para compilar
-6. Corregir cualquier error encontrado antes de finalizar
-7. Confirmar que todos los comandos se ejecuten sin errores
-
-Esta regla no se aplica para tareas de documentación, configuración, o cualquier operación que no involucre modificaciones del código fuente local.
+- **Importante**: si te atascas tratando de corregir un error, especialmente en fallos de pruebas, desiste luego de los primeros intentos y completa el resto de la tarea. Al finalizar, informa al usuario sobre el problema y por qué no se pudo corregir
+- No aplicar soluciones alternativas a lo que pidió el usuario. Si el plan original no funciona, detener la tarea y pedir nuevas instrucciones
+- No ejecutar comandos de control de versiones salvo que se haya explicitado en las instrucciones
 
 ### Reglas de Pruebas
 
-- **Obligatoriedad de pruebas unitarias:** Toda nueva funcionalidad o corrección debe incluir pruebas unitarias que acompañen la implementación.
-- **Actualización ante cambios:** Si se modifica comportamiento existente, actualizar las pruebas afectadas o agregar nuevas según corresponda.
+- **Obligatoriedad de pruebas unitarias:** Toda nueva funcionalidad o corrección debe incluir pruebas unitarias que acompañen la implementación
+- **Actualización ante cambios:** Si se modifica comportamiento existente, actualizar las pruebas afectadas o agregar nuevas según corresponda
+- **Refactorización**: **Nunca** se debe eliminar un caso de prueba salvo que realmente sea obsoleto
 
 ### Código y estructura generado:
 
