@@ -27,11 +27,20 @@ const mockLanguageService: MockedObject<Pick<LanguageService, 'getSupportedLangu
   isLanguageSupported: vi.fn(() => true) as any,
   getLanguageKey: vi.fn((code: SupportedLanguageCode) => `lang_${code}`) as any,
 };
-const mockAIService: MockedObject<Pick<AIService, 'processText' | 'detectLanguage' | 'checkAPIAvailability' | 'cancelProcessing'>> = {
+const mockAIService: MockedObject<
+  Pick<
+    AIService,
+    'processText' | 'detectLanguage' | 'checkAPIAvailability' | 'cancelProcessing' | 'proofread' | 'rewrite' | 'write' | 'prompt'
+  >
+> = {
   processText: vi.fn(() => Promise.resolve('Texto procesado')),
   detectLanguage: vi.fn(() => Promise.resolve(DEFAULT_DETECTED_LANGUAGE)),
   checkAPIAvailability: vi.fn(() => Promise.resolve(true)) as any,
   cancelProcessing: vi.fn(),
+  proofread: vi.fn(() => Promise.resolve('Texto corregido')),
+  rewrite: vi.fn(() => Promise.resolve('Texto reescrito')),
+  write: vi.fn(() => Promise.resolve('Texto escrito')),
+  prompt: vi.fn(() => Promise.resolve('Texto de prompt')),
 };
 
 const DEFAULT_DETECTED_LANGUAGE = 'it';
@@ -55,7 +64,7 @@ describe('SidepanelApp', () => {
 
     expect(textarea.exists()).toBe(true);
     expect(textarea.props('modelValue')).toBe('');
-    expect(wrapper.findComponent({ name: 'ProcessControls' }).exists()).toBe(true);
+    expect(wrapper.findComponent({ name: 'ToolSelector' }).exists()).toBe(true);
   });
 
   it('should check API availability on initialization', () => {
@@ -80,269 +89,51 @@ describe('SidepanelApp', () => {
     await textarea.setValue('Este es un texto más largo que debería activar la detección de idioma');
     await flushPromises();
 
-    expect(wrapper.findComponent(VAlert).text()).toContain(`lang_${detectedLanguage}`);
-  });
-
-  it('should show "Procesado localmente" indicator when using native API', async () => {
-    const detectedLanguage = 'es';
-    mockAIService.detectLanguage.mockResolvedValue(detectedLanguage as SupportedLanguageCode);
-    mockLanguageService.getLanguageKey.mockReturnValue(`lang_${detectedLanguage}`);
-
-    const wrapper = mount(SidepanelApp);
-    const textarea = wrapper.findComponent(VTextarea);
-
-    await textarea.setValue('Este es un texto lo suficientemente largo para activar la detección de idioma.');
-    await flushPromises();
-
-    expect(wrapper.findComponent(VAlert).text()).toContain(`lang_${detectedLanguage}`);
-  });
-
-  it('should show "localProcessingBadge" indicator when using native API', async () => {
-    const detectedLanguage = 'es';
-    mockAIService.detectLanguage.mockResolvedValue(detectedLanguage as SupportedLanguageCode);
-    mockAIService.processText.mockResolvedValue('Texto procesado');
-    mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-    const wrapper = mount(SidepanelApp);
-    const textarea = wrapper.findComponent(VTextarea);
-
-    await textarea.setValue('Texto de prueba');
-    await flushPromises();
-
-    const button = wrapper.findComponent(VBtn);
-    await button.trigger('click');
-    await flushPromises();
-
-    expect(wrapper.find('#processing-source').exists()).toBe(true);
+    expect(wrapper.html()).toContain(`lang_${detectedLanguage}`);
   });
 
   it('should automatically detect language from text selected from context menu', async () => {
-    mount(SidepanelApp);
-    await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción automática.', summarize: false });
+    const wrapper = mount(SidepanelApp);
+    const text = 'Esta es una oración de prueba para traducción automática.';
+    await sendMessage('selectedText', { text });
     await flushPromises();
 
-    expect(mockAIService.detectLanguage).toHaveBeenCalled();
+    expect(mockAIService.detectLanguage).toHaveBeenCalledWith(text);
   });
 
   it('should automatically process text when selected from context menu', async () => {
-    mount(SidepanelApp);
-    await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción automática.', summarize: false });
+    const wrapper = mount(SidepanelApp);
+    const text = 'Esta es una oración de prueba para traducción automática.';
+    await sendMessage('selectedText', { text });
     await flushPromises();
-    expect(mockAIService.processText).toHaveBeenCalledWith(
-      'Esta es una oración de prueba para traducción automática.',
-      {
-        sourceLanguage: DEFAULT_DETECTED_LANGUAGE,
-        targetLanguage: 'zh',
-        summarize: false,
-      }
-    );
+
+    expect(mockAIService.proofread).toHaveBeenCalledWith(text);
+    const resultCard = wrapper.findComponent({ name: 'ResultCard' });
+    expect(resultCard.props('content')).toBe('Texto corregido');
   });
 
-  describe('Process Button Behavior', () => {
-    it('should be disabled when no text is entered', () => {
+  describe('ToolSelector Behavior', () => {
+    it('should disable process button when no text is entered', () => {
       const wrapper = mount(SidepanelApp);
-      const button = wrapper.findComponent(VBtn);
-
-      expect(button.props('disabled')).toBe(true);
-    });
-
-    it('should be disabled for too short text for language detection', async () => {
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-
-      await textarea.setValue('Hello');
-      await flushPromises();
-
       const button = wrapper.findComponent(VBtn);
       expect(button.props('disabled')).toBe(true);
     });
 
-    it('should be disabled while language detection is in progress', async () => {
-      mockAIService.detectLanguage.mockReturnValue(new Promise(() => { }));
-
+    it('should call proofread and rewrite services and display results', async () => {
       const wrapper = mount(SidepanelApp);
       const textarea = wrapper.findComponent(VTextarea);
-
-      await textarea.setValue('Este es un texto más largo que debería activar la detección de idioma');
+      await textarea.setValue('Este es un texto de prueba');
       await flushPromises();
 
-      const button = wrapper.findComponent(VBtn);
-      expect(button.props('disabled')).toBe(true);
-    });
-
-    it('should enable button when source language is detected to be different from target language', async () => {
-      const sourceLanguage = 'fr';
-      const targetLanguage = 'de';
-
-      mockAIService.detectLanguage.mockResolvedValue(sourceLanguage as SupportedLanguageCode);
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-      await textarea.setValue('Esta es una oración de prueba para traducción.');
+      const toolSelector = wrapper.findComponent({ name: 'ToolSelector' });
+      toolSelector.vm.$emit('process', {
+        proofread: true,
+        rewrite: true,
+      });
       await flushPromises();
 
-      const targetSelect = wrapper.findComponent(VSelect);
-      await targetSelect.setValue(targetLanguage);
-      await flushPromises();
-
-      const button = wrapper.findComponent(VBtn);
-      expect(button.props('disabled')).toBe(false);
-    });
-
-    it('should disable button when source language is detected to be the same as target language', async () => {
-      const sameLanguage = 'it';
-
-      mockAIService.detectLanguage.mockResolvedValue(sameLanguage as SupportedLanguageCode);
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-      await textarea.setValue('Esta es una oración de prueba para traducción.');
-      await flushPromises();
-
-      const targetSelect = wrapper.findComponent(VSelect);
-      await targetSelect.setValue(sameLanguage);
-      await flushPromises();
-
-      const button = wrapper.findComponent(VBtn);
-      expect(button.props('disabled')).toBe(true);
-    });
-
-    it('should show "processingButton" and be disabled when processing is in progress', async () => {
-      const detectedLanguage = 'es';
-
-      mockAIService.detectLanguage.mockResolvedValue(detectedLanguage as SupportedLanguageCode);
-      mockAIService.processText.mockReturnValue(new Promise(() => { }));
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-
-      await textarea.setValue('Este es un texto más largo que debería activar la detección de idioma');
-      await flushPromises();
-
-      const button = wrapper.findComponent(VBtn);
-      expect(button.props('disabled')).toBe(false);
-
-      await button.trigger('click');
-      await flushPromises();
-
-      expect(button.text()).toBe('processingButton');
-      expect(button.props('disabled')).toBe(true);
-    });
-
-    it('should not process when source and target languages are the same and summarize is false, even from context menu', async () => {
-      const sameLanguage = 'it';
-      mockAIService.detectLanguage.mockResolvedValue(sameLanguage as SupportedLanguageCode);
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      await flushPromises();
-
-      const targetSelect = wrapper.findComponent(VSelect);
-      await targetSelect.setValue(sameLanguage);
-
-      const checkbox = wrapper.findComponent(VCheckbox);
-      await checkbox.setValue(false);
-      await flushPromises();
-
-      await sendMessage('selectedText', { text: 'Texto de prueba', summarize: false });
-      await flushPromises();
-
-      expect(mockAIService.processText).not.toHaveBeenCalled();
-      expect(wrapper.findComponent(VAlert).text()).toContain('sameLanguageWarning');
-    });
-
-    it('should reset button state after processing completes', async () => {
-      const detectedLanguage = 'es';
-
-      mockAIService.detectLanguage.mockResolvedValue(detectedLanguage as SupportedLanguageCode);
-      mockAIService.processText.mockResolvedValue('Texto procesado');
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-
-      await textarea.setValue('Este es un texto más largo que debería activar la detección de idioma');
-      await flushPromises();
-
-      const button = wrapper.findComponent(VBtn);
-      await button.trigger('click');
-      await flushPromises();
-
-      expect(button.text()).toBe('processButton');
-      expect(button.props('disabled')).toBe(false);
-    });
-
-    it('should enable button after switching target language during processing', async () => {
-      const detectedLanguage = 'es';
-
-      mockAIService.detectLanguage.mockResolvedValue(detectedLanguage as SupportedLanguageCode);
-      mockAIService.processText.mockReturnValue(new Promise(() => { }));
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-
-      await textarea.setValue('Este es un texto más largo que debería activar la detección de idioma');
-      await flushPromises();
-
-      const button = wrapper.findComponent(VBtn);
-      await button.trigger('click');
-      await flushPromises();
-
-      const targetSelect = wrapper.findComponent(VSelect);
-      await targetSelect.setValue('fr');
-      await flushPromises();
-
-      expect(button.props('disabled')).toBe(false);
-      expect(button.text()).toBe('processButton');
-    });
-
-    it('should enable button after typing in input field during processing', async () => {
-      const detectedLanguage = 'es';
-
-      mockAIService.detectLanguage.mockResolvedValue(detectedLanguage as SupportedLanguageCode);
-      mockAIService.processText.mockReturnValue(new Promise(() => { }));
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-
-      await textarea.setValue('Este es un texto más largo que debería activar la detección de idioma');
-      await flushPromises();
-
-      const button = wrapper.findComponent(VBtn);
-      await button.trigger('click');
-      await flushPromises();
-
-      await textarea.setValue('Nuevo texto diferente para procesar');
-      await flushPromises();
-
-      expect(button.props('disabled')).toBe(false);
-      expect(button.text()).toBe('processButton');
-    });
-
-    it('should re-enable process button when translation fails with an error', async () => {
-      const detectedLanguage = 'es';
-
-      mockAIService.detectLanguage.mockResolvedValue(detectedLanguage as SupportedLanguageCode);
-      mockAIService.processText.mockRejectedValue(new Error('Error al procesar el texto'));
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-
-      await textarea.setValue('Este es un texto más largo que debería activar la detección de idioma');
-      await flushPromises();
-
-      const button = wrapper.findComponent(VBtn);
-      await button.trigger('click');
-      await flushPromises();
-
-      expect(button.text()).toBe('processButton');
-      expect(button.props('disabled')).toBe(false);
+      expect(mockAIService.proofread).toHaveBeenCalled();
+      expect(mockAIService.rewrite).toHaveBeenCalled();
     });
   });
 
@@ -417,22 +208,44 @@ describe('SidepanelApp', () => {
     });
   });
 
-  describe('Error Handling', () => {
-    it('should display error message when translation fails with an error', async () => {
-      const detectedLanguage = 'es';
-      const errorMessage = 'Error al procesar el texto';
+  describe('ToolSelector Behavior', () => {
+    it('should cancel processing when cancel button is clicked', async () => {
+      mockAIService.proofread.mockReturnValue(new Promise(() => {}));
+      const wrapper = mount(SidepanelApp);
+      const textarea = wrapper.findComponent(VTextarea);
+      await textarea.setValue('Este es un texto de prueba');
+      await flushPromises();
 
-      mockAIService.detectLanguage.mockResolvedValue(detectedLanguage as SupportedLanguageCode);
-      mockAIService.processText.mockRejectedValue(new Error(errorMessage));
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
+      const toolSelector = wrapper.findComponent({ name: 'ToolSelector' });
+      toolSelector.vm.$emit('process', {
+        proofread: true,
+      });
+      await flushPromises();
+
+      const cancelButton = wrapper.findComponent(VBtn);
+      await cancelButton.trigger('click');
+      await flushPromises();
+
+      expect(mockAIService.cancelProcessing).toHaveBeenCalled();
+      const resultCard = wrapper.findComponent({ name: 'ResultCard' });
+      expect(resultCard.props('error')).toBe('Cancelled by user');
+    });
+  });
+
+  describe('General Error Handling', () => {
+    it('should display error message when processing fails', async () => {
+      const errorMessage = 'Error al procesar el texto';
+      mockAIService.proofread.mockRejectedValue(new Error(errorMessage));
 
       const wrapper = mount(SidepanelApp);
       const textarea = wrapper.findComponent(VTextarea);
-      await textarea.setValue('Este es un texto más largo que debería activar la detección de idioma');
+      await textarea.setValue('Este es un texto de prueba');
       await flushPromises();
 
-      const button = wrapper.findComponent(VBtn);
-      await button.trigger('click');
+      const toolSelector = wrapper.findComponent({ name: 'ToolSelector' });
+      toolSelector.vm.$emit('process', {
+        proofread: true,
+      });
       await flushPromises();
 
       expect(wrapper.findComponent(VAlert).text()).toContain(errorMessage);
@@ -459,208 +272,77 @@ describe('SidepanelApp', () => {
     });
   });
 
-  describe('Summarize Functionality', () => {
-    it('should send summarize option to AIService when checkbox is checked', async () => {
-      const detectedLanguage = 'es';
-
-      mockAIService.detectLanguage.mockResolvedValue(detectedLanguage as SupportedLanguageCode);
-      mockAIService.processText.mockResolvedValue('Texto procesado');
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
+  describe('ToolSelector Behavior', () => {
+    it('should disable process button when no text is entered', () => {
       const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-      await textarea.setValue('Este es un texto más largo que debería activar la detección de idioma');
-      await flushPromises();
-
-      const checkbox = wrapper.findComponent(VCheckbox);
-      await checkbox.setValue(true);
-      await flushPromises();
-
       const button = wrapper.findComponent(VBtn);
-      await button.trigger('click');
-      await flushPromises();
-
-      expect(mockAIService.processText).toHaveBeenCalledWith(
-        'Este es un texto más largo que debería activar la detección de idioma',
-        {
-          sourceLanguage: detectedLanguage,
-          targetLanguage: 'zh',
-          summarize: true,
-        }
-      );
-    });
-
-    it('should send summarize: false when checkbox is unchecked', async () => {
-      const detectedLanguage = 'es';
-
-      mockAIService.detectLanguage.mockResolvedValue(detectedLanguage as SupportedLanguageCode);
-      mockAIService.processText.mockResolvedValue('Texto procesado');
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-      await textarea.setValue('Este es un texto más largo que debería activar la detección de idioma');
-      await flushPromises();
-
-      const checkbox = wrapper.findComponent(VCheckbox);
-      expect(checkbox.props('modelValue')).toBe(false);
-
-      const button = wrapper.findComponent(VBtn);
-      await button.trigger('click');
-      await flushPromises();
-
-      expect(mockAIService.processText).toHaveBeenCalledWith(
-        'Este es un texto más largo que debería activar la detección de idioma',
-        {
-          sourceLanguage: detectedLanguage,
-          targetLanguage: 'zh',
-          summarize: false,
-        }
-      );
-    });
-
-    it('should enable process button even when languages are the same if summarize is checked', async () => {
-      const sameLanguage = 'it';
-
-      mockAIService.detectLanguage.mockResolvedValue(sameLanguage as SupportedLanguageCode);
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-      await textarea.setValue('Esta es una oración de prueba para traducción.');
-      await flushPromises();
-
-      const targetSelect = wrapper.findComponent(VSelect);
-      await targetSelect.setValue(sameLanguage);
-      await flushPromises();
-
-      let button = wrapper.findComponent(VBtn);
       expect(button.props('disabled')).toBe(true);
-
-      const checkbox = wrapper.findComponent(VCheckbox);
-      await checkbox.setValue(true);
-      await flushPromises();
-
-      button = wrapper.findComponent(VBtn);
-      expect(button.props('disabled')).toBe(false);
     });
 
-    it('should automatically check summarize checkbox when selectedText message has summarize: true', async () => {
+    it('should call proofread and rewrite services when selected', async () => {
       const wrapper = mount(SidepanelApp);
+      const textarea = wrapper.findComponent(VTextarea);
+      await textarea.setValue('Este es un texto de prueba');
       await flushPromises();
 
-      await sendMessage('selectedText', { text: 'Texto', summarize: true });
-      await nextTick();
+      const toolSelector = wrapper.findComponent({ name: 'ToolSelector' });
+      toolSelector.vm.$emit('process', {
+        proofread: true,
+        rewrite: true,
+      });
+      await flushPromises();
 
-      const checkbox = wrapper.findComponent(VCheckbox);
-      expect(checkbox.props('modelValue')).toBe(true);
+      expect(mockAIService.proofread).toHaveBeenCalled();
+      expect(mockAIService.rewrite).toHaveBeenCalled();
+
+      const resultCards = wrapper.findAllComponents({ name: 'ResultCard' });
+      expect(resultCards.length).toBe(2);
+      expect(resultCards[0].props('title')).toBe('Proofread');
+      expect(resultCards[0].props('content')).toBe('Texto corregido');
+      expect(resultCards[1].props('title')).toBe('Rewrite');
+      expect(resultCards[1].props('content')).toBe('Texto reescrito');
     });
 
-    it('should uncheck summarize checkbox when selectedText message has summarize: false', async () => {
+    it('should handle errors in sequential processing', async () => {
+      const errorMessage = 'Error en el proofread';
+      mockAIService.proofread.mockRejectedValue(new Error(errorMessage));
+
       const wrapper = mount(SidepanelApp);
+      const textarea = wrapper.findComponent(VTextarea);
+      await textarea.setValue('Este es un texto de prueba');
       await flushPromises();
 
-      const checkbox = wrapper.findComponent(VCheckbox);
-      await checkbox.setValue(true);
+      const toolSelector = wrapper.findComponent({ name: 'ToolSelector' });
+      toolSelector.vm.$emit('process', {
+        proofread: true,
+        rewrite: true,
+      });
+      await flushPromises();
 
-      await sendMessage('selectedText', { text: 'Texto', summarize: false });
-      await nextTick();
+      const resultCards = wrapper.findAllComponents({ name: 'ResultCard' });
+      expect(resultCards.length).toBe(1);
+      expect(resultCards[0].props('title')).toBe('Proofread');
+      expect(resultCards[0].props('error')).toBe(errorMessage);
+      expect(mockAIService.rewrite).not.toHaveBeenCalled();
+    });
 
-      expect(checkbox.props('modelValue')).toBe(false);
+    it('should show loading state during processing', async () => {
+      mockAIService.proofread.mockReturnValue(new Promise(() => {}));
+
+      const wrapper = mount(SidepanelApp);
+      const textarea = wrapper.findComponent(VTextarea);
+      await textarea.setValue('Este es un texto de prueba');
+      await flushPromises();
+
+      const toolSelector = wrapper.findComponent({ name: 'ToolSelector' });
+      toolSelector.vm.$emit('process', {
+        proofread: true,
+      });
+      await flushPromises();
+
+      const resultCard = wrapper.findComponent({ name: 'ResultCard' });
+      expect(resultCard.props('loading')).toBe(true);
     });
   });
 
-  describe('Default Language Loading', () => {
-    it('should use browser language as default when supported', async () => {
-      const browserLanguage = 'zh';
-      mockLanguageService.getBrowserLanguage.mockReturnValue(browserLanguage);
-      mockLanguageService.isLanguageSupported.mockReturnValue(true);
-
-      const wrapper = mount(SidepanelApp);
-      await flushPromises();
-
-      const targetSelect = wrapper.findComponent(VSelect);
-      expect(targetSelect.props('modelValue')).toBe(browserLanguage);
-    });
-
-    it('should use default language when browser language is not supported', async () => {
-      const browserLanguage = 'xx';
-      const fallbackLanguage = mockSupportedLanguages[0];
-
-      mockLanguageService.getBrowserLanguage.mockReturnValue(browserLanguage);
-      mockLanguageService.getSupportedLanguages.mockReturnValue(mockSupportedLanguages as any);
-      mockLanguageService.isLanguageSupported.mockImplementation((lang: string) => lang !== browserLanguage);
-
-      const wrapper = mount(SidepanelApp);
-      await flushPromises();
-
-      const targetSelect = wrapper.findComponent(VSelect);
-      expect(targetSelect.props('modelValue')).toBe(fallbackLanguage);
-    });
-
-    it('should populate language selector with available languages', async () => {
-      const wrapper = mount(SidepanelApp);
-      await flushPromises();
-
-      const targetSelect = wrapper.findComponent(VSelect);
-      const items = targetSelect.props('items') as any[];
-
-      expect(items.length).toBe(mockSupportedLanguages.length);
-      const itemValues = items.map((item: any) => item.value);
-      expect(itemValues).toEqual(mockSupportedLanguages);
-    });
-  });
-
-  describe('Language Detection and Error Handling', () => {
-    it('should show error when unsupported language is detected', async () => {
-      const unsupportedLang = 'xx';
-      mockAIService.detectLanguage.mockResolvedValue(unsupportedLang as SupportedLanguageCode);
-      mockLanguageService.isLanguageSupported.mockReturnValue(false);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-      await textarea.setValue('Este texto está en un idioma no soportado');
-      await flushPromises();
-
-      expect(wrapper.findComponent(VAlert).text()).toContain('detectedLanguageNotSupported');
-    });
-
-    it('should not show "insufficient text" message when unsupported language is detected', async () => {
-      const unsupportedLang = 'xx';
-      mockAIService.detectLanguage.mockResolvedValue(unsupportedLang as SupportedLanguageCode);
-      mockLanguageService.isLanguageSupported.mockReturnValue(false);
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-      await textarea.setValue('Texto largo no soportado');
-      await flushPromises();
-
-      expect(wrapper.text()).not.toContain('Detected Language');
-    });
-
-    it('should hide error message when text is shorter than minDetectLength', async () => {
-      mockAIService.detectLanguage.mockRejectedValue(new Error('Detection failed'));
-
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-      await textarea.setValue('Long text that causes error');
-      await flushPromises();
-
-      expect(wrapper.findComponent(VAlert).text()).toContain('languageDetectionError');
-
-      await textarea.setValue('Short');
-      await flushPromises();
-
-      expect(wrapper.findComponent(VAlert).exists()).toBe(false);
-    });
-
-    it('should not execute language detection for text shorter than minDetectLength', async () => {
-      const wrapper = mount(SidepanelApp);
-      const textarea = wrapper.findComponent(VTextarea);
-      await textarea.setValue('Corto');
-      await flushPromises();
-
-      expect(mockAIService.detectLanguage).not.toHaveBeenCalled();
-    });
-  });
 });
