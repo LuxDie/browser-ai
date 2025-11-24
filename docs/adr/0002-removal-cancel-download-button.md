@@ -1,5 +1,10 @@
 # 0002 — Diseño Simplificado de la UI de Descarga de Modelos
 
+## Estado
+**Anulado**
+
+**Nota:** La decisión tomada en este ADR ha sido anulada y reemplazada por [ADR 0005 — Soporte para Cancelación y Progreso de Descarga de Modelos](0005-model-download-cancellation-support.md).
+
 ## Contexto
 Durante el diseño de la interfaz de descarga de modelos de traducción para el panel lateral, se evaluaron varias opciones para mostrar el progreso de descarga. Sin embargo, la API de Chrome AI presenta limitaciones significativas:
 
