@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 
-type Listener = Parameters<typeof Browser.contextMenus.onClicked.addListener>[0]
+type ContextMenusListener = Parameters<typeof Browser.contextMenus.onClicked.addListener>[0];
+type ActionListener = Parameters<typeof Browser.action.onClicked.addListener>[0];
 
 const DEFAULT_MODEL_AVAILABILITY = 'available';
 const DEFAULT_BROWSER_LANGUAGE = 'en-US';
@@ -53,7 +54,7 @@ const globalMocks: {
       writeText: vi.fn(),
     },
     language: DEFAULT_BROWSER_LANGUAGE,
-  }, 
+  },
 };
 
 const browserMocks: {
@@ -62,9 +63,13 @@ const browserMocks: {
     create: typeof browser.contextMenus.create;
     removeAll: typeof browser.contextMenus.removeAll;
     onClicked: Pick<typeof browser.contextMenus.onClicked, 'addListener'> &
-      { trigger: Listener };
+    { trigger: ContextMenusListener };
   };
-  sidePanel: Pick<typeof browser.sidePanel, 'setPanelBehavior' | 'open'>;
+  action: {
+    onClicked: Pick<typeof browser.action.onClicked, 'addListener'> &
+    { trigger: ActionListener };
+  };
+  sidePanel: Pick<typeof browser.sidePanel, 'setPanelBehavior' | 'setOptions' | 'getOptions' | 'open'>;
 } = {
   i18n: {
     getMessage: vi.fn<typeof browser.i18n.getMessage>((key) => {
@@ -73,30 +78,46 @@ const browserMocks: {
     }),
   },
   contextMenus: (() => {
-    const listeners: Listener[] = [];
-    const onClicked:
-      Pick<typeof browser.contextMenus.onClicked, 'addListener'> &
-      { trigger: Listener } = {
-      addListener: vi.fn<typeof browser.contextMenus.onClicked.addListener>(
-        (listener) => {
-          listeners.push(listener);
-        }
-      ),
-      trigger: (info, tab?) => {
-        listeners.forEach(listener => { listener(info, tab); });
-      },
-    };
+    const listeners: ContextMenusListener[] = [];
     return {
       create: vi.fn<typeof browser.contextMenus.create>(),
       removeAll: vi.fn<typeof browser.contextMenus.removeAll>(
         () => Promise.resolve()
         // vi.fn no copia correctamente la firma de una función sobrecargada
       ) as unknown as typeof browser.contextMenus.removeAll,
-      onClicked,
+      onClicked: {
+        addListener: vi.fn<typeof browser.contextMenus.onClicked.addListener>(
+          (listener) => {
+            listeners.push(listener);
+          }
+        ),
+        trigger: (info, tab?) => {
+          listeners.forEach(listener => { listener(info, tab); });
+        },
+      },
+    };
+  })(),
+  action: (() => {
+    const listeners: ActionListener[] = [];
+    return {
+      onClicked: {
+        addListener: vi.fn<typeof browser.action.onClicked.addListener>(
+          (listener) => {
+            listeners.push(listener);
+          }
+        ),
+        trigger: (tab) => {
+          listeners.forEach(listener => { listener(tab); });
+        },
+      },
     };
   })(),
   sidePanel: {
     setPanelBehavior: vi.fn(),
+    setOptions: vi.fn(),
+    getOptions: vi.fn(() =>
+      Promise.resolve({ enabled: false, path: '' })
+    ),
     open: vi.fn(),
   },
 };

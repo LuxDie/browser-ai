@@ -96,9 +96,6 @@
   "tabNotFoundError": {
     "message": "No se encontró la pestaña para el clic del menú contextual"
   },
-  "connectionErrorMessage": {
-    "message": "Could not establish connection. Receiving end does not exist."
-  },
   "lang_ar": {
     "message": "Árabe"
   },

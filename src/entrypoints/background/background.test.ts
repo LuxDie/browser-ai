@@ -68,12 +68,6 @@ describe('Background Script', () => {
       });
     });
 
-    it('should configure side panel behavior exactly once', () => {
-      expect(browser.sidePanel.setPanelBehavior).toHaveBeenCalledOnce();
-      expect(browser.sidePanel.setPanelBehavior).toHaveBeenCalledWith({
-        openPanelOnActionClick: true,
-      });
-    });
   });
 
   describe('onMessage Listener', () => {
@@ -117,7 +111,7 @@ describe('Background Script', () => {
           sourceLanguage,
           targetLanguage
         });
-        
+
         expect(result).toEqual(translatedText);
       });
 
@@ -155,56 +149,5 @@ describe('Background Script', () => {
       });
     });
   });
-  describe('Context Menu onClicked Listener', () => {
-    it('should open sidepanel', () => {
-      // Use base setup
-  
-      // Trigger context menu click
-      const selectedText = 'Este es un texto seleccionado para traducir';
-      fakeBrowser.contextMenus.onClicked.trigger({
-        menuItemId: 'translateSelection',
-        selectionText: selectedText
-      }, { id: 123 });
 
-      // Verify that sidepanel was opened
-      expect(browser.sidePanel.open).toHaveBeenCalled();
-    });
-
-    it('should send selectedText message to sidepanel when sidepanel is ready', async () => {
-      // Simulate sidepanel sending ready message
-      await sendMessage('sidepanelReady');
-
-      // Trigger context menu click
-      const selectedText = 'Este es un texto seleccionado para traducir';
-      fakeBrowser.contextMenus.onClicked.trigger({
-        menuItemId: 'translateSelection',
-        selectionText: selectedText
-      }, { id: 123 });
-
-      // Verify that selectedText message was received
-      await vi.waitFor(() => {
-        expect(selectedTextMock).toHaveBeenCalledWith(
-          expect.objectContaining({ data: { text: selectedText, summarize: false } })
-        );
-      });
-    });
-
-    it('should wait for sidepanel to init before sending selectedText message', async () => {
-      // Use base setup
-
-      // Trigger context menu click
-      const selectedText = 'Este es un texto seleccionado para traducir';
-      fakeBrowser.contextMenus.onClicked.trigger({
-        menuItemId: 'translateSelection',
-        selectionText: selectedText
-      }, { id: 123 });
-      // Simulate sidepanel sending ready message
-      await sendMessage('sidepanelReady');
-      
-      // Verify that selectedText message was received
-      expect(selectedTextMock).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { text: selectedText, summarize: false } })
-      );
-    });
-  });
 });

@@ -96,9 +96,6 @@
   "tabNotFoundError": {
     "message": "Tab not found for context menu click"
   },
-  "connectionErrorMessage": {
-    "message": "Could not establish connection. Receiving end does not exist."
-  },
   "lang_ar": {
     "message": "Arabic"
   },

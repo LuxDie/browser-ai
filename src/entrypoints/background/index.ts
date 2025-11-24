@@ -1,6 +1,11 @@
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import { registerAIService } from '@/entrypoints/background/ai/ai.service';
+import {
+  SIDEPANEL_PATH,
+  EXTENSION_ICON_PATH,
+  CONNECTION_ERROR_MESSAGE,
+} from '@/utils/constants';
 
 export type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 
@@ -13,12 +18,14 @@ export default defineBackground({
     // Registrar servicios proxy
     registerAIService();
 
-
     // Texto seleccionado pendiente para envío al sidepanel
     let pendingRequest: { text: string, summarize: boolean } | null = null;
 
     // Instancias de servicios
     const modelManager = ModelManager.getInstance();
+
+    // Cache local para el estado del panel lateral
+    const sidepanelState = new Map<number, { enabled: boolean, path: string }>();
 
     // Función para crear el menú contextual
     async function createContextMenu(): Promise<void> {
@@ -51,23 +58,21 @@ export default defineBackground({
 
     // Manejador de clics en el menú contextual
     browser.contextMenus.onClicked.addListener((info, tab) => {
-      if (!tab) {
-        throw new Error(browser.i18n.getMessage('tabNotFoundError'));
-      }
-
       if (info.selectionText && (info.menuItemId === 'translateSelection' || info.menuItemId === 'summarizeSelection')) {
         const selectedText = info.selectionText;
         const summarize = info.menuItemId === 'summarizeSelection';
 
         void (async () => {
-          await browser.sidePanel.open({ windowId: tab.windowId });
+          if (!tab) { return; }
 
+          openSidepanel(tab.id!);
           // Intentar enviar el texto al sidepanel inmediatamente
           try {
             await sendMessage('selectedText', { text: selectedText, summarize });
           } catch (error) {
-            if (error instanceof Error && error.message === browser.i18n.getMessage('connectionErrorMessage')) {
-              // El panel lateral está cerrado, guardar el texto seleccionado para enviarlo cuando esté listo
+            if (error instanceof Error && error.message === CONNECTION_ERROR_MESSAGE) {
+              // El panel lateral está cerrado, guardar el texto seleccionado
+              // para enviarlo cuando esté listo
               pendingRequest = { text: selectedText, summarize };
             } else {
               throw error;
@@ -105,7 +110,7 @@ export default defineBackground({
           type: 'basic',
           title: browser.i18n.getMessage('extName'),
           message: browser.i18n.getMessage('textProcessedNotification'),
-          iconUrl: 'icons/icon-128.png'
+          iconUrl: EXTENSION_ICON_PATH
         });
       }
 
@@ -120,20 +125,47 @@ export default defineBackground({
       }
     });
 
-    // Inicializar menú contextual al instalar la extensión y configurar side panel behavior al instalar la extensión
+    // Inicializar menú contextual al instalar la extensión
     browser.runtime.onInstalled.addListener(() => {
-      void (async () => {
-        await createContextMenu();
-
-        // Configurar comportamiento del panel lateral para que se abra al hacer click en el ícono
-        await browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-        console.log('Side panel behavior configured successfully');
-      })();
-    });
-
-    // Recrear menú contextual al iniciar el navegador
-    browser.runtime.onStartup.addListener(() => {
+      // Deshabilita el panel lateral global (window)
+      void browser.sidePanel.setOptions({
+        enabled: false
+      });
       void createContextMenu();
     });
+
+    // Escucha el clic en el icono de la extensión
+    browser.action.onClicked.addListener((tab) => {
+      toggleSidepanel(tab.id!);
+    });
+
+    function toggleSidepanel(tabId: number) {
+      const currentState = sidepanelState.get(tabId) ?? { enabled: false, path: '' };
+
+      if (currentState.enabled && currentState.path === SIDEPANEL_PATH) {
+        // Cerrar el panel lateral
+        void browser.sidePanel.setOptions({
+          tabId,
+          path: SIDEPANEL_PATH,
+          enabled: false
+        });
+        sidepanelState.set(tabId, { enabled: false, path: SIDEPANEL_PATH });
+      } else {
+        // Abrir el panel lateral
+        openSidepanel(tabId);
+      }
+    }
+
+    function openSidepanel(tabId: number) {
+      void browser.sidePanel.setOptions({
+        tabId,
+        path: SIDEPANEL_PATH,
+        enabled: true
+      });
+      void browser.sidePanel.open({
+        tabId,
+      });
+      sidepanelState.set(tabId, { enabled: true, path: SIDEPANEL_PATH });
+    }
   }
 });
