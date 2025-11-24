@@ -7,7 +7,7 @@ import { type SupportedLanguageCode, LanguageService } from '@/entrypoints/backg
 import AppHeader from '@/components/AppHeader.vue';
 import ModelDownloadCard from '@/components/ModelDownloadCard.vue';
 import ToolSelector, { type SelectedTools } from '@/components/ToolSelector.vue';
-import ResultCard from '@/components/ResultCard.vue';
+import OutputArea from '@/components/OutputArea.vue';
 
 const AIService = getAIService();
 const languageService = LanguageService.getInstance();
@@ -20,16 +20,7 @@ const isLoading = ref(false);
 const error = ref<string | null>(null);
 const apiAvailable = ref(true);
 
-// Results state
-interface ResultItem {
-  id: string;
-  title: string;
-  content?: string;
-  loading: boolean;
-  error?: string;
-}
-
-const results = ref<ResultItem[]>([]);
+const finalResult = ref('');
 
 // Use a ref for abort controller to be able to abort previous requests
 let abortController = new AbortController();
@@ -71,7 +62,7 @@ const processTools = async (tools: SelectedTools) => {
 
   isLoading.value = true;
   error.value = null;
-  results.value = [];
+  finalResult.value = '';
   
   // Cancel previous request if any
   abortController.abort();
@@ -85,59 +76,23 @@ const processTools = async (tools: SelectedTools) => {
   try {
     // 1. Proofread
     if (tools.proofread) {
-      const id = 'proofread';
-      results.value.push({ id, title: 'Proofread', loading: true });
-      try {
-        const res = await AIService.proofread(currentText);
-        updateResult(id, res);
-        currentText = res;
-      } catch (err: any) {
-        handleStepError(id, err);
-        throw err;
-      }
+      currentText = await AIService.proofread(currentText);
     }
 
     // 2. Rewrite
     if (tools.rewrite) {
-      const id = 'rewrite';
-      results.value.push({ id, title: 'Rewrite', loading: true });
-      try {
-        const res = await AIService.rewrite(currentText);
-        updateResult(id, res);
-        currentText = res;
-      } catch (err: any) {
-        handleStepError(id, err);
-        throw err;
-      }
+      currentText = await AIService.rewrite(currentText);
     }
 
     // 3. Writer
     if (tools.write) {
-      const id = 'write';
-      results.value.push({ id, title: 'Writer', loading: true });
-      try {
-        const res = await AIService.write(currentText);
-        updateResult(id, res);
-        currentText = res;
-      } catch (err: any) {
-        handleStepError(id, err);
-        throw err;
-      }
+      currentText = await AIService.write(currentText);
     }
 
     // 4. Prompt
     if (tools.prompt) {
-      const id = 'prompt';
-      results.value.push({ id, title: 'Prompt Result', loading: true });
       const fullPrompt = `${tools.promptText}\n\nContext:\n${currentText}`;
-      try {
-        const res = await AIService.prompt(fullPrompt);
-        updateResult(id, res);
-        currentText = res;
-      } catch (err: any) {
-        handleStepError(id, err);
-        throw err;
-      }
+      currentText = await AIService.prompt(fullPrompt);
     }
 
     // 5. Summarize / Translate
@@ -145,40 +100,19 @@ const processTools = async (tools: SelectedTools) => {
       const isTranslation = tools.translate;
       const isSummarization = tools.summarize;
       
-      let id = '';
-      let title = '';
-      
-      if (isSummarization && isTranslation) {
-        id = 'summarize-translate';
-        title = `Summary & Translation (${getLanguageLabel(tools.targetLanguage)})`;
-      } else if (isSummarization) {
-        id = 'summarize';
-        title = 'Summary';
-      } else {
-        id = 'translate';
-        title = `Translation (${getLanguageLabel(tools.targetLanguage)})`;
-      }
-
-      results.value.push({ id, title, loading: true });
-      
       const targetLang = isTranslation ? tools.targetLanguage : sourceLanguage.value;
 
-      try {
-        const res = await AIService.processText(
-          currentText,
-          {
-            sourceLanguage: sourceLanguage.value,
-            targetLanguage: targetLang,
-            summarize: isSummarization
-          }
-        );
-        updateResult(id, res);
-        currentText = res;
-      } catch (err: any) {
-        handleStepError(id, err);
-        throw err;
-      }
+      currentText = await AIService.processText(
+        currentText,
+        {
+          sourceLanguage: sourceLanguage.value,
+          targetLanguage: targetLang,
+          summarize: isSummarization
+        }
+      );
     }
+
+    finalResult.value = currentText;
 
   } catch (e: any) {
     if (e.name !== 'AbortError') {
@@ -189,31 +123,10 @@ const processTools = async (tools: SelectedTools) => {
   }
 };
 
-const updateResult = (id: string, content: string) => {
-  const item = results.value.find(r => r.id === id);
-  if (item) {
-    item.content = content;
-    item.loading = false;
-  }
-};
-
-const handleStepError = (id: string, err: any) => {
-  const item = results.value.find(r => r.id === id);
-  if (item) {
-    item.error = err.message;
-    item.loading = false;
-  }
-};
-
 const handleCancel = () => {
   AIService.cancelProcessing();
   isLoading.value = false;
-  results.value.forEach(r => {
-    if (r.loading) {
-      r.loading = false;
-      r.error = 'Cancelled by user';
-    }
-  });
+  error.value = 'Cancelled by user';
 };
 
 watch(text, async (newText) => {
@@ -263,16 +176,7 @@ watch(text, async (newText) => {
           {{ error }}
         </v-alert>
 
-        <div v-if="results.length > 0" class="d-flex flex-column ga-4">
-          <ResultCard
-            v-for="result in results"
-            :key="result.id"
-            :title="result.title"
-            :content="result.content"
-            :loading="result.loading"
-            :error="result.error"
-          />
-        </div>
+        <OutputArea v-if="finalResult" :result="finalResult" />
       </v-container>
     </v-main>
   </v-app>

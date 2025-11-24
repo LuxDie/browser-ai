@@ -2,22 +2,22 @@
 import LocalProcessingBadge from '@/components/LocalProcessingBadge.vue';
 
 defineProps<{
-  translatedText: string;
+  result: string;
 }>();
+
+const t = browser.i18n.getMessage;
 </script>
 
 <template>
-  <div v-if="translatedText" class="d-flex flex-column ga-2">
+  <div v-if="result" class="d-flex flex-column ga-2">
     <v-textarea
       :label="t('resultLabel')"
-      :model-value="translatedText"
+      :model-value="result"
       rows="5"
       variant="outlined"
       readonly
     >
-      <template #append-inner>
-        <LocalProcessingBadge />
-      </template>
     </v-textarea>
+    <LocalProcessingBadge />
   </div>
 </template>
