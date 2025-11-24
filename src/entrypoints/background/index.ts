@@ -15,7 +15,7 @@ export default defineBackground({
 
 
     // Texto seleccionado pendiente para envío al sidepanel
-    let pendingRequest: { text: string, summarize: boolean } | null = null;
+    let pendingRequest: { text: string, action: 'translate' | 'summarize' | 'rewrite' | 'proofread' } | null = null;
 
     // Instancias de servicios
     const modelManager = ModelManager.getInstance();
@@ -47,6 +47,22 @@ export default defineBackground({
         title: browser.i18n.getMessage('summarizeMenu'),
         contexts: ['selection']
       });
+
+      // Opción de reescritura
+      browser.contextMenus.create({
+        id: 'rewriteSelection',
+        parentId: 'browserAI',
+        title: browser.i18n.getMessage('rewriteMenu') || 'Rewrite',
+        contexts: ['selection']
+      });
+
+      // Opción de corrección
+      browser.contextMenus.create({
+        id: 'proofreadSelection',
+        parentId: 'browserAI',
+        title: browser.i18n.getMessage('proofreadMenu') || 'Proofread',
+        contexts: ['selection']
+      });
     }
 
     // Manejador de clics en el menú contextual
@@ -55,20 +71,41 @@ export default defineBackground({
         throw new Error(browser.i18n.getMessage('tabNotFoundError'));
       }
 
-      if (info.selectionText && (info.menuItemId === 'translateSelection' || info.menuItemId === 'summarizeSelection')) {
+      if (info.selectionText && (
+        info.menuItemId === 'translateSelection' ||
+        info.menuItemId === 'summarizeSelection' ||
+        info.menuItemId === 'rewriteSelection' ||
+        info.menuItemId === 'proofreadSelection'
+      )) {
         const selectedText = info.selectionText;
-        const summarize = info.menuItemId === 'summarizeSelection';
+        let action: 'translate' | 'summarize' | 'rewrite' | 'proofread' = 'translate';
+
+        switch (info.menuItemId) {
+          case 'summarizeSelection':
+            action = 'summarize';
+            break;
+          case 'rewriteSelection':
+            action = 'rewrite';
+            break;
+          case 'proofreadSelection':
+            action = 'proofread';
+            break;
+          case 'translateSelection':
+          default:
+            action = 'translate';
+            break;
+        }
 
         void (async () => {
           await browser.sidePanel.open({ windowId: tab.windowId });
 
           // Intentar enviar el texto al sidepanel inmediatamente
           try {
-            await sendMessage('selectedText', { text: selectedText, summarize });
+            await sendMessage('selectedText', { text: selectedText, action });
           } catch (error) {
             if (error instanceof Error && error.message === browser.i18n.getMessage('connectionErrorMessage')) {
               // El panel lateral está cerrado, guardar el texto seleccionado para enviarlo cuando esté listo
-              pendingRequest = { text: selectedText, summarize };
+              pendingRequest = { text: selectedText, action };
             } else {
               throw error;
             }

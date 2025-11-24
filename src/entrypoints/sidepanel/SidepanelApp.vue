@@ -21,6 +21,7 @@ const error = ref<string | null>(null);
 const apiAvailable = ref(true);
 
 const finalResult = ref('');
+const toolSelectorRef = ref<InstanceType<typeof ToolSelector> | null>(null);
 
 // Use a ref for abort controller to be able to abort previous requests
 let abortController = new AbortController();
@@ -39,7 +40,26 @@ onMounted(async () => {
 
   onMessage('selectedText', async (message) => {
     text.value = message.data.text;
-    // We could handle pre-selection here if needed
+    
+    // Handle automatic tool selection and processing
+    if (message.data.action && toolSelectorRef.value) {
+      toolSelectorRef.value.resetTools();
+      
+      const action = message.data.action;
+      if (action === 'translate') {
+        toolSelectorRef.value.selectTool('translate', true);
+      } else if (action === 'summarize') {
+        toolSelectorRef.value.selectTool('summarize', true);
+      } else if (action === 'rewrite') {
+        toolSelectorRef.value.selectTool('rewrite', true);
+      } else if (action === 'proofread') {
+        toolSelectorRef.value.selectTool('proofread', true);
+      }
+
+      // Wait for next tick to ensure state is updated if needed, though reactive state should be immediate
+      // Trigger processing with the updated tools
+      await processTools(toolSelectorRef.value.selectedTools);
+    }
   });
 
   void sendMessage('sidepanelReady');
@@ -166,6 +186,7 @@ watch(text, async (newText) => {
         </div>
 
         <ToolSelector
+          ref="toolSelectorRef"
           :available-languages="availableLanguages"
           :is-loading="isLoading"
           :can-process="!!text"

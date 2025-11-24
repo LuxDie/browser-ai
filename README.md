@@ -112,8 +112,8 @@ Para usar las APIs de IA integradas, excepto traducción:
 
 1. **Traducción desde selección de texto**:
    - Seleccionar texto en cualquier página web
-   - Hacer clic derecho y seleccionar "Traducir con Browser AI"
-   - El panel lateral se abrirá automáticamente con la traducción
+   - Hacer clic derecho y seleccionar "Traducir con Browser AI", "Resumir", "Reescribir" o "Corregir"
+   - El panel lateral se abrirá automáticamente con el resultado procesado
 
 2. **Traducción manual**:
    - Hacer clic en el icono de Browser AI en la barra de herramientas
@@ -142,6 +142,8 @@ Browser AI utiliza las siguientes APIs integradas de Chrome:
 - **[Translator API](https://developer.chrome.com/docs/ai/built-in-apis#translator-api)**: Para traducción de texto
 - **[Language Detector API](https://developer.chrome.com/docs/ai/built-in-apis#language-detector-api)**: Para detección automática del idioma
 - **[Summarizer API](https://developer.chrome.com/docs/ai/built-in-apis#summarizer-api)**: Para resumen de texto
+- **[Writer/Rewriter API](https://developer.chrome.com/docs/ai/built-in-apis#writer-rewriter-api)**: Para reescritura y redacción de texto
+- **[Prompt API](https://developer.chrome.com/docs/ai/built-in-apis#prompt-api)**: Para consultas generales y corrección
 
 ## 🤝 Contribución y Colaboración
 

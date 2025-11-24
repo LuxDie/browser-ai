@@ -118,7 +118,7 @@ describe('SidepanelApp', () => {
 
   it('should automatically detect language from text selected from context menu', async () => {
     mount(SidepanelApp);
-    await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción automática.', summarize: false });
+    await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción automática.', action: 'translate' });
     await flushPromises();
 
     expect(mockAIService.detectLanguage).toHaveBeenCalled();
@@ -126,7 +126,7 @@ describe('SidepanelApp', () => {
 
   it('should automatically process text when selected from context menu', async () => {
     mount(SidepanelApp);
-    await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción automática.', summarize: false });
+    await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción automática.', action: 'translate' });
     await flushPromises();
     expect(mockAIService.processText).toHaveBeenCalledWith(
       'Esta es una oración de prueba para traducción automática.',
@@ -247,7 +247,7 @@ describe('SidepanelApp', () => {
       await checkbox.setValue(false);
       await flushPromises();
 
-      await sendMessage('selectedText', { text: 'Texto de prueba', summarize: false });
+      await sendMessage('selectedText', { text: 'Texto de prueba', action: 'translate' });
       await flushPromises();
 
       expect(mockAIService.processText).not.toHaveBeenCalled();
@@ -545,25 +545,25 @@ describe('SidepanelApp', () => {
       expect(button.props('disabled')).toBe(false);
     });
 
-    it('should automatically check summarize checkbox when selectedText message has summarize: true', async () => {
+    it('should automatically check summarize checkbox when selectedText message has action: summarize', async () => {
       const wrapper = mount(SidepanelApp);
       await flushPromises();
 
-      await sendMessage('selectedText', { text: 'Texto', summarize: true });
+      await sendMessage('selectedText', { text: 'Texto', action: 'summarize' });
       await nextTick();
 
       const checkbox = wrapper.findComponent(VCheckbox);
       expect(checkbox.props('modelValue')).toBe(true);
     });
 
-    it('should uncheck summarize checkbox when selectedText message has summarize: false', async () => {
+    it('should uncheck summarize checkbox when selectedText message has action: translate', async () => {
       const wrapper = mount(SidepanelApp);
       await flushPromises();
 
       const checkbox = wrapper.findComponent(VCheckbox);
       await checkbox.setValue(true);
 
-      await sendMessage('selectedText', { text: 'Texto', summarize: false });
+      await sendMessage('selectedText', { text: 'Texto', action: 'translate' });
       await nextTick();
 
       expect(checkbox.props('modelValue')).toBe(false);

@@ -13,7 +13,7 @@ export interface ProtocolMap {
   }): string;
 
   sidepanelReady(): void;
-  selectedText(data: { text: string; summarize?: boolean }): void;
+  selectedText(data: { text: string; action?: 'translate' | 'summarize' | 'rewrite' | 'proofread' }): void;
   modelStatusUpdate(data: AIModelStatus): void;
 }
 

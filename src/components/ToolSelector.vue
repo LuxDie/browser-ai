@@ -62,6 +62,35 @@ const getLanguageLabel = (code: SupportedLanguageCode) => {
     return code;
   }
 };
+
+const resetTools = () => {
+  selectedTools.value = {
+    translate: false,
+    targetLanguage: selectedTools.value.targetLanguage, // Keep target language preference
+    summarize: false,
+    write: false,
+    rewrite: false,
+    proofread: false,
+    prompt: false,
+    promptText: ''
+  };
+};
+
+type BooleanToolKeys = {
+  [K in keyof SelectedTools]: SelectedTools[K] extends boolean ? K : never
+}[keyof SelectedTools];
+
+const selectTool = (tool: BooleanToolKeys, value: boolean = true) => {
+  if (tool in selectedTools.value) {
+    selectedTools.value[tool] = value;
+  }
+};
+
+defineExpose({
+  selectTool,
+  resetTools,
+  selectedTools
+});
 </script>
 
 <template>
