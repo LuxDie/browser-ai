@@ -43,7 +43,7 @@ export class ModelManager {
       if (!translator) {
         return {
           state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('chromeAINotAvailable') || 'Chrome AI APIs no disponibles'
+          errorMessage: t('chromeAINotAvailable') || 'Chrome AI APIs no disponibles'
         };
       }
 
@@ -52,13 +52,11 @@ export class ModelManager {
         targetLanguage: target
       });
 
-      console.log(`🔍 Checking translation model availability for ${source}→${target}:`, availability);
-
       return {
         state: availability,
         ...(availability === 'downloading' && { downloadProgress: 0 }),
         ...(availability === 'unavailable' && {
-          errorMessage: browser.i18n.getMessage('modelNotSupported', [availability]) ||
+          errorMessage: t('modelNotSupported', [availability]) ||
             `Modelo no soportado: ${availability}`
         })
       };
@@ -68,7 +66,7 @@ export class ModelManager {
       if (!summarizer) {
         return {
           state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('summarizerAPINotAvailable') ||
+          errorMessage: t('summarizerAPINotAvailable') ||
             'Summarizer API no disponible'
         };
       }
@@ -78,7 +76,7 @@ export class ModelManager {
         state: availability,
         ...(availability === 'downloading' && { downloadProgress: 0 }),
         ...(availability === 'unavailable' && {
-          errorMessage: browser.i18n.getMessage('summarizerModelNotAvailable') ||
+          errorMessage: t('summarizerModelNotAvailable') ||
             'Modelo de resumen no disponible'
         })
       };
@@ -89,7 +87,7 @@ export class ModelManager {
       if (!languageDetector) {
         return {
           state: 'unavailable',
-          errorMessage: browser.i18n.getMessage('languageDetectorAPINotSupported') ||
+          errorMessage: t('languageDetectorAPINotSupported') ||
             'LanguageDetector API no disponible'
         };
       }
@@ -99,7 +97,7 @@ export class ModelManager {
         state: availability,
         ...(availability === 'downloading' && { downloadProgress: 0 }),
         ...(availability === 'unavailable' && {
-          errorMessage: browser.i18n.getMessage('languageDetectorUnavailable') ||
+          errorMessage: t('languageDetectorUnavailable') ||
             'Modelo de detección de idioma no disponible'
         })
       };
@@ -132,7 +130,7 @@ export class ModelManager {
     if (config.type === 'translation') {
       const api = this.#browserAPIs.translator;
       if (!api) {
-        throw new Error(browser.i18n.getMessage('translatorAPINotSupported') ||
+        throw new Error(t('translatorAPINotSupported') ||
           'Translator API no soportada');
       }
       const createOptions: TranslatorCreateOptions = {
@@ -145,7 +143,7 @@ export class ModelManager {
     } else if (config.type === 'summarization') {
       const api = this.#browserAPIs.summarizer;
       if (!api) {
-        throw new Error(browser.i18n.getMessage('summarizerAPINotSupported') ||
+        throw new Error(t('summarizerAPINotSupported') ||
           'Summarizer API no soportada');
       }
       const createOptions: SummarizerCreateOptions = {
@@ -156,7 +154,7 @@ export class ModelManager {
     } else {
       const api = this.#browserAPIs.languageDetector;
       if (!api) {
-        throw new Error(browser.i18n.getMessage('languageDetectorAPINotSupported') ||
+        throw new Error(t('languageDetectorAPINotSupported') ||
           'LanguageDetector API no soportada');
       }
       const createOptions: LanguageDetectorCreateOptions = {
@@ -186,18 +184,16 @@ export class ModelManager {
     const translator = this.#browserAPIs.translator;
 
     if (!translator) {
-      throw new Error(browser.i18n.getMessage('chromeAINotAvailableForTranslation') ||
+      throw new Error(t('chromeAINotAvailableForTranslation') ||
         'Error: Chrome AI APIs no disponibles para traducción');
     }
 
-    console.log(`Translating "${text}" from ${source} to ${target}`);
     const translatorInstance = await translator.create({
       sourceLanguage: source,
       targetLanguage: target,
       ...(options?.signal && { signal: options.signal })
     });
     const translatedText = await translatorInstance.translate(text);
-    console.log(`Translated: "${translatedText}"`);
     return translatedText;
   }
 
@@ -210,7 +206,7 @@ export class ModelManager {
     const summarizer = this.#browserAPIs.summarizer;
 
     if (!summarizer) {
-      throw new Error(browser.i18n.getMessage('summarizerAPINotSupported') || 'Summarizer API no soportada');
+      throw new Error(t('summarizerAPINotSupported') || 'Summarizer API no soportada');
     }
 
     const summarizerOptions: SummarizerOptions = {
@@ -222,14 +218,12 @@ export class ModelManager {
       ...inputOptions
     };
 
-    console.log(`Summarizing text with options:`, summarizerOptions);
     const summarizerInstance = await summarizer
       .create({
         ...summarizerOptions,
         ...(options?.signal && { signal: options.signal })
       });
     const summary = await summarizerInstance.summarize(text);
-    console.log(`Summary generated: "${summary}"`);
     return summary;
   }
 
@@ -240,7 +234,7 @@ export class ModelManager {
     const languageDetector = this.#browserAPIs.languageDetector;
 
     if (!languageDetector) {
-      throw new Error('LanguageDetector API no soportada');
+      throw new Error(t('languageDetectorAPINotSupported') || 'LanguageDetector API no soportada');
     }
 
     const detector = await languageDetector.create(options);
