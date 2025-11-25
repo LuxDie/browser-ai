@@ -305,5 +305,8 @@
   },
   "progress": {
     "message": "Progreso"
+  },
+  "modelDownloadCancelled": {
+    "message": "Descarga de modelo cancelada por el usuario"
   }
 }

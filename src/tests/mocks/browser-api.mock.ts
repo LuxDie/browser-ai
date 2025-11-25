@@ -20,6 +20,7 @@ const globalMocks: {
   Translator: Pick<typeof Translator, 'availability' | 'create'>;
   LanguageDetector: Pick<typeof LanguageDetector, 'availability' | 'create'>;
   Summarizer: Pick<typeof Summarizer, 'availability' | 'create'>;
+  AbortController: typeof AbortController;
   navigator: {
     clipboard: Pick<typeof navigator.clipboard, 'writeText'>;
     language: typeof navigator.language;
@@ -54,6 +55,13 @@ const globalMocks: {
       writeText: vi.fn(),
     },
     language: DEFAULT_BROWSER_LANGUAGE,
+  },
+  AbortController: class {
+    #signal = { aborted: false };
+    get signal() { return this.#signal as AbortSignal; }
+    abort = vi.fn<AbortController['abort']>(() => {
+      this.#signal.aborted = true;
+    });
   },
 };
 
