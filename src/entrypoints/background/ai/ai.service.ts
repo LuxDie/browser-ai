@@ -145,10 +145,11 @@ export class AIService {
     }
 
     if (notificationPending) {
+      // TODO: separar responsabilidad
       void browser.notifications.create({
         type: 'basic',
-        title: browser.i18n.getMessage('extName'),
-        message: browser.i18n.getMessage('textProcessedNotification'),
+        title: t('extName'),
+        message: t('textProcessedNotification'),
         iconUrl: 'icons/icon-128.png'
       });
     }

@@ -35,7 +35,7 @@ export default defineBackground({
       // Crear menú padre
       browser.contextMenus.create({
         id: 'browserAI',
-        title: browser.i18n.getMessage('browserAIMenu'),
+        title: t('browserAIMenu'),
         contexts: ['selection']
       });
 
@@ -43,7 +43,7 @@ export default defineBackground({
       browser.contextMenus.create({
         id: 'translateSelection',
         parentId: 'browserAI',
-        title: browser.i18n.getMessage('translateMenu'),
+        title: t('translateMenu'),
         contexts: ['selection']
       });
 
@@ -51,7 +51,7 @@ export default defineBackground({
       browser.contextMenus.create({
         id: 'summarizeSelection',
         parentId: 'browserAI',
-        title: browser.i18n.getMessage('summarizeMenu'),
+        title: t('summarizeMenu'),
         contexts: ['selection']
       });
     }
@@ -108,8 +108,8 @@ export default defineBackground({
       if (sendNotification) {
         void browser.notifications.create({
           type: 'basic',
-          title: browser.i18n.getMessage('extName'),
-          message: browser.i18n.getMessage('textProcessedNotification'),
+          title: t('extName'),
+          message: t('textProcessedNotification'),
           iconUrl: EXTENSION_ICON_PATH
         });
       }
