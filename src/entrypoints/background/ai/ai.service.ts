@@ -14,6 +14,13 @@ interface ProcessOptions {
 export class AIService {
   #modelManager = ModelManager.getInstance();
   #languageService = LanguageService.getInstance();
+  #abortController = new AbortController();
+
+  cancelProcessing(): void {
+    this.#abortController.abort();
+    this.#abortController = new AbortController();
+  }
+
   async #setupModel(
     modelParams: Parameters<ModelManager['checkModelStatus']>[0]
   ): Promise<boolean> {
@@ -40,7 +47,11 @@ export class AIService {
           });
         });
       };
-      modelStatus = await this.#modelManager.downloadModel(modelParams, progressCallback);
+      modelStatus = await this.#modelManager.downloadModel(
+        modelParams,
+        progressCallback,
+        { signal: this.#abortController.signal },
+      );
       void sendMessage('modelStatusUpdate', modelStatus);
     } else if (modelStatus.state === 'downloading') {
 
@@ -81,7 +92,8 @@ export class AIService {
         processedText = await this.#modelManager.translate(
           processedText,
           options.sourceLanguage,
-          summarizerDefaultLanguage
+          summarizerDefaultLanguage,
+          { signal: this.#abortController.signal }
         );
       }
 
@@ -95,7 +107,12 @@ export class AIService {
         expectedInputLanguages: [summarizerInputLanguage],
         outputLanguage: summarizerOutputLanguage
       };
-      processedText = await this.#modelManager.summarize(processedText, summarizerOptions);
+      processedText = await this.#modelManager
+        .summarize(
+          processedText,
+          summarizerOptions,
+          { signal: this.#abortController.signal },
+        );
 
       if (summarizerOutputLanguage !== options.targetLanguage) {
         notificationPending = await this.#setupModel({
@@ -103,7 +120,13 @@ export class AIService {
           source: summarizerDefaultLanguage,
           target: options.targetLanguage
         });
-        processedText = await this.#modelManager.translate(processedText, summarizerDefaultLanguage, options.targetLanguage);
+        processedText = await this.#modelManager
+          .translate(
+            processedText,
+            summarizerDefaultLanguage,
+            options.targetLanguage,
+            { signal: this.#abortController.signal },
+          );
       }
     } else { // summarize === false
       notificationPending = await this.#setupModel({
@@ -112,7 +135,13 @@ export class AIService {
         target: options.targetLanguage
       });
 
-      processedText = await this.#modelManager.translate(processedText, options.sourceLanguage, options.targetLanguage);
+      processedText = await this.#modelManager
+        .translate(
+          processedText,
+          options.sourceLanguage,
+          options.targetLanguage,
+          { signal: this.#abortController.signal },
+        );
     }
 
     if (notificationPending) {
@@ -129,7 +158,8 @@ export class AIService {
 
   async detectLanguage(text: string): Promise<string> {
     await this.#setupModel({ type: 'language-detection' });
-    return await this.#modelManager.detectLanguage(text);
+    return await this.#modelManager
+      .detectLanguage(text, { signal: this.#abortController.signal });
   }
   checkAPIAvailability(): boolean {
     return this.#modelManager.checkAPIAvailability();
