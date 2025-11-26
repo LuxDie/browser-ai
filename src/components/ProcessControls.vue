@@ -36,7 +36,8 @@ const buttonText = computed(() => {
       :supported-languages="supportedLanguages"
     />
     <button
-      id="process-button" data-testid="process-button"
+      id="process-button"
+      data-testid="process-button"
       class="btn-primary px-6 disabled:opacity-50 disabled:cursor-not-allowed"
       :disabled="!canProcess"
       @click="emit('process')"

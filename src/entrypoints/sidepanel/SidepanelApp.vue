@@ -50,13 +50,13 @@ onMounted(async () => {
     }
   });
 
-  window.addEventListener('selectedText', async (event: Event) => {
+  window.addEventListener('selectedText', (event: Event) => void (async () => {
     const customEvent = event as CustomEvent<{ text: string; summarize?: boolean }>;
     text.value = customEvent.detail.text;
     summarize.value = customEvent.detail.summarize ?? false;
     warning.value = null;
     error.value = null;
-    
+
     // Detectar idioma primero
     if (text.value.trim().length >= 15) {
       try {
@@ -74,7 +74,7 @@ onMounted(async () => {
         }
       }
     }
-  });
+  })());
 
   window.dispatchEvent(new CustomEvent('sidepanelReady'));
 });
@@ -146,7 +146,7 @@ watch(summarize, () => {
 });
 
 const handleCancel = () => {
-  AIService.cancelProcessing();
+  void AIService.cancelProcessing();
   modelStatus.value = null;
 };
 
@@ -167,22 +167,35 @@ const dCardParams = computed(() => {
 </script>
 
 <template>
-  <div data-testid="sidepanel-app-container" class="p-4 flex flex-col gap-4">
+  <div
+    data-testid="sidepanel-app-container"
+    class="p-4 flex flex-col gap-4"
+  >
     <AppHeader :api-available="apiAvailable" />
 
-    <ModelDownloadCard v-if="modelStatus" :status="modelStatus" :params="dCardParams" @cancel="handleCancel" />
+    <ModelDownloadCard
+      v-if="modelStatus"
+      :status="modelStatus"
+      :params="dCardParams"
+      @cancel="handleCancel"
+    />
 
     <InputArea
       v-model="text"
       :source-language="sourceLanguage"
     />
 
-    <div v-if="warning" id="process-warning-container" data-testid="warning-container" class="text-yellow-800 bg-yellow-100 p-2 rounded-md">
+    <div
+      v-if="warning"
+      id="process-warning-container"
+      data-testid="warning-container"
+      class="text-yellow-800 bg-yellow-100 p-2 rounded-md"
+    >
       {{ warning }}
     </div>
 
     <ProcessControls
-      v-model:targetLanguage="targetLanguage"
+      v-model:target-language="targetLanguage"
       v-model:summarize="summarize"
       :supported-languages="supportedLanguages"
       :is-loading="isLoading"
@@ -190,7 +203,11 @@ const dCardParams = computed(() => {
       @process="processText"
     />
 
-    <div v-if="error" data-testid="error-container" class="text-red-500 bg-red-100 p-2 rounded-md">
+    <div
+      v-if="error"
+      data-testid="error-container"
+      class="text-red-500 bg-red-100 p-2 rounded-md"
+    >
       {{ error }}
     </div>
 

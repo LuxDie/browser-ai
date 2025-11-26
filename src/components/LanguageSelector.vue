@@ -15,16 +15,23 @@ defineProps<{
 
 <template>
   <div class="flex-1">
-    <label for="target-language" class="block text-sm font-medium text-gray-700 mb-2">
+    <label
+      for="target-language"
+      class="block text-sm font-medium text-gray-700 mb-2"
+    >
       {{ t('targetLanguageLabel') }}
     </label>
     <select
       id="target-language"
-      data-testid="target-language-select"
       v-model="modelValue"
+      data-testid="target-language-select"
       class="input-field"
     >
-      <option v-for="lang in supportedLanguages" :key="lang" :value="lang">
+      <option
+        v-for="lang in supportedLanguages"
+        :key="lang"
+        :value="lang"
+      >
         {{ t(languageService.getLanguageKey(lang)) }}
       </option>
     </select>
