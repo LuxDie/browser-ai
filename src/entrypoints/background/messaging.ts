@@ -1,6 +1,10 @@
 import { defineExtensionMessaging } from '@webext-core/messaging';
 import type { SupportedLanguageCode } from '@/entrypoints/background/language/language.service';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
+/**
+ * Protocolo tipado para comunicación entre componentes de la extensión.
+ * Define mensajes sendMessage/onMessage con payloads y retornos.
+ */
 export interface ProtocolMap {
   getModelStatus(data: {
     source: SupportedLanguageCode;

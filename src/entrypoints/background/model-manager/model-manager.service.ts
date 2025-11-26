@@ -1,6 +1,10 @@
 import type { AIModelStatus, SummarizerOptions } from '@/entrypoints/background/model-manager/model-manager.model';
 import type { SupportedLanguageCode } from '../language/language.service';
 
+/**
+ * Gestor singleton de modelos de IA de Chrome.
+ * Maneja verificación de disponibilidad, descarga y ejecución de operaciones de traducción, resumen y detección de idioma.
+ */
 export class ModelManager {
   static #instance: ModelManager | null = null;
 
@@ -27,10 +31,18 @@ export class ModelManager {
     this.#browserAPIs.summarizer = 'Summarizer' in self ? Summarizer : null;
   }
 
+  /**
+   * Verifica si las APIs de IA del navegador están disponibles.
+   * @returns true si al menos una API existe.
+   */
   checkAPIAvailability(): boolean {
     return !!(this.#browserAPIs.languageDetector ?? this.#browserAPIs.translator ?? this.#browserAPIs.summarizer);
   }
 
+/**
+ * Verifica si las APIs de IA del navegador están disponibles.
+ * @returns true si al menos una API existe.
+ */
   async checkModelStatus(config:
     { type: 'language-detection' } |
     { type: 'translation'; source: SupportedLanguageCode; target: SupportedLanguageCode } |
@@ -93,6 +105,16 @@ export class ModelManager {
       }
 
       const availability = await languageDetector.availability();
+      /**
+       * Descarga el modelo de IA si está disponible para descarga.
+       * @param config - Configuración del modelo a descargar.
+       * @param monitor - Callback opcional para monitorear progreso.
+       * @param options - Opciones con AbortSignal para cancelación.
+       * @returns Estado del modelo tras descarga ('available').
+       * @throws Error si API no soportada o cancelada.
+       * @example
+       * downloadModel(\{ type: 'summarization' \});
+       */
       return {
         state: availability,
         ...(availability === 'downloading' && { downloadProgress: 0 }),
@@ -153,6 +175,17 @@ export class ModelManager {
       await api.create(createOptions);
     } else {
       const api = this.#browserAPIs.languageDetector;
+      /**
+       * Traduce texto utilizando el modelo de Chrome Translator.
+       * @param text - Texto fuente a traducir.
+       * @param source - Código de idioma origen.
+       * @param target - Código de idioma destino.
+       * @param options - Opciones con AbortSignal para cancelación.
+       * @returns Texto traducido al idioma destino.
+       * @throws Error si Translator API no disponible o cancelada.
+       * @example
+       * await translate('Hola mundo', 'es', 'en'); // 'Hello world'
+       */
       if (!api) {
         throw new Error(t('languageDetectorAPINotSupported') ||
           'LanguageDetector API no soportada');
@@ -165,6 +198,16 @@ export class ModelManager {
     }
 
     // Limpiar el caché y retornar disponible
+    /**
+     * Genera un resumen del texto usando Chrome Summarizer.
+     * @param text - Texto a resumir.
+     * @param inputOptions - Opciones específicas del summarizer.
+     * @param options - AbortSignal opcional.
+     * @returns Resumen del texto.
+     * @throws Error si Summarizer no disponible.
+     * @example
+     * await summarize('Texto largo...', \{ outputLanguage: 'es' \});
+     */
     modelStatusCache.delete(config.type);
     return { state: 'available' };
   }
@@ -184,6 +227,15 @@ export class ModelManager {
     const translator = this.#browserAPIs.translator;
 
     if (!translator) {
+      /**
+       * Detecta el idioma del texto usando Chrome LanguageDetector.
+       * @param text - Texto para detectar idioma.
+       * @param options - AbortSignal opcional.
+       * @returns Código del idioma más probable.
+       * @throws Error si LanguageDetector no disponible.
+       * @example
+       * await detectLanguage('Hola mundo');
+       */
       throw new Error(t('chromeAINotAvailableForTranslation') ||
         'Error: Chrome AI APIs no disponibles para traducción');
     }

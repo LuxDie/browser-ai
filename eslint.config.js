@@ -1,10 +1,11 @@
-import eslint from '@eslint/js'
-import globals from 'globals'
-import { defineConfig } from 'eslint/config'
-import tseslint from 'typescript-eslint'
+import eslint from '@eslint/js';
+import globals from 'globals';
+import { defineConfig } from 'eslint/config';
+import tseslint from 'typescript-eslint';
+import tsdoc from 'eslint-plugin-tsdoc';
 import autoImports from './.wxt/eslint-auto-imports.mjs';
 
-export default defineConfig(
+export default defineConfig([
   {
     ignores: [
       'coverage/**',
@@ -40,13 +41,16 @@ export default defineConfig(
         ...globals.es2020,
       },
     },
+    plugins: {
+      tsdoc,
+    },
     rules: {
       // TODO: migrar a @stylistic/eslint-plugin para la regla de punto y coma
       '@/semi': ['error', 'always'],
-      
+
       'dot-notation': 'off',
       "@typescript-eslint/dot-notation": [
-        "error", 
+        "error",
         {
           "allowIndexSignaturePropertyAccess": true
         }
@@ -54,6 +58,7 @@ export default defineConfig(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'off',
+      'tsdoc/syntax': 'warn',
     },
   },
   {
@@ -69,4 +74,4 @@ export default defineConfig(
       '@typescript-eslint/unbound-method': 'off',
     },
   }
-)
+]);

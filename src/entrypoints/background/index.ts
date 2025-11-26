@@ -25,7 +25,10 @@ export default defineBackground({
     // Cache local para el estado del panel lateral
     const sidepanelState = new Map<number, { enabled: boolean, path: string }>();
 
-    // Función para crear el menú contextual
+    /**
+     * Crea el menú contextual del navegador para Browser AI
+     * Elimina menús existentes y crea el menú padre con opciones de traducción y resumen
+     */
     async function createContextMenu(): Promise<void> {
       // Eliminar menús contextuales existentes para evitar duplicados
       await browser.contextMenus.removeAll();
@@ -137,6 +140,11 @@ export default defineBackground({
       toggleSidepanel(tab.id!);
     });
 
+    /**
+     * Alterna el estado del panel lateral para una pestaña específica
+     * Si está abierto, lo cierra; si está cerrado, lo abre
+     * @param tabId - ID de la pestaña
+     */
     function toggleSidepanel(tabId: number) {
       const currentState = sidepanelState.get(tabId) ?? { enabled: false, path: '' };
 
@@ -154,6 +162,11 @@ export default defineBackground({
       }
     }
 
+    /**
+     * Abre el panel lateral para una pestaña específica
+     * Configura las opciones del panel y lo abre
+     * @param tabId - ID de la pestaña
+     */
     function openSidepanel(tabId: number) {
       void browser.sidePanel.setOptions({
         tabId,
