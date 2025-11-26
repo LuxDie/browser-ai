@@ -2,6 +2,7 @@ import { defineProxyService } from '@webext-core/proxy-service';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import { sendMessage } from '@/entrypoints/background/messaging';
 import { LanguageService } from '../language/language.service';
+import { historyService } from '../history';
 import type { SupportedLanguageCode, SummarizerLanguageCode } from '../language/language.service';
 import type { SummarizerOptions } from '../model-manager/model-manager.model';
 
@@ -153,6 +154,17 @@ export class AIService {
         iconUrl: 'icons/icon-128.png'
       });
     }
+
+    // Guardar en el historial
+    await historyService.addRecord({
+      type: options.summarize ? 'summarize' : 'translate',
+      input: text,
+      output: processedText,
+      metadata: {
+        sourceLanguage: options.sourceLanguage,
+        targetLanguage: options.targetLanguage,
+      },
+    });
 
     return processedText;
   }

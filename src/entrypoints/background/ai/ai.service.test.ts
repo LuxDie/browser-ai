@@ -5,6 +5,7 @@ import {
   removeMessageListeners
 } from '@/entrypoints/background/messaging';
 import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
+ import { historyService } from '@/entrypoints/background/history';
 import type { LanguageService } from '@/entrypoints/background/language/language.service';
 
 // Mock ModelManager module
@@ -22,6 +23,15 @@ vi.mock('@/entrypoints/background/language/language.service', () => {
   return {
     LanguageService: {
       getInstance: () => mockLanguageService
+    }
+  };
+});
+
+// Mock HistoryService module
+vi.mock('@/entrypoints/background/history', () => {
+  return {
+    historyService: {
+      addRecord: vi.fn(),
     }
   };
 });
@@ -50,10 +60,15 @@ describe('AIService', () => {
     vi.spyOn(browser.notifications, 'create');
     removeMessageListeners();
     onMessage('modelStatusUpdate', modelStatusUpdateSpy);
+    vi.clearAllMocks();
   });
 
   it('should follow the correct flow when summarization model is available', async () => {
-    await aIService.processText('Texto a resumir', {
+    const inputText = 'Texto a resumir';
+    const outputText = 'Texto resumido.';
+    mockModelManagerService.summarize.mockResolvedValue(outputText);
+
+    await aIService.processText(inputText, {
       sourceLanguage: 'en',
       targetLanguage: 'es',
       summarize: true
@@ -62,18 +77,29 @@ describe('AIService', () => {
     expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({ type: 'summarization' });
     expect(mockModelManagerService.downloadModel).not.toHaveBeenCalled();
     expect(mockModelManagerService.summarize).toHaveBeenCalled();
+    expect(historyService.addRecord).toHaveBeenCalledWith({
+      type: 'summarize',
+      input: inputText,
+      output: outputText,
+      metadata: {
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
+      },
+    });
   });
 
   it('should follow the correct flow when translation model is available', async () => {
-    mockModelManagerService.translate.mockResolvedValue('Texto traducido.');
+    const inputText = 'Texto a traducir';
+    const outputText = 'Texto traducido.';
+    mockModelManagerService.translate.mockResolvedValue(outputText);
 
-    const result = await aIService.processText('Texto a traducir', {
+    const result = await aIService.processText(inputText, {
       sourceLanguage: 'en',
       targetLanguage: 'es',
       summarize: false
     });
 
-    expect(result).toBe('Texto traducido.');
+    expect(result).toBe(outputText);
     expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({
       type: 'translation',
       source: 'en',
@@ -81,7 +107,16 @@ describe('AIService', () => {
     });
     expect(mockModelManagerService.downloadModel).not.toHaveBeenCalled();
     expect(mockModelManagerService.translate)
-      .toHaveBeenCalledWith('Texto a traducir', 'en', 'es', expect.anything());
+      .toHaveBeenCalledWith(inputText, 'en', 'es', expect.anything());
+    expect(historyService.addRecord).toHaveBeenCalledWith({
+      type: 'translate',
+      input: inputText,
+      output: outputText,
+      metadata: {
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
+      },
+    });
   });
 
   it('should download model and send status messages when summarization model is downloadable', async () => {

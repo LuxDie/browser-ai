@@ -78,6 +78,9 @@ const browserMocks: {
     { trigger: ActionListener };
   };
   sidePanel: Pick<typeof browser.sidePanel, 'setPanelBehavior' | 'setOptions' | 'getOptions' | 'open'>;
+  storage: {
+    local: Pick<typeof browser.storage.local, 'get' | 'set' | 'remove' | 'clear'>;
+  };
 } = {
   i18n: {
     getMessage: vi.fn<typeof browser.i18n.getMessage>((key) => {
@@ -127,6 +130,53 @@ const browserMocks: {
       Promise.resolve({ enabled: false, path: '' })
     ),
     open: vi.fn(),
+  },
+  storage: {
+    local: (() => {
+      const store: Record<string, unknown> = {};
+      return {
+        get: vi.fn().mockImplementation((keys?: string | string[] | Record<string, unknown> | null) => {
+          if (keys === null || keys === undefined) {
+            return Promise.resolve(store);
+          }
+          if (typeof keys === 'string') {
+            return Promise.resolve({ [keys]: store[keys] });
+          }
+          if (Array.isArray(keys)) {
+            const result: Record<string, unknown> = {};
+            for (const key of keys) {
+              result[key] = store[key];
+            }
+            return Promise.resolve(result);
+          }
+          const result: Record<string, unknown> = {};
+          for (const key in keys) {
+            result[key] = store[key] ?? keys[key];
+          }
+          return Promise.resolve(result);
+        }),
+        set: vi.fn().mockImplementation((data: Record<string, unknown>) => {
+          Object.assign(store, data);
+          return Promise.resolve();
+        }),
+        remove: vi.fn().mockImplementation((keys: string | string[]) => {
+          if (typeof keys === 'string') {
+            delete store[keys];
+          } else {
+            for (const key of keys) {
+              delete store[key];
+            }
+          }
+          return Promise.resolve();
+        }),
+        clear: vi.fn().mockImplementation(() => {
+          for (const key in store) {
+            delete store[key];
+          }
+          return Promise.resolve();
+        }),
+      };
+    })(),
   },
 };
 
