@@ -1,5 +1,5 @@
 ---
-description: "Calidad de código"
+description: Calidad de código
 ---
 Ejecuta las siguientes verificaciones:
 
