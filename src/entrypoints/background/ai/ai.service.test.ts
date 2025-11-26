@@ -605,4 +605,101 @@ describe('AIService', () => {
       );
     });
   });
+
+  describe('processText for translation', () => {
+    const testText = 'Este es un texto de prueba para traducir';
+    const sourceLanguage = 'en';
+    const targetLanguage = 'es';
+
+    it('should check model availability', async () => {
+      await aIService.processText(testText, {
+        sourceLanguage,
+        targetLanguage,
+        summarize: false
+      });
+
+      expect(mockModelManagerService.checkModelStatus).toHaveBeenCalledWith({
+        type: 'translation',
+        source: sourceLanguage,
+        target: targetLanguage
+      });
+    });
+
+    it('should execute translation', async () => {
+      mockModelManagerService.translate.mockResolvedValue('Texto traducido.');
+
+      await aIService.processText(testText, {
+        sourceLanguage,
+        targetLanguage,
+        summarize: false
+      });
+
+      expect(mockModelManagerService.checkModelStatus).toHaveBeenCalled();
+      expect(mockModelManagerService.translate).toHaveBeenCalledWith(
+        testText,
+        sourceLanguage,
+        targetLanguage,
+        expect.any(Object)
+      );
+    });
+
+    it('should return translation result', async () => {
+      const translatedText = 'Este es un texto de prueba traducido';
+      mockModelManagerService.translate.mockResolvedValue(translatedText);
+
+      const result = await aIService.processText(testText, {
+        sourceLanguage,
+        targetLanguage,
+        summarize: false
+      });
+
+      expect(result).toBe(translatedText);
+    });
+
+    it('should send modelStatusUpdate when model is not available', async () => {
+      mockModelManagerService.checkModelStatus.mockResolvedValueOnce({
+        state: 'downloadable'
+      });
+      mockModelManagerService.downloadModel.mockResolvedValueOnce({
+        state: 'available'
+      });
+      mockModelManagerService.translate.mockResolvedValue('Texto traducido.');
+
+      await aIService.processText('Texto de prueba', {
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
+        summarize: false
+      });
+
+      expect(modelStatusUpdateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            state: 'downloading',
+          }),
+        })
+      );
+    });
+
+    it('should send browser notification when translation requires model download', async () => {
+      mockModelManagerService.checkModelStatus.mockResolvedValueOnce({
+        state: 'downloadable'
+      });
+      mockModelManagerService.downloadModel.mockResolvedValueOnce({
+        state: 'available'
+      });
+      mockModelManagerService.translate.mockResolvedValue('Texto traducido.');
+
+      await aIService.processText('Texto de prueba', {
+        sourceLanguage: 'en',
+        targetLanguage: 'es',
+        summarize: false
+      });
+
+      expect(browser.notifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'textProcessedNotification'
+        })
+      );
+    });
+  });
 });
