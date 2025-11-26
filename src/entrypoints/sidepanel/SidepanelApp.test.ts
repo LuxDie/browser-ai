@@ -347,7 +347,7 @@ describe('SidepanelApp', () => {
       await flushPromises();
 
       // Show download message
-      await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
+      globalThis.dispatchEvent(new CustomEvent('modelStatusUpdate', { detail: { state: 'downloading', downloadProgress: 0 } }));
       await flushPromises();
       expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(true);
 
