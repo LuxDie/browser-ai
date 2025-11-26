@@ -36,12 +36,8 @@ describe('Background Script', () => {
     background.main();
   });
   describe('onInstalled Listener', () => {
-
-    beforeEach(async () => {
+    it('should create the context menu', async () => {
       await fakeBrowser.runtime.onInstalled.trigger({ reason: 'install', temporary: false });
-    });
-
-    it('should create the context menu', () => {
       expect(browser.contextMenus.create).toHaveBeenCalledTimes(3);
 
       // Check that the parent menu is created
@@ -67,86 +63,28 @@ describe('Background Script', () => {
         contexts: ['selection'],
       });
     });
-
   });
 
   describe('onMessage Listener', () => {
+    it('should handle sidepanelReady message', async () => {
+      // Test pending request handling
+      const pendingText = 'Texto pendiente';
+      // Simulate a pending request by triggering context menu first
+      await fakeBrowser.runtime.onInstalled.trigger({ reason: 'install', temporary: false });
+      // Mock context menu click
+      await fakeBrowser.contextMenus.onClicked.trigger({
+        menuItemId: 'translateSelection',
+        selectionText: pendingText
+      }, { id: 1 });
 
-    describe('when receiving a translateTextRequest message with available model', () => {
-      const testText = 'Este es un texto de prueba para traducir';
-      const sourceLanguage = 'en';
-      const targetLanguage = 'es';
+      // Now trigger sidepanelReady
+      await sendMessage('sidepanelReady');
 
-      it('should check model availability', async () => {
-        await sendMessage('translateText', {
-          text: testText,
-          sourceLanguage,
-          targetLanguage
-        });
-        expect(Translator.availability).toHaveBeenCalledWith({
-          sourceLanguage,
-          targetLanguage
-        });
-      });
-
-      it('should execute translation', async () => {
-        const translatorInstance: Pick<Translator, 'translate'> = { translate: vi.fn() };
-        vi.mocked(Translator.create).mockResolvedValue(translatorInstance as Translator);
-        await sendMessage('translateText', {
-          text: testText,
-          sourceLanguage,
-          targetLanguage
-        });
-        expect(Translator.create).toHaveBeenCalled();
-        expect(translatorInstance.translate).toHaveBeenCalled();
-      });
-
-      it('should return translation result', async () => {
-        const translatedText = 'Este es un texto de prueba traducido';
-        const translatorInstance: Pick<Translator, 'translate'> = { translate: vi.fn(() => Promise.resolve(translatedText)) };
-        vi.mocked(Translator.create).mockResolvedValue(translatorInstance as Translator);
-
-        const result = await sendMessage('translateText', {
-          text: testText,
-          sourceLanguage,
-          targetLanguage
-        });
-
-        expect(result).toEqual(translatedText);
-      });
-
-      it('should send modelStatusUpdate when model is not available', async () => {
-        vi.mocked(Translator.availability).mockResolvedValue('downloadable');
-        const testText = 'Texto de prueba';
-        const sourceLanguage = 'en';
-        const targetLanguage = 'es';
-        await sendMessage('translateText', { text: testText, sourceLanguage, targetLanguage });
-        expect(modelStatusUpdateMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            data: expect.objectContaining({
-              state: 'downloading',
-            }),
-          })
-        );
-      });
-
-      it('should send browser notification when translation requires model download', async () => {
-        vi.mocked(Translator.availability).mockResolvedValue('downloadable');
-        vi.spyOn(browser.notifications, 'create');
-
-
-        await sendMessage('translateText', {
-          text: 'Texto de prueba',
-          sourceLanguage: 'en',
-          targetLanguage: 'es'
-        });
-
-        expect(browser.notifications.create).toHaveBeenCalledWith(
-          expect.objectContaining({
-            message: 'textProcessedNotification'
-          })
-        );
-      });
+      expect(selectedTextMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { text: pendingText, summarize: false }
+        })
+      );
     });
   });
 });

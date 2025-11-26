@@ -1,9 +1,7 @@
 import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
-import { ModelManager } from '@/entrypoints/background/model-manager/model-manager.service';
 import { registerAIService } from '@/entrypoints/background/ai/ai.service';
 import {
   SIDEPANEL_PATH,
-  EXTENSION_ICON_PATH,
   CONNECTION_ERROR_MESSAGE,
 } from '@/utils/constants';
 
@@ -18,9 +16,6 @@ export default defineBackground({
 
     // Texto seleccionado pendiente para envío al sidepanel
     let pendingRequest: { text: string, summarize: boolean } | null = null;
-
-    // Instancias de servicios
-    const modelManager = ModelManager.getInstance();
 
     // Cache local para el estado del panel lateral
     const sidepanelState = new Map<number, { enabled: boolean, path: string }>();
@@ -82,43 +77,6 @@ export default defineBackground({
         })();
       }
     });
-
-    // Manejadores de mensajes usando @webext-core/messaging
-    onMessage('getModelStatus', async (message) => {
-      const { source, target } = message.data;
-      return await modelManager.checkModelStatus({ type: 'translation', source, target });
-    });
-
-    onMessage('translateText', async (message) => {
-      const { text, sourceLanguage, targetLanguage } = message.data;
-      let sendNotification = false;
-
-      // Verificar disponibilidad del modelo
-      let modelStatus = await modelManager.checkModelStatus({ type: 'translation', source: sourceLanguage, target: targetLanguage });
-      if (modelStatus.state === 'downloadable') {
-        // Si la traducción requiere descargar un modelo, mostraremos una notificación al finalizar
-        sendNotification = true;
-        modelStatus.state = 'downloading';
-        void sendMessage('modelStatusUpdate', modelStatus);
-        modelStatus = await modelManager.downloadModel({ type: 'translation', source: sourceLanguage, target: targetLanguage });
-        void sendMessage('modelStatusUpdate', modelStatus);
-      }
-
-      const translatedText = await modelManager.translate(text, sourceLanguage, targetLanguage);
-
-      if (sendNotification) {
-        void browser.notifications.create({
-          type: 'basic',
-          title: t('extName'),
-          message: t('textProcessedNotification'),
-          iconUrl: EXTENSION_ICON_PATH
-        });
-      }
-
-      return translatedText;
-    });
-
-
     onMessage('sidepanelReady', () => {
       if (pendingRequest) {
         void sendMessage('selectedText', pendingRequest);
