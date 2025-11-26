@@ -19,7 +19,10 @@ defineProps<{
       v-model="modelValue"
       class="border p-2 rounded-md"
       rows="5"
-    ></textarea>
-    <DetectedLanguage v-if="sourceLanguage" :source-language="sourceLanguage" />
+    />
+    <DetectedLanguage
+      v-if="sourceLanguage"
+      :source-language="sourceLanguage"
+    />
   </div>
 </template>

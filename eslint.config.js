@@ -4,6 +4,8 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import tsdoc from 'eslint-plugin-tsdoc';
 import autoImports from './.wxt/eslint-auto-imports.mjs';
+import pluginVue from 'eslint-plugin-vue'
+
 
 export default defineConfig([
   {
@@ -27,10 +29,23 @@ export default defineConfig([
   tseslint.configs.recommendedTypeChecked,
   tseslint.configs.strictTypeChecked,
   tseslint.configs.stylisticTypeChecked,
+  ...pluginVue.configs['flat/recommended'],
   {
     languageOptions: {
       parserOptions: {
         projectService: true,
+      },
+    },
+  },
+  // Configuración específica para archivos Vue
+  {
+    files: ['**/*.vue'],
+    languageOptions: {
+      parserOptions: {
+        parser: tseslint.parser,
+        sourceType: 'module',
+        projectService: true,
+        extraFileExtensions: ['.vue'],
       },
     },
   },
