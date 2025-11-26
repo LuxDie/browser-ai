@@ -59,7 +59,7 @@ export class LanguageService {
 
   /**
    * Obtiene la clave de mensaje de internacionalización para un idioma soportado
-   * @param code Código del idioma
+   * @param code - Código del idioma
    * @returns La clave de mensaje garantizada válida para i18n
    */
   getLanguageKey(code: SupportedLanguageCode): SupportedLanguageKey {
@@ -68,7 +68,7 @@ export class LanguageService {
 
   /**
    * Determina si un idioma está soportado
-   * @param languageCode Código del idioma a verificar
+   * @param languageCode - Código del idioma a verificar
    * @returns true si el idioma está soportado
    */
   isLanguageSupported(languageCode: string): languageCode is SupportedLanguageCode {

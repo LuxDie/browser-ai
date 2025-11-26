@@ -11,6 +11,11 @@ interface ProcessOptions {
   targetLanguage: SupportedLanguageCode;
 }
 
+/**
+ * Servicio principal para operaciones de IA.
+ * Integra ModelManager y LanguageService para procesamiento de texto.
+ * Soporta cancelación y notificaciones automáticas.
+ */
 export class AIService {
   #modelManager = ModelManager.getInstance();
   #languageService = LanguageService.getInstance();
@@ -63,6 +68,21 @@ export class AIService {
     return downloadTriggered;
   }
 
+
+  /**
+   * Procesa texto aplicando traducción y/o resumen según opciones.
+   * Maneja descarga automática de modelos si necesario.
+   * @param text - Texto fuente a procesar.
+   * @param options - Opciones de procesamiento (resumir, idiomas origen/destino).
+   * @returns Texto procesado (traducido y/o resumido).
+   * @throws Error si falla descarga o procesamiento de modelos.
+   * @example
+   * await processText('Texto largo en español', \{
+   *   summarize: true,
+   *   sourceLanguage: 'es',
+   *   targetLanguage: 'en'
+   * \});
+   */
   async processText(text: string, options: ProcessOptions): Promise<string> {
     let processedText = text;
     let notificationPending = false;

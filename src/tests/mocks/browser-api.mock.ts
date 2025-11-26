@@ -130,6 +130,12 @@ const browserMocks: {
   },
 };
 
+/**
+ * Función helper para configurar los mocks del navegador necesarios para las pruebas
+ * Establece mocks globales para APIs del navegador y funciones de IA usando vi.stubGlobal
+ * Configura mocks para Translator, LanguageDetector, Summarizer, AbortController y navigator
+ * También asigna mocks directamente al objeto browser usando Object.assign
+ */
 export function setupBrowserMocks() {
   Object.entries(globalMocks).forEach(([key, value]) => {
     vi.stubGlobal(key, value);
