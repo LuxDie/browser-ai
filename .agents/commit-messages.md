@@ -15,6 +15,7 @@
   - Las modificaciones de funcionalidad o infraestructura fundamentales usan el alcance `core`
 - **Línea de resumen:** Máximo 50 caracteres, escribir en inglés, ser conciso y claro
 - **Cuerpo del mensaje:** Opcional, para explicaciones detalladas si son necesarias
+- **Formato de código:** Usar backticks (`` ` ``) para rodear nombres de símbolos, nombres de archivos, nombres de carpetas y nombres de paquetes
 - **Ejemplos:**
   - `feat: add user authentication system`
   - `fix: resolve memory leak in data processing`
