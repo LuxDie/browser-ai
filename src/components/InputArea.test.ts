@@ -1,53 +1,57 @@
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
+import type { VTextarea } from 'vuetify/components';
 import InputArea from '@/components/InputArea.vue';
+import type DetectedLanguage from '@/components/DetectedLanguage.vue';
 
 describe('InputArea', () => {
-  it('should render textarea with correct label', () => {
+  it('should send correct label and model to v-textarea', () => {
     const wrapper = mount(InputArea, {
       props: {
         modelValue: '',
-        sourceLanguage: null
+        language: null
       }
     });
 
-    expect(wrapper.find('label').text()).toBe('inputLabel');
-    expect(wrapper.find('textarea').text()).toBe('');
+    expect(wrapper.getComponent<typeof VTextarea>('[data-testid="input-area"]')
+      .props()).toMatchObject({
+        label: 'inputLabel',
+        modelValue: ''
+      });
   });
 
   it('should update modelValue when typing', async () => {
+    const text = 'Hello';
     const wrapper = mount(InputArea, {
       props: {
         modelValue: '',
-        sourceLanguage: null
+        language: null
       }
     });
 
-    const textarea = wrapper.find('textarea');
-    await textarea.setValue('Hello');
+    const vTextArea = wrapper.getComponent('[data-testid="input-area"]');
+    await vTextArea.setValue(text);
 
-    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['Hello']);
+    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([text]);
   });
 
-  it('should show DetectedLanguage component when sourceLanguage is provided', () => {
-    const wrapper = mount(InputArea, {
-      props: {
-        modelValue: '',
-        sourceLanguage: 'en'
-      }
-    });
+  it.for([{
+    language: 'en',
+    expected: true
+  }, {
+    language: null,
+    expected: false
+  }] as const)('should set detected language visibility to $expected when source language is $language',
+    ({ language, expected }) => {
+      const wrapper = mount(InputArea, {
+        props: {
+          modelValue: 'This is a long text',
+          language
+        },
+      });
 
-    expect(wrapper.findComponent({ name: 'DetectedLanguage' }).exists()).toBe(true);
-  });
-
-  it('should not show DetectedLanguage component when sourceLanguage is null', () => {
-    const wrapper = mount(InputArea, {
-      props: {
-        modelValue: '',
-        sourceLanguage: null
-      }
-    });
-
-    expect(wrapper.findComponent({ name: 'DetectedLanguage' }).exists()).toBe(false);
-  });
+      expect(wrapper.findComponent<typeof DetectedLanguage>('[data-testid="detected-language-code"]')
+        .exists()).toBe(expected);
+    },
+  );
 });

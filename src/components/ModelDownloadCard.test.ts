@@ -1,102 +1,78 @@
 import { mount } from '@vue/test-utils';
 import { describe, it, expect, vi } from 'vitest';
-import ModelDownloadCard from '@/components/ModelDownloadCard.vue';
+import { VProgressLinear } from 'vuetify/components';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
+import ModelDownloadCard from '@/components/ModelDownloadCard.vue';
+
+const mockStatus: AIModelStatus = {
+  state: 'downloading',
+  downloadProgress: 50,
+};
+
+const mountOptions = { props: { status: mockStatus } };
 
 describe('ModelDownloadCard.vue', () => {
-  const mockStatus: AIModelStatus = {
-    state: 'downloading',
-    downloadProgress: 50,
-  };
+  it('should render download progress and title', () => {
+    const wrapper = mount(ModelDownloadCard, mountOptions);
 
-  it('should render the download progress and title', () => {
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: mockStatus,
-      },
-    });
-
-    expect(wrapper.find('h5').text()).toBe('downloadingSummarizer');
+    expect(wrapper.text()).toContain('downloadingSummarizer');
     expect(wrapper.text()).toContain('50%');
   });
 
-  it('should update the progress bar width based on downloadProgress', () => {
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: mockStatus,
-      },
-    });
+  it('should render cancel button with correct label', () => {
+    const wrapper = mount(ModelDownloadCard, mountOptions);
 
-    const progressBar = wrapper.find('.bg-blue-600');
-    expect(progressBar.attributes('style')).toContain('width: 50%');
-  });
-
-  it('should render with 0% progress correctly', () => {
-    const zeroProgressStatus: AIModelStatus = { ...mockStatus, downloadProgress: 0 };
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: zeroProgressStatus,
-      },
-    });
-
-    expect(wrapper.text()).toContain('0%');
-    const progressBar = wrapper.find('.bg-blue-600');
-    expect(progressBar.attributes('style')).toContain('width: 0%');
-  });
-
-  it('should render with 100% progress correctly', () => {
-    const fullProgressStatus: AIModelStatus = { ...mockStatus, downloadProgress: 100 };
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: fullProgressStatus,
-      },
-    });
-
-    expect(wrapper.text()).toContain('100%');
-    const progressBar = wrapper.find('.bg-blue-600');
-    expect(progressBar.attributes('style')).toContain('width: 100%');
-  });
-  it('should render cancel button when state is downloading', () => {
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: mockStatus,
-      },
-    });
-
-    const button = wrapper.find('button');
-    expect(button.exists()).toBe(true);
+    const button = wrapper.get('[data-testid="cancel-download-button"]');
     expect(button.text()).toBe('cancelDownload');
   });
 
-  it('should emit cancel event when button is clicked', async () => {
-    const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: mockStatus,
-      },
+  it.for([
+    ['', 'downloading', true],
+    [' not', 'unavailable', false],
+    [' not', 'downloadable', false],
+    [' not', 'available', false],
+  ] as const)('should%s render cancel button when state is %s',
+    ([_, state, expected]) => {
+      const wrapper = mount(ModelDownloadCard, {
+        ...mountOptions,
+        props: { status: { ...mockStatus, state } },
+      });
+
+      const button = wrapper.find('[data-testid="cancel-download-button"]');
+      expect(button.exists()).toBe(expected);
     });
 
-    await wrapper.find('button').trigger('click');
-    expect(wrapper.emitted('cancel')).toBeTruthy();
-  });
-
   it('should render title with source and target languages when params are provided', () => {
-    const params = { source: 'English', target: 'Spanish' };
-
+    const params = { source: 'Inglés', target: 'Castellano' };
+    const correctMessage = 'Descargando Inglés - Castellano';
     vi.mocked(browser.i18n.getMessage).mockImplementation((key, substitutions) => {
-      if (key === 'downloadingTranslator' && Array.isArray(substitutions) && substitutions.length >= 2) {
-        return `Downloading from ${String(substitutions[0])} to ${String(substitutions[1])}`;
+      if (key === 'downloadingTranslator'
+        && Array.isArray(substitutions)
+        && substitutions.length >= 2) {
+        return correctMessage;
       }
       return key;
     });
-
     const wrapper = mount(ModelDownloadCard, {
-      props: {
-        status: mockStatus,
-        params,
-      },
+      ...mountOptions,
+      props: { status: mockStatus, params },
     });
 
-    expect(wrapper.find('h5').text()).toBe('Downloading from English to Spanish');
-    expect(browser.i18n.getMessage).toHaveBeenCalledWith('downloadingTranslator', ['English', 'Spanish']);
+    expect(wrapper.text()).toContain(correctMessage);
+  });
+
+  it('should emit cancel event when button is clicked', async () => {
+    const wrapper = mount(ModelDownloadCard, mountOptions);
+
+    await wrapper.get('[data-testid="cancel-download-button"]').trigger('click');
+    expect(wrapper.emitted('cancel')).toBeTruthy();
+  });
+
+  it('should pass model to progress indicator correctly', () => {
+    const wrapper = mount(ModelDownloadCard, mountOptions);
+
+    const progressLinear = wrapper
+      .getComponent<typeof VProgressLinear>('[data-testid="progress-indicator"]');
+    expect(progressLinear.props('modelValue')).toBe(50);
   });
 });

@@ -3,10 +3,13 @@ import { mount } from '@vue/test-utils';
 import LocalProcessingBadge from '@/components/LocalProcessingBadge.vue';
 
 describe('LocalProcessingBadge', () => {
-  it('should render the badge with correct text', () => {
+  it('should show the "locally processed" message correctly', () => {
     const wrapper = mount(LocalProcessingBadge);
 
-    expect(wrapper.text()).toContain('localProcessingBadge');
-    expect(wrapper.find('#processing-source').exists()).toBe(true);
+    const badge = wrapper.find('[data-testid="local-processing-badge"]');
+    expect(badge.exists()).toBe(true);
+
+    const tooltip = wrapper.getComponent({ name: 'VTooltip' });
+    expect(tooltip.props('text')).toBe('localProcessingBadge');
   });
 });

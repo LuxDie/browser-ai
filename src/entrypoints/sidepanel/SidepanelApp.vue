@@ -14,13 +14,33 @@ const languageService = LanguageService.getInstance();
 const modelStatus = ref<AIModelStatus | null>(null);
 const text = ref('');
 const translatedText = ref('');
+const detectedLanguage = ref<string | null>(null);
 const sourceLanguage = ref<SupportedLanguageCode | null>(null);
 const targetLanguage = ref<SupportedLanguageCode>('es');
 const isLoading = ref(false);
-const error = ref<string | null>(null);
+const error = ref<{ type: string; error: Error } | null>(null);
 const summarize = ref(false);
 const supportedLanguages = ref<SupportedLanguageCode[]>([]);
-const warning = ref<string | null>(null);
+
+const displayError = computed(() => {
+  if (!error.value || error.value.error.name === 'AbortError') return null;
+  return {
+    type: error.value.type,
+    message: error.value.error.message
+  };
+});
+
+const unsupportedLanguage = computed(() => {
+  return !!detectedLanguage.value && !languageService.isLanguageSupported(detectedLanguage.value);
+});
+
+const insufficientText = computed(() => {
+  return !!text.value && text.value.trim().length < minDetectLength;
+});
+
+const sameLanguage = computed(() => {
+  return sourceLanguage.value === targetLanguage.value && !summarize.value;
+});
 
 const canProcess = computed(() => {
   const hasText = text.value.trim().length > 0;
@@ -31,6 +51,7 @@ const canProcess = computed(() => {
 });
 
 const apiAvailable = ref(true);
+const minDetectLength = 15;
 
 onMounted(async () => {
   apiAvailable.value = await AIService.checkAPIAvailability();
@@ -54,36 +75,20 @@ onMounted(async () => {
     const customEvent = event as CustomEvent<{ text: string; summarize?: boolean }>;
     text.value = customEvent.detail.text;
     summarize.value = customEvent.detail.summarize ?? false;
-    warning.value = null;
-    error.value = null;
 
-    // Detectar idioma primero
-    if (text.value.trim().length >= 15) {
-      try {
-        const lang = await AIService.detectLanguage(text.value);
-        if (languageService.isLanguageSupported(lang)) {
-          sourceLanguage.value = lang;
-          await processText();
-        } else {
-          sourceLanguage.value = null;
-          error.value = t('detectedLanguageNotSupported', lang);
-        }
-      } catch (e: unknown) {
-        if (e instanceof Error) {
-          error.value = t('languageDetectionError');
-        }
-      }
+    // Esperar a que los watchers finalicen antes de proceder
+    await nextTick();
+    if (canProcess.value) {
+      await processText();
     }
   })());
 
-  window.dispatchEvent(new CustomEvent('sidepanelReady'));
+  window.dispatchEvent(new CustomEvent('appMounted'));
 });
 
 const processText = async () => {
-  if (!sourceLanguage.value) return;
-
-  if (sourceLanguage.value === targetLanguage.value && !summarize.value) {
-    warning.value = t('sameLanguageWarning');
+  if (!sourceLanguage.value || sameLanguage.value) {
+    console.warn(t('processingAborted'));
     return;
   }
 
@@ -102,12 +107,12 @@ const processText = async () => {
     translatedText.value = response;
   } catch (e: unknown) {
     if (e instanceof Error) {
-      if (e.name === 'AbortError') {
-        // No mostrar error cuando el usuario cancela el procesamiento
-        return;
-      }
-      const errorMessage = e.message;
-      error.value = `${t('processingError')}\n${errorMessage}`;
+      error.value = {
+        type: t('processingError'),
+        error: e
+      };
+    } else {
+      console.warn(`${t('nonStandardError')}:`, e);
     }
   } finally {
     isLoading.value = false;
@@ -116,23 +121,27 @@ const processText = async () => {
 
 watch(text, async (newText) => {
   resetSharedState();
-  if (newText.trim().length < 15) {
-    sourceLanguage.value = null;
-    error.value = null; // Limpiar error cuando el texto es demasiado corto
+  if (newText.length === 0) return;
+  if (newText.trim().length < minDetectLength) {
+    sourceLanguage.value = detectedLanguage.value = null;
     return;
   }
   try {
-    const lang = await AIService.detectLanguage(newText);
-    if (languageService.isLanguageSupported(lang)) {
-      sourceLanguage.value = lang;
+    detectedLanguage.value = await AIService.detectLanguage(newText);
+    if (languageService.isLanguageSupported(detectedLanguage.value)) {
+      sourceLanguage.value = detectedLanguage.value;
       error.value = null;
     } else {
       sourceLanguage.value = null;
-      error.value = t('detectedLanguageNotSupported', lang);
     }
   } catch (e: unknown) {
     if (e instanceof Error) {
-      error.value = t('languageDetectionError');
+      error.value = {
+        type: t('languageDetectionError'),
+        error: e
+      };
+    } else {
+      console.warn(`${t('nonStandardError')}:`, e);
     }
   }
 });
@@ -153,7 +162,7 @@ const handleCancel = () => {
 const resetSharedState = () => {
   isLoading.value = false;
   modelStatus.value = null;
-  warning.value = null;
+  error.value = null;
 };
 
 const dCardParams = computed(() => {
@@ -168,10 +177,15 @@ const dCardParams = computed(() => {
 
 <template>
   <div
+    class="pa-4 d-flex flex-column ga-4"
     data-testid="sidepanel-app-container"
-    class="p-4 flex flex-col gap-4"
   >
     <AppHeader :api-available="apiAvailable" />
+
+    <InputArea
+      v-model="text"
+      :language="detectedLanguage"
+    />
 
     <ModelDownloadCard
       v-if="modelStatus"
@@ -180,19 +194,28 @@ const dCardParams = computed(() => {
       @cancel="handleCancel"
     />
 
-    <InputArea
-      v-model="text"
-      :source-language="sourceLanguage"
-    />
-
-    <div
-      v-if="warning"
-      id="process-warning-container"
-      data-testid="warning-container"
-      class="text-yellow-800 bg-yellow-100 p-2 rounded-md"
+    <v-alert
+      v-if="insufficientText"
+      data-testid="insufficient-text-message"
     >
-      {{ warning }}
-    </div>
+      {{ t('insufficientTextForDetection') }}
+    </v-alert>
+
+    <v-alert
+      v-if="sameLanguage"
+      type="warning"
+      data-testid="same-language-message"
+    >
+      {{ t('sameLanguageWarning') }}
+    </v-alert>
+
+    <v-alert
+      v-if="unsupportedLanguage"
+      type="error"
+      data-testid="unsupported-language-message"
+    >
+      {{ t('detectedLanguageNotSupported', detectedLanguage!) }}
+    </v-alert>
 
     <ProcessControls
       v-model:target-language="targetLanguage"
@@ -203,14 +226,18 @@ const dCardParams = computed(() => {
       @process="processText"
     />
 
-    <div
-      v-if="error"
+    <v-alert
+      v-if="displayError"
       data-testid="error-container"
-      class="text-red-500 bg-red-100 p-2 rounded-md"
+      type="error"
     >
-      {{ error }}
-    </div>
+      <p>{{ displayError.type }}</p>
+      <p>{{ displayError.message }}</p>
+    </v-alert>
 
-    <OutputArea :translated-text="translatedText" />
+    <OutputArea
+      v-if="translatedText"
+      v-model="translatedText"
+    />
   </div>
 </template>

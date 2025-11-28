@@ -1,9 +1,17 @@
 <template>
-  <span
-    id="processing-source"
-    data-testid="local-processing-badge"
-    class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full"
+  <v-tooltip
+    :text="t('localProcessingBadge')"
+    data-testid="processing-badge-tooltip"
   >
-    {{ t('localProcessingBadge') }}
-  </span>
+    <template #activator="{ props }">
+      <v-icon
+        v-bind="props"
+        id="processing-source"
+        icon="mdi-shield-check"
+        size="x-small"
+        color="success"
+        data-testid="local-processing-badge"
+      />
+    </template>
+  </v-tooltip>
 </template>

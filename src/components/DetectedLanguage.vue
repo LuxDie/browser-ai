@@ -1,22 +1,45 @@
 <script setup lang="ts">
 import {
   LanguageService,
-  type SupportedLanguageCode
 } from '@/entrypoints/background/language/language.service';
 
 const props = defineProps<{
-  sourceLanguage: SupportedLanguageCode;
+  language: string | null;
 }>();
 
 const languageService = LanguageService.getInstance();
-const languageMessage = computed(() => {
-  return t('detectedLanguage', t(languageService.getLanguageKey(props.sourceLanguage)));
-});
 
+const languageMessage = computed(() => {
+  if (!props.language) return '';
+  const languageName = languageService.isLanguageSupported(props.language)
+    ? t(languageService.getLanguageKey(props.language))
+    : props.language;
+  return t('detectedLanguage', languageName);
+});
 </script>
 
 <template>
-  <div data-testid="detected-language">
-    {{ languageMessage }}
-  </div>
+  <v-fade-transition>
+    <div
+      v-if="language"
+      class="d-flex align-center"
+    >
+      <v-tooltip
+        :text="languageMessage"
+        data-testid="detected-language-message"
+      >
+        <template #activator="{ props: ttProps }">
+          <v-chip
+            v-bind="ttProps"
+            size="x-small"
+            color="primary"
+            variant="tonal"
+            data-testid="detected-language-code"
+          >
+            {{ language }}
+          </v-chip>
+        </template>
+      </v-tooltip>
+    </div>
+  </v-fade-transition>
 </template>

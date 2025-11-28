@@ -1,38 +1,34 @@
-import { describe, it, expect } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { mount, type VueWrapper } from '@vue/test-utils';
 import OutputArea from '@/components/OutputArea.vue';
+import type { VTextarea } from 'vuetify/components';
+
+const translatedText = 'This is a translated text';
 
 describe('OutputArea', () => {
-  it('should render nothing when translatedText is empty', () => {
-    const wrapper = mount(OutputArea, {
-      props: {
-        translatedText: ''
-      }
-    });
+  let wrapper!: VueWrapper<any>;
 
-    expect(wrapper.find('textarea').exists()).toBe(false);
+  beforeEach(() => {
+    wrapper = mount(OutputArea, {
+      props: {
+        modelValue: translatedText,
+      },
+    });
   });
 
-  it('should render textarea with translated text when provided', () => {
-    const translatedText = 'Translated text';
-    const wrapper = mount(OutputArea, {
-      props: {
-        translatedText
-      }
-    });
-
-    const textarea = wrapper.find('textarea');
-    expect(textarea.exists()).toBe(true);
-    expect((textarea.element as HTMLTextAreaElement).value).toBe(translatedText);
+  it('should send correct props to text output component', () => {
+    const outputArea = wrapper.getComponent<typeof VTextarea>('[data-testid="output-area"]');
+    expect(outputArea.props('modelValue')).toBe(translatedText);
   });
 
-  it('should render LocalProcessingBadge', () => {
-    const wrapper = mount(OutputArea, {
-      props: {
-        translatedText: 'Some text'
-      }
-    });
+  it('should render "local processing" badge', () => {
+    expect(wrapper.find('[data-testid="local-processing-badge"]').exists()).toBe(true);
+  });
 
-    expect(wrapper.findComponent({ name: 'LocalProcessingBadge' }).exists()).toBe(true);
+  it('should copy output content to clipboard when copy button is clicked', async () => {
+    const copyButton = wrapper.get('[data-testid="copy-button"]');
+    await copyButton.trigger('click');
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(translatedText);
   });
 });
