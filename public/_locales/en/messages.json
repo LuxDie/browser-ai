@@ -20,26 +20,23 @@
   "processButton": {
     "message": "Process"
   },
-  "processingButton": {
-    "message": "Processing..."
-  },
   "resultLabel": {
     "message": "Result"
   },
   "localProcessingBadge": {
-    "message": "🔒 Processed locally"
+    "message": "Processed locally"
   },
   "copyButton": {
     "message": "Copy"
   },
   "apiWarning": {
-    "message": "⚠️ Browser native APIs are not available. Make sure you have the latest version of your browser."
+    "message": "Browser native APIs are not available. Make sure you have the latest version of your browser."
   },
   "downloadingSummarizer": {
-    "message": "📥 Downloading summarizer for the first time..."
+    "message": "Downloading summarizer for the first time..."
   },
   "downloadingTranslator": {
-    "message": "📥 Downloading translator ($source$ - $target$) for the first time...",
+    "message": "Downloading translator ($source$ - $target$) for the first time...",
     "placeholders": {
       "source": {
         "content": "$1"
@@ -53,7 +50,7 @@
     "message": "Download may take a few minutes. Please wait..."
   },
   "sameLanguageWarning": {
-    "message": "⚠️ Source and target languages are the same. Select a different target language or activate the \"Summarize\" option."
+    "message": "Source and target languages are the same. Select a different target language or activate the \"Summarize\" option."
   },
   "detectedLanguage": {
     "message": "Detected language: $language$",
@@ -311,5 +308,11 @@
   },
   "cancelDownload": {
     "message": "Cancel download"
+  },
+  "processingAborted": {
+    "message": "Processing aborted due to invalid data"
+  },
+  "nonStandardError": {
+    "message": "A non-standard error was received"
   }
 }

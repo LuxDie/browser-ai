@@ -16,5 +16,6 @@
     {
       "text": "Follow conventional commit format with type prefix and clear description"
     }
-  ]
+  ],
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

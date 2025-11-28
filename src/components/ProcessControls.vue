@@ -2,7 +2,6 @@
 import type {
   SupportedLanguageCode
 } from '@/entrypoints/background/language/language.service';
-import SummarizeOption from './SummarizeOption.vue';
 import LanguageSelector from './LanguageSelector.vue';
 
 const targetLanguage = defineModel<SupportedLanguageCode>(
@@ -10,7 +9,7 @@ const targetLanguage = defineModel<SupportedLanguageCode>(
 );
 const summarize = defineModel<boolean>('summarize', { required: true });
 
-const props = defineProps<{
+defineProps<{
   supportedLanguages: SupportedLanguageCode[];
   isLoading: boolean;
   canProcess: boolean;
@@ -20,29 +19,35 @@ const emit = defineEmits<{
   'process': [];
 }>();
 
-const buttonText = computed(() => {
-  return props.isLoading
-    ? t('processingButton')
-    : t('processButton');
-});
-
 </script>
 
 <template>
-  <div class="flex gap-2 items-end">
-    <SummarizeOption v-model="summarize" />
+  <div 
+    class="d-flex flex-wrap align-center justify-end ga-2"
+    data-testid="process-controls"
+  >
+    <v-checkbox
+      v-model="summarize"
+      :label="t('summarizeLabel')"
+      hide-details
+      density="compact"
+      data-testid="summarize-checkbox"
+    />
     <LanguageSelector
       v-model="targetLanguage"
       :supported-languages="supportedLanguages"
     />
-    <button
+    <v-btn
       id="process-button"
+      rounded="xl"
+      variant="flat"
       data-testid="process-button"
-      class="btn-primary px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="text-none bg-primary"
       :disabled="!canProcess"
+      :loading="isLoading"
       @click="emit('process')"
     >
-      {{ buttonText }}
-    </button>
+      {{ t('processButton') }}
+    </v-btn>
   </div>
 </template>

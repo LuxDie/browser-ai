@@ -2,11 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import LanguageSelector from '@/components/LanguageSelector.vue';
 import type { SupportedLanguageCode } from '@/entrypoints/background/language/language.service';
+import type { VSelect } from 'vuetify/components';
 
 vi.mock('@/entrypoints/background/language/language.service', () => ({
   LanguageService: {
     getInstance: vi.fn(() => ({
-      getLanguageKey: vi.fn((code: string) => `lang_${code}`)
+      getLanguageKey: vi.fn((code: SupportedLanguageCode) => code)
     }))
   }
 }));
@@ -14,43 +15,30 @@ vi.mock('@/entrypoints/background/language/language.service', () => ({
 const supportedLanguages: SupportedLanguageCode[] = ['en', 'es', 'fr', 'de'];
 
 describe('LanguageSelector', () => {
-  it('should render select with all supported languages', () => {
+  it('should pass correct language names and model to select component', () => {
+    const lang = 'en';
     const wrapper = mount(LanguageSelector, {
       props: {
-        modelValue: 'en',
+        modelValue: lang,
         supportedLanguages
       }
     });
 
-    const options = wrapper.findAll('option');
-    expect(options).toHaveLength(supportedLanguages.length);
+    const vSelect = wrapper.getComponent<typeof VSelect>('[data-testid="language-selector"]');
+    const items = vSelect.props('items') as { value: string, title: string }[];
+    expect(items.length).toBe(supportedLanguages.length);
+    expect(items.map(item => item.value)).toEqual(supportedLanguages);
+    expect(vSelect.props('modelValue')).toBe(lang);
   });
 
-  it('should update modelValue when selection changes', async () => {
+  it('should emit update:modelValue when selection changes', async () => {
+    const lang = 'fr';
     const wrapper = mount(LanguageSelector, {
-      props: {
-        modelValue: 'en',
-        supportedLanguages
-      }
+      props: { modelValue: 'en', supportedLanguages }
     });
 
-    const select = wrapper.find('select#target-language');
-    await select.setValue('es');
+    await wrapper.getComponent<typeof VSelect>('[data-testid="language-selector"]').setValue(lang);
 
-    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['es']);
-  });
-
-  it('should display language labels using LanguageService', () => {
-    const wrapper = mount(LanguageSelector, {
-      props: {
-        modelValue: 'en',
-        supportedLanguages
-      }
-    });
-
-    const options = wrapper.findAll('option');
-    options.forEach((option, index) => {
-      expect(option.text()).toBe(`lang_${supportedLanguages[index] ?? ''}`);
-    });
+    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([lang]);
   });
 });

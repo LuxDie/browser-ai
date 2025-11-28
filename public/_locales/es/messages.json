@@ -20,26 +20,23 @@
   "processButton": {
     "message": "Procesar"
   },
-  "processingButton": {
-    "message": "Procesando..."
-  },
   "resultLabel": {
     "message": "Resultado"
   },
   "localProcessingBadge": {
-    "message": "🔒 Procesado localmente"
+    "message": "Procesado localmente"
   },
   "copyButton": {
     "message": "Copiar"
   },
   "apiWarning": {
-    "message": "⚠️ Las APIs nativas del navegador no están disponibles. Asegúrate de tener la versión más reciente de tu navegador."
+    "message": "Las APIs nativas del navegador no están disponibles. Asegúrate de tener la versión más reciente de tu navegador."
   },
   "downloadingSummarizer": {
-    "message": "📥 Descargando resumidor por única vez..."
+    "message": "Descargando resumidor por única vez..."
   },
   "downloadingTranslator": {
-    "message": "📥 Descargando traductor ($source$ - $target$) por única vez...",
+    "message": "Descargando traductor ($source$ - $target$) por única vez...",
     "placeholders": {
       "source": {
         "content": "$1"
@@ -53,7 +50,7 @@
     "message": "La descarga puede tomar algunos minutos. Por favor, espere..."
   },
   "sameLanguageWarning": {
-    "message": "⚠️ Los idiomas de origen y destino son iguales. Selecciona un idioma destino diferente o activa la opción \"Resumir\"."
+    "message": "Los idiomas de origen y destino son iguales. Selecciona un idioma destino diferente o activa la opción \"Resumir\"."
   },
   "detectedLanguage": {
     "message": "Idioma detectado: $language$",
@@ -311,5 +308,11 @@
   },
   "cancelDownload": {
     "message": "Cancelar descarga"
+  },
+  "processingAborted": {
+    "message": "Procesamiento abortado a causa de datos inválidos"
+  },
+  "nonStandardError": {
+    "message": "Se recibió un error no estándar"
   }
 }
