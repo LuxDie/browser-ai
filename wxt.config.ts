@@ -1,8 +1,12 @@
 import { defineConfig } from 'wxt';
+import vuetify from 'vite-plugin-vuetify';
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   modules: ['@wxt-dev/module-vue'],
+  vite: () => ({
+    plugins: [vuetify({ autoImport: true })],
+  }),
   srcDir: 'src',
   webExt: {
     disabled: true,

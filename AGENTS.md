@@ -41,3 +41,4 @@ Las cadenas de texto deben estar internacionalizadas con la función `t`.
 ### Uso de herramientas
 
 - Siempre prefiere utilizar herramientas antes que comandos de consola
+- Lee [package.json](/package.json) para obtener información sobre los comandos NPM disponibles en el proyecto.

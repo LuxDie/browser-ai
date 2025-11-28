@@ -8,32 +8,26 @@ const languageService = LanguageService.getInstance();
 
 const modelValue = defineModel<SupportedLanguageCode>();
 
-defineProps<{
+const props = defineProps<{
   supportedLanguages: SupportedLanguageCode[];
 }>();
+
+const languageItems = computed(() => {
+  return props.supportedLanguages.map((lang) => {
+    return {
+      value: lang,
+      title: languageService.getLanguageKey(lang),
+    };
+  });
+});
 </script>
 
 <template>
-  <div class="flex-1">
-    <label
-      for="target-language"
-      class="block text-sm font-medium text-gray-700 mb-2"
-    >
-      {{ t('targetLanguageLabel') }}
-    </label>
-    <select
-      id="target-language"
-      v-model="modelValue"
-      data-testid="target-language-select"
-      class="input-field"
-    >
-      <option
-        v-for="lang in supportedLanguages"
-        :key="lang"
-        :value="lang"
-      >
-        {{ t(languageService.getLanguageKey(lang)) }}
-      </option>
-    </select>
-  </div>
+  <v-select
+    v-model="modelValue"
+    :label="t('targetLanguageLabel')"
+    :items="languageItems"
+    class="flex-1"
+    data-testid="target-language-select"
+  />
 </template>

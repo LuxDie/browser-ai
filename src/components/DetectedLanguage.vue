@@ -16,7 +16,13 @@ const languageMessage = computed(() => {
 </script>
 
 <template>
-  <div data-testid="detected-language">
-    {{ languageMessage }}
+  <div v-if="sourceLanguage">
+    <v-alert
+      id="detected-language-container"
+      data-testid="detected-language"
+      :text="languageMessage"
+      type="info"
+      variant="tonal"
+    />
   </div>
 </template>

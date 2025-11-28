@@ -11,6 +11,11 @@ export default defineConfig({
     setupFiles: ['./src/tests/setup.ts'],
     mockReset: true,
     silent: true,
+    server: {
+      deps: {
+        inline: ['vuetify'],
+      },
+    },
   },
   resolve: {
     alias: {

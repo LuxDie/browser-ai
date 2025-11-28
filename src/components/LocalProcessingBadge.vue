@@ -1,9 +1,11 @@
 <template>
-  <span
+  <v-chip
     id="processing-source"
     data-testid="local-processing-badge"
-    class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full"
+    color="green"
+    text-color="white"
+    size="small"
   >
     {{ t('localProcessingBadge') }}
-  </span>
+  </v-chip>
 </template>

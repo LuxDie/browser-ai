@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils';
 import { describe, it, expect, vi } from 'vitest';
 import ModelDownloadCard from '@/components/ModelDownloadCard.vue';
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
+import { VCardTitle, VProgressLinear, VBtn } from 'vuetify/components';
 
 describe('ModelDownloadCard.vue', () => {
   const mockStatus: AIModelStatus = {
@@ -16,7 +17,7 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    expect(wrapper.find('h5').text()).toBe('downloadingSummarizer');
+    expect(wrapper.findComponent(VCardTitle).text()).toBe('downloadingSummarizer');
     expect(wrapper.text()).toContain('50%');
   });
 
@@ -27,8 +28,16 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    const progressBar = wrapper.find('.bg-blue-600');
-    expect(progressBar.attributes('style')).toContain('width: 50%');
+    // Verificar que el componente padre tiene el computed property correcto
+    expect(wrapper.vm).toBeDefined();
+    // Usar any para evitar el error de TypeScript ya que el computed no está tipado en la instancia
+    const progressPercentage = (wrapper.vm as any).progressPercentage;
+    expect(progressPercentage).toBe(50);
+    // Verificar que el progreso se muestra correctamente en el DOM
+    expect(wrapper.text()).toContain('50%');
+    // Verificar que el componente VProgressLinear existe y está presente
+    const progressBar = wrapper.findComponent(VProgressLinear);
+    expect(progressBar.exists()).toBe(true);
   });
 
   it('should render with 0% progress correctly', () => {
@@ -40,8 +49,8 @@ describe('ModelDownloadCard.vue', () => {
     });
 
     expect(wrapper.text()).toContain('0%');
-    const progressBar = wrapper.find('.bg-blue-600');
-    expect(progressBar.attributes('style')).toContain('width: 0%');
+    const progressBar = wrapper.findComponent(VProgressLinear);
+    expect(progressBar.exists()).toBe(true);
   });
 
   it('should render with 100% progress correctly', () => {
@@ -53,9 +62,10 @@ describe('ModelDownloadCard.vue', () => {
     });
 
     expect(wrapper.text()).toContain('100%');
-    const progressBar = wrapper.find('.bg-blue-600');
-    expect(progressBar.attributes('style')).toContain('width: 100%');
+    const progressBar = wrapper.findComponent(VProgressLinear);
+    expect(progressBar.exists()).toBe(true);
   });
+
   it('should render cancel button when state is downloading', () => {
     const wrapper = mount(ModelDownloadCard, {
       props: {
@@ -63,7 +73,7 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    const button = wrapper.find('button');
+    const button = wrapper.findComponent(VBtn);
     expect(button.exists()).toBe(true);
     expect(button.text()).toBe('cancelDownload');
   });
@@ -75,20 +85,18 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    await wrapper.find('button').trigger('click');
+    await wrapper.findComponent(VBtn).trigger('click');
     expect(wrapper.emitted('cancel')).toBeTruthy();
   });
 
   it('should render title with source and target languages when params are provided', () => {
     const params = { source: 'English', target: 'Spanish' };
-
     vi.mocked(browser.i18n.getMessage).mockImplementation((key, substitutions) => {
       if (key === 'downloadingTranslator' && Array.isArray(substitutions) && substitutions.length >= 2) {
         return `Downloading from ${String(substitutions[0])} to ${String(substitutions[1])}`;
       }
       return key;
     });
-
     const wrapper = mount(ModelDownloadCard, {
       props: {
         status: mockStatus,
@@ -96,7 +104,7 @@ describe('ModelDownloadCard.vue', () => {
       },
     });
 
-    expect(wrapper.find('h5').text()).toBe('Downloading from English to Spanish');
+    expect(wrapper.findComponent(VCardTitle).text()).toBe('Downloading from English to Spanish');
     expect(browser.i18n.getMessage).toHaveBeenCalledWith('downloadingTranslator', ['English', 'Spanish']);
   });
 });

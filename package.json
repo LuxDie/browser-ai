@@ -32,16 +32,17 @@
     "eslint-plugin-vue": "^10.6.1",
     "globals": "^16.4.0",
     "happy-dom": "^20.0.2",
-    "postcss": "^8.4.35",
-    "tailwindcss": "^3.4.1",
     "typescript": "^5.2.2",
     "typescript-eslint": "^8.46.1",
     "vite": "^7.1.12",
+    "vite-plugin-vuetify": "^2.1.2",
     "vitest": "^4.0.7",
     "vue-tsc": "^3.1.2",
+    "vuetify": "^3.10.11",
     "wxt": "^0.20.11"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
     "@webext-core/messaging": "^2.3.0",
     "@webext-core/proxy-service": "^1.2.1",
     "vue": "^3.5.22"
