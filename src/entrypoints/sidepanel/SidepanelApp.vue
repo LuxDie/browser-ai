@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
 import { getAIService } from '@/entrypoints/background/ai/ai.service';
-import { onMessage, sendMessage } from '@/entrypoints/background/messaging';
 import { type SupportedLanguageCode, LanguageService } from '@/entrypoints/background/language/language.service';
 import AppHeader from '@/components/AppHeader.vue';
 import InputArea from '@/components/InputArea.vue';
@@ -45,17 +44,19 @@ onMounted(async () => {
     ? browserLang
     : supportedLanguages.value[0]!;
 
-  onMessage('modelStatusUpdate', (message) => {
-    if (message.data.state === 'downloading') {
-      modelStatus.value = message.data;
+  window.addEventListener('modelStatusUpdate', (event: Event) => {
+    const customEvent = event as CustomEvent<AIModelStatus>;
+    if (customEvent.detail.state === 'downloading') {
+      modelStatus.value = customEvent.detail;
     } else {
       modelStatus.value = null;
     }
   });
 
-  onMessage('selectedText', async (message) => {
-    text.value = message.data.text;
-    summarize.value = message.data.summarize ?? false;
+  window.addEventListener('selectedText', async (event: Event) => {
+    const customEvent = event as CustomEvent<{ text: string; summarize?: boolean }>;
+    text.value = customEvent.detail.text;
+    summarize.value = customEvent.detail.summarize ?? false;
     warning.value = null;
     error.value = null;
     
@@ -78,7 +79,7 @@ onMounted(async () => {
     }
   });
 
-  void sendMessage('sidepanelReady');
+  window.dispatchEvent(new CustomEvent('sidepanelReady'));
 });
 
 const processText = async () => {
@@ -154,7 +155,7 @@ watch(summarize, () => {
 </script>
 
 <template>
-  <div class="p-4 flex flex-col gap-4">
+  <div data-testid="sidepanel-app-container" class="p-4 flex flex-col gap-4">
     <AppHeader :api-available="apiAvailable" />
 
     <ModelDownloadCard v-if="modelStatus" :status="modelStatus" />

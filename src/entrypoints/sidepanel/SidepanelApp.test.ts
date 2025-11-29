@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, type MockedObject, afterEach, beforeEach } from 'vitest';
 import { mount, flushPromises, VueWrapper } from '@vue/test-utils';
 import SidepanelApp from '@/entrypoints/sidepanel/SidepanelApp.vue';
-import { sendMessage, onMessage, removeMessageListeners } from '@/entrypoints/background/messaging';
+import { onMessage, removeMessageListeners } from '@/entrypoints/background/messaging';
 import type { LanguageService } from '@/entrypoints/background/language/language.service';
 import type { AIService } from '@/entrypoints/background/ai/ai.service';
 
@@ -120,7 +120,7 @@ describe('SidepanelApp', () => {
     it('should automatically detect language from text selected from context menu', async () => {
       const wrapper = mount(SidepanelApp);
       // Simular recepción de texto desde menú contextual
-      await sendMessage('selectedText', { text: 'Esta es una oración de prueba para traducción automática.', summarize: false });
+      window.dispatchEvent(new CustomEvent('selectedText', { detail: { text: 'Esta es una oración de prueba para traducción automática.', summarize: false } }));
       // Esperar a que se active la traducción automática
       await flushPromises();
 
@@ -131,7 +131,7 @@ describe('SidepanelApp', () => {
     it('should automatically process text when selected from context menu', async () => {
       const wrapper = mount(SidepanelApp);
       // Simular recepción de texto desde menú contextual
-      await sendMessage('selectedText', { text: LONG_TEXT, summarize: false });
+      window.dispatchEvent(new CustomEvent('selectedText', { detail: { text: LONG_TEXT, summarize: false } }));
       // Esperar a que se active el procesamiento automático
       await flushPromises();
       expect((wrapper.get('[data-testid=output-textarea]').element as HTMLTextAreaElement).value).toContain(PROCCESED_TEXT);
@@ -151,7 +151,7 @@ describe('SidepanelApp', () => {
       await flushPromises();
 
       // Simulate receiving message from context menu
-      await sendMessage('selectedText', { text: LONG_TEXT, summarize: false });
+      window.dispatchEvent(new CustomEvent('selectedText', { detail: { text: LONG_TEXT, summarize: false } }));
       await flushPromises();
 
       expect(wrapper.find('[data-testid=output-textarea]').exists()).toBe(false);
@@ -312,7 +312,7 @@ describe('SidepanelApp', () => {
       await flushPromises();
 
       // Simulate receiving modelStatusUpdate message
-      await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
+      window.dispatchEvent(new CustomEvent('modelStatusUpdate', { detail: { state: 'downloading', downloadProgress: 0 } }));
       await flushPromises();
 
       // Check if ModelDownloadCard is present
@@ -323,12 +323,12 @@ describe('SidepanelApp', () => {
       const wrapper = mount(SidepanelApp);
       await flushPromises();
       // Simular finalización de la descarga
-      await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
+      window.dispatchEvent(new CustomEvent('modelStatusUpdate', { detail: { state: 'downloading', downloadProgress: 0 } }));
       await flushPromises();
       expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(true);
 
       // Verificar que el estado del modelo esté oculto
-      await sendMessage('modelStatusUpdate', { state: 'available' });
+      window.dispatchEvent(new CustomEvent('modelStatusUpdate', { detail: { state: 'available' } }));
       await flushPromises();
 
       expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(false);
@@ -338,7 +338,7 @@ describe('SidepanelApp', () => {
       const wrapper = mount(SidepanelApp);
       await flushPromises();
       // Show download message
-      await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
+      window.dispatchEvent(new CustomEvent('modelStatusUpdate', { detail: { state: 'downloading', downloadProgress: 0 } }));
       await flushPromises();
       expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(true);
 
@@ -354,7 +354,7 @@ describe('SidepanelApp', () => {
       const wrapper = mount(SidepanelApp);
       await flushPromises();
       // Show download message
-      await sendMessage('modelStatusUpdate', { state: 'downloading', downloadProgress: 0 });
+      window.dispatchEvent(new CustomEvent('modelStatusUpdate', { detail: { state: 'downloading', downloadProgress: 0 } }));
       await flushPromises();
       expect(wrapper.findComponent({ name: 'ModelDownloadCard' }).exists()).toBe(true);
 
@@ -451,7 +451,7 @@ describe('SidepanelApp', () => {
       const wrapper = mount(SidepanelApp);
       await flushPromises();
 
-      await sendMessage('selectedText', { text: 'Texto', summarize: true });
+      window.dispatchEvent(new CustomEvent('selectedText', { detail: { text: 'Texto', summarize: true } }));
       await flushPromises();
 
       const checkbox = wrapper.find('input#summarize-checkbox');
@@ -464,7 +464,7 @@ describe('SidepanelApp', () => {
       const checkbox = wrapper.find('input#summarize-checkbox');
       await checkbox.setValue(true);
 
-      await sendMessage('selectedText', { text: 'Texto', summarize: false });
+      window.dispatchEvent(new CustomEvent('selectedText', { detail: { text: 'Texto', summarize: false } }));
       await flushPromises();
 
       expect((checkbox.element as HTMLInputElement).checked).toBe(false);
