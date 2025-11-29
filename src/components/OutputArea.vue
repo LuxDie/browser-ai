@@ -12,6 +12,6 @@ defineProps<{
       <label for="output-text">{{ t('resultLabel') }}</label>
       <LocalProcessingBadge />
     </div>
-    <textarea id="output-text" :value="translatedText" class="border p-2 rounded-md" rows="5" readonly></textarea>
+    <textarea id="output-text" data-testid="output-textarea" :value="translatedText" class="border p-2 rounded-md" rows="5" readonly></textarea>
   </div>
 </template>

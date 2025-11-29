@@ -7,8 +7,6 @@ import {
   CONNECTION_ERROR_MESSAGE,
 } from '@/utils/constants';
 
-export type { AIModelStatus } from '@/entrypoints/background/model-manager/model-manager.model';
-
 /* Background script para Browser AI
  * Maneja eventos del navegador y comunicación entre componentes
  */

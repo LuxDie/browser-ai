@@ -20,6 +20,7 @@ defineProps<{
     </label>
     <select
       id="target-language"
+      data-testid="target-language-select"
       v-model="modelValue"
       class="input-field"
     >
