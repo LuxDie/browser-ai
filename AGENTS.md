@@ -16,6 +16,7 @@
 - **Obligatoriedad de pruebas unitarias:** Toda nueva funcionalidad o corrección debe incluir pruebas unitarias que acompañen la implementación
 - **Actualización ante cambios:** Si se modifica comportamiento existente, actualizar las pruebas afectadas o agregar nuevas según corresponda
 - **Refactorización**: **Nunca** se debe eliminar un caso de prueba salvo que realmente sea obsoleto
+- Los **títulos de las pruebas** deben estar en inglés.
 - Las cadenas de texto en las pruebas unitarias deben estar en castellano. Las que se usan más de una vez deben estar en constantes. Si se usan en una sola prueba deben tener alcance local. Los nombres de las constantes deben estar en inglés, según las reglas del proyecto.
 - Las variables globales se simulan con `vi.stubGlobals`, no con `Object.assign`
 - Las pruebas unitarias deben simular todo servicio externo para mantener la aislación
@@ -41,3 +42,5 @@ Las cadenas de texto deben estar internacionalizadas con la función `t`.
 ### Uso de herramientas
 
 - Siempre prefiere utilizar herramientas antes que comandos de consola
+- Lee [package.json](/package.json) para obtener información sobre los comandos NPM disponibles en el proyecto.
+- Para ejecutar pruebas aisladamente, utiliza `npm test -- <ruta/a/archivo.test.ts> --testNamePattern <patrón>`
