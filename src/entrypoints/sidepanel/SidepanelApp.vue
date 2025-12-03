@@ -160,6 +160,7 @@ const handleCancel = () => {
 };
 
 const resetSharedState = () => {
+  void AIService.cancelProcessing();
   isLoading.value = false;
   modelStatus.value = null;
   error.value = null;

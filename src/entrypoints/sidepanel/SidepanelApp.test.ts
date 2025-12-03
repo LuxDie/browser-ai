@@ -580,4 +580,17 @@ describe('SidepanelApp', () => {
       expect(errorMessage.exists()).toBe(false);
     });
   });
+
+  describe('Cancellation Logic', () => {
+    it('should cancel processing when user changes a parameter', async () => {
+      const checkbox = wrapper.getComponent('[data-testid="summarize-checkbox"]');
+      await checkbox.setValue(false);
+      await setTextAndProcess(wrapper);
+      mockAIService.cancelProcessing.mockClear();
+
+      await checkbox.setValue(true);
+
+      expect(mockAIService.cancelProcessing).toHaveBeenCalledOnce();
+    });
+  });
 });
