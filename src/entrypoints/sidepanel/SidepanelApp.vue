@@ -21,6 +21,7 @@ const isLoading = ref(false);
 const error = ref<{ type: string; error: Error } | null>(null);
 const summarize = ref(false);
 const supportedLanguages = ref<SupportedLanguageCode[]>([]);
+const textValidation = ref<Promise<void> | null>(null);
 
 const displayError = computed(() => {
   if (!error.value || error.value.error.name === 'AbortError') return null;
@@ -69,8 +70,9 @@ const handleSelectedText = (event: Event) => {
 
     // Esperar a que los watchers finalicen antes de proceder
     await nextTick();
+    await textValidation.value;
     if (canProcess.value) {
-      await processText();
+      void processText();
     }
   })();
 };
@@ -128,31 +130,33 @@ const processText = async () => {
   }
 };
 
-watch(text, async (newText) => {
-  resetSharedState();
-  if (newText.length === 0) return;
-  if (newText.trim().length < minDetectLength) {
-    sourceLanguage.value = detectedLanguage.value = null;
-    return;
-  }
-  try {
-    detectedLanguage.value = await AIService.detectLanguage(newText);
-    if (languageService.isLanguageSupported(detectedLanguage.value)) {
-      sourceLanguage.value = detectedLanguage.value;
-      error.value = null;
-    } else {
-      sourceLanguage.value = null;
+watch(text, (newText) => {
+  textValidation.value = (async () => {
+    resetSharedState();
+    if (newText.length === 0) return;
+    if (newText.trim().length < minDetectLength) {
+      sourceLanguage.value = detectedLanguage.value = null;
+      return;
     }
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      error.value = {
-        type: t('languageDetectionError'),
-        error: e
-      };
-    } else {
-      console.warn(`${t('nonStandardError')}:`, e);
+    try {
+      detectedLanguage.value = await AIService.detectLanguage(newText);
+      if (languageService.isLanguageSupported(detectedLanguage.value)) {
+        sourceLanguage.value = detectedLanguage.value;
+        error.value = null;
+      } else {
+        sourceLanguage.value = null;
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        error.value = {
+          type: t('languageDetectionError'),
+          error: e
+        };
+      } else {
+        console.warn(`${t('nonStandardError')}:`, e);
+      }
     }
-  }
+  })();
 });
 
 watch(targetLanguage, () => {
