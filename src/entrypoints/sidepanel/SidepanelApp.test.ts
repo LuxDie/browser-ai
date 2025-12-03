@@ -158,6 +158,22 @@ describe('SidepanelApp', () => {
       expect(wrapper.find('[data-testid=output-area]').exists()).toBe(false);
       expect(wrapper.text()).toContain('sameLanguageWarning');
     });
+
+    it('should process correctly when input has short text and processing is initiated from context menu', async () => {
+      // Primero introducir texto corto en el input
+      const textarea = wrapper.getComponent('[data-testid="input-area"]');
+      await textarea.setValue(SHORT_TEXT);
+      await flushPromises();
+
+      // Simular recepción de texto desde menú contextual (que sobreescribe el input)
+      globalThis.dispatchEvent(new CustomEvent('selectedText', {
+        detail: { text: LONG_TEXT, summarize: false }
+      }));
+      await flushPromises();
+
+      // Verificar que el área de salida está visible
+      expect(wrapper.find('[data-testid="output-area"]').exists()).toBe(true);
+    });
   });
 
   // TODO: refactorizar con `it.each`
