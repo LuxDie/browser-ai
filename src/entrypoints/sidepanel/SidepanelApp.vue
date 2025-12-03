@@ -52,6 +52,28 @@ const canProcess = computed(() => {
 
 const apiAvailable = ref(true);
 const minDetectLength = 15;
+const handleModelStatusUpdate = (event: Event) => {
+  const customEvent = event as CustomEvent<AIModelStatus>;
+  if (customEvent.detail.state === 'downloading') {
+    modelStatus.value = customEvent.detail;
+  } else {
+    modelStatus.value = null;
+  }
+};
+
+const handleSelectedText = (event: Event) => {
+  void (async () => {
+    const customEvent = event as CustomEvent<{ text: string; summarize?: boolean }>;
+    text.value = customEvent.detail.text;
+    summarize.value = customEvent.detail.summarize ?? false;
+
+    // Esperar a que los watchers finalicen antes de proceder
+    await nextTick();
+    if (canProcess.value) {
+      await processText();
+    }
+  })();
+};
 
 onMounted(async () => {
   apiAvailable.value = await AIService.checkAPIAvailability();
@@ -62,28 +84,15 @@ onMounted(async () => {
     ? browserLang
     : supportedLanguages.value[0]!;
 
-  window.addEventListener('modelStatusUpdate', (event: Event) => {
-    const customEvent = event as CustomEvent<AIModelStatus>;
-    if (customEvent.detail.state === 'downloading') {
-      modelStatus.value = customEvent.detail;
-    } else {
-      modelStatus.value = null;
-    }
-  });
-
-  window.addEventListener('selectedText', (event: Event) => void (async () => {
-    const customEvent = event as CustomEvent<{ text: string; summarize?: boolean }>;
-    text.value = customEvent.detail.text;
-    summarize.value = customEvent.detail.summarize ?? false;
-
-    // Esperar a que los watchers finalicen antes de proceder
-    await nextTick();
-    if (canProcess.value) {
-      await processText();
-    }
-  })());
+  window.addEventListener('modelStatusUpdate', handleModelStatusUpdate);
+  window.addEventListener('selectedText', handleSelectedText);
 
   window.dispatchEvent(new CustomEvent('appMounted'));
+});
+
+onUnmounted(() => {
+  window.removeEventListener('modelStatusUpdate', handleModelStatusUpdate);
+  window.removeEventListener('selectedText', handleSelectedText);
 });
 
 const processText = async () => {
