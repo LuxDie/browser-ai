@@ -1,7 +1,7 @@
 {
   "name": "browser-ai",
-  "version": "0.2.2-beta",
-  "description": "Browser AI - Chrome extension for translation using built-in AI APIs",
+  "version": "0.3.0-beta.1",
+  "description": "Local AI translation and summarization using Chrome's built-in APIs. Private, fast, and works offline.",
   "type": "module",
   "scripts": {
     "dev": "wxt",

@@ -3,7 +3,7 @@
     "message": "Browser AI"
   },
   "extDescription": {
-    "message": "Procesamiento de texto con IA integrada"
+    "message": "Traducción y resumen con IA local usando las APIs integradas de Chrome. Privado, rápido y funciona sin conexión."
   },
   "processingError": {
     "message": "Hubo un error al procesar la solicitud"

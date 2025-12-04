@@ -3,7 +3,7 @@
     "message": "Browser AI"
   },
   "extDescription": {
-    "message": "AI-powered translation using Chrome's built-in APIs"
+    "message": "Local AI translation and summarization using Chrome's built-in APIs. Private, fast, and works offline."
   },
   "processingError": {
     "message": "An error occurred while processing the request"
