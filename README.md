@@ -3,11 +3,18 @@
 [![Liberapay](https://img.shields.io/liberapay/receives/ecicala.svg?logo=liberapay)](https://liberapay.com/ecicala/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/mombidalkepdcflpimineeacinniphdp?logo=google-chrome&logoColor=white&label=Chrome%20Web%2dStore)](https://chromewebstore.google.com/detail/browser-ai/mombidalkepdcflpimineeacinniphdp)
+![Mantenimiento](https://img.shields.io/badge/Mantenimiento-buscando_mantenedor-orange.svg)
 
 ## Estado del Proyecto
 
 **Título Provisional:** Browser AI  
-**Estado:** En Desarrollo
+**Estado:** En busca de mantenedores
+
+He decidido pausar el desarrollo de nuevas funcionalidades por cuenta propia para priorizar mi disponibilidad actual. Sin embargo, el proyecto **no está abandonado**:
+
+* **Revisiones:** Sigo disponible para revisar y dar el visto bueno (*merge*) a los **Pull Requests** que cumplan con los estándares de calidad y buenas prácticas del proyecto.
+* **Issues:** No estaré respondiendo activamente a reportes de errores a menos que vengan acompañados de una propuesta de solución o código.
+* **Colaboración:** Si eres usuario de esta herramienta y te interesa sumarte como mantenedor regular con permisos de escritura, por favor abre una *issue* para que podamos coordinarlo.
 
 ## Descripción
 
